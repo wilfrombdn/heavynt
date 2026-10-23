@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#000000">
+<title>Workout Tracker</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#000;color:#fff;font:16px/1.5 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;display:grid;place-items:center;min-height:100vh;padding:24px}
+  main{max-width:440px;width:100%}
+  h1{font-size:34px;letter-spacing:-.02em;margin:0 0 6px}
+  p{color:#9a9a9a;margin:0 0 22px}
+  .btn{display:block;text-align:center;background:#fff;color:#000;font-weight:700;text-decoration:none;padding:16px;border-radius:16px}
+  .btn:active{background:#ddd}
+  .meta{text-align:center;color:#777;font-size:13px;margin:10px 0 28px}
+  ol{padding-left:20px;color:#bbb}
+  li{margin-bottom:6px}
+  a.link{color:#fff}
+  .card{border:1px solid #262626;border-radius:16px;padding:16px 18px;background:#0e0e0e}
+  h2{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#777;margin:0 0 10px}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}
+</style>
+</head>
+<body>
+<main>
+  <h1>Workout Tracker</h1>
+  <p>Track the weight on every exercise. A body map shows what's strong <span class="dot" style="background:#3b82f6"></span>and what's weak <span class="dot" style="background:#e5484d"></span>.</p>
+  <a class="btn" id="dl" href="https://github.com/wilfrombdn/workout-tracker/releases/latest/download/workout-tracker.apk">Download for Android (.apk)</a>
+  <div class="meta" id="meta">Android 7.0 or newer</div>
+  <div class="card">
+    <h2>Install</h2>
+    <ol>
+      <li>Open this page on your phone and tap Download.</li>
+      <li>Open the file. If asked, allow installs from your browser.</li>
+      <li>Tap Install. Updates install over the old version and keep your data.</li>
+    </ol>
+  </div>
+  <p class="meta"><a class="link" href="https://github.com/wilfrombdn/workout-tracker">Source on GitHub</a></p>
+</main>
+<script>
+fetch('https://api.github.com/repos/wilfrombdn/workout-tracker/releases/latest').then(r=>r.json()).then(r=>{
+  const a=(r.assets||[]).find(x=>x.name.endsWith('.apk')); if(!a) return;
+  document.getElementById('meta').textContent=`${r.tag_name} · ${(a.size/1048576).toFixed(1)} MB · ${new Date(r.published_at).toLocaleDateString()} · Android 7.0+`;
+}).catch(()=>{});
+</script>
+</body>
+</html>

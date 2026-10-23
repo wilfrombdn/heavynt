@@ -1,0 +1,10 @@
+{
+  "appId": "com.wilfrombdn.workouttracker",
+  "appName": "Workout Tracker",
+  "webDir": "www",
+  "backgroundColor": "#000000",
+  "plugins": {
+    "LocalNotifications": { "smallIcon": "ic_stat_workout" },
+    "SystemBars": { "style": "DARK" }
+  }
+}
