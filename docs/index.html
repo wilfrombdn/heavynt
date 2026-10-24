@@ -26,7 +26,7 @@
 <main>
   <img src="icon.png" alt="" width="84" height="84" style="border-radius:20px;display:block;margin-bottom:16px;border:1px solid #262626">`n  <h1>Heavyn't</h1>
   <p>Track the weight on every exercise. A body map shows what's strong <span class="dot" style="background:#3b82f6"></span>and what's weak <span class="dot" style="background:#e5484d"></span>.</p>
-  <a class="btn" id="dl" href="https://github.com/wilfrombdn/workout-tracker/releases/latest/download/heavynt.apk">Download for Android (.apk)</a>
+  <a class="btn" id="dl" href="https://github.com/wilfrombdn/heavynt/releases/latest/download/heavynt.apk">Download for Android (.apk)</a>
   <div class="meta" id="meta">Native Android app · Android 8.0 or newer</div>
   <div class="card">
     <h2>Install</h2>
@@ -44,10 +44,10 @@
       <li>Check your workouts are there, then uninstall the old one.</li>
     </ol>
   </div>
-  <p class="meta"><a class="link" href="https://github.com/wilfrombdn/workout-tracker">Source on GitHub</a></p>
+  <p class="meta"><a class="link" href="https://github.com/wilfrombdn/heavynt">Source on GitHub</a></p>
 </main>
 <script>
-fetch('https://api.github.com/repos/wilfrombdn/workout-tracker/releases/latest').then(r=>r.json()).then(r=>{
+fetch('https://api.github.com/repos/wilfrombdn/heavynt/releases/latest').then(r=>r.json()).then(r=>{
   const a=(r.assets||[]).find(x=>x.name.endsWith('.apk')); if(!a) return;
   document.getElementById('meta').textContent=`${r.tag_name} Â· ${(a.size/1048576).toFixed(1)} MB Â· ${new Date(r.published_at).toLocaleDateString()} Â· Android 8.0+`;
 }).catch(()=>{});

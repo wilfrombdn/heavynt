@@ -2,7 +2,7 @@
 
 Minimal black & white Android workout tracker. Logs the weight on every exercise and colours an anatomy map: blue = strong, red = weak.
 
-**Download:** https://wilfrombdn.github.io/workout-tracker/
+**Download:** https://wilfrombdn.github.io/heavynt/
 
 ## Features
 - Home: today's workout + front/back body map scored from your lifts (estimated 1RM ÷ bodyweight vs. an intermediate lifter, best set in last 90 days)
