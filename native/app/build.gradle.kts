@@ -15,7 +15,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.wilfrombdn.heavynt"
+        applicationId = "com.wilfrombdn.heavynt2" // new signing key (old one lost), so a new ID installs beside the old app
         minSdk = 26
         targetSdk = 36
         versionCode = 102
