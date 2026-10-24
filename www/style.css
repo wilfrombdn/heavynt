@@ -64,7 +64,7 @@ button.card { cursor: pointer; }
 .map-card { padding: 10px 8px 14px; background: radial-gradient(ellipse at 50% 38%, #15171c 0%, #0b0b0d 62%, #070707 100%); }
 .bodymap { width: 100%; height: auto; display: block; }
 .bodymap .outline { fill: none; stroke: #6a6a6a; stroke-width: 1; }
-.bodymap .region path { stroke: var(--rs, rgba(255,255,255,0.28)); stroke-width: 0.9; transition: fill 0.4s; cursor: pointer; }
+.bodymap .region path { stroke: var(--rs, rgba(255,255,255,0.28)); stroke-width: 1; stroke-linejoin: round; transition: fill 0.4s; cursor: pointer; }
 .bodymap .region.lit { animation: breathe 5s ease-in-out infinite; }
 @keyframes breathe { 0%, 100% { opacity: 0.88; } 50% { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .bodymap .region.lit { animation: none; } }
