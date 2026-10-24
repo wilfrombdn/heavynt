@@ -1,7 +1,7 @@
 // Workout tab: start today's plan, tap a section to complete it, hold to edit, plateau prompts.
 import { state, save, uid, exById, planById } from './store.js';
-import { dateKey, planForDate, exerciseHistory, plateauInfo, addDays, cycleIndex } from './logic.js';
-import { h, ask, openSheet, stepper, exerciseSelect, selectify, toast, buzz, fmtNum, fmtDate, fmtShort } from './ui.js';
+import { dateKey, planForDate, scheduledPlan, exerciseHistory, plateauInfo, addDays, cycleIndex } from './logic.js';
+import { h, ask, openSheet, stepper, exerciseSelect, toast, icon, buzz, fmtNum, fmtDate, fmtShort } from './ui.js';
 
 export const weightStep = () => (state.settings.unit === 'kg' ? 2.5 : 5);
 export const unit = () => state.settings.unit;
@@ -226,30 +226,71 @@ export function renderWorkout(c) {
 
   const plan = planForDate(state);
   const doneToday = plan && todaysLog(plan.id);
+  const o = state.overrides[dateKey()];
+  const skipped = o && o.skipped && state.plans.find((p) => p.id === o.skipped);
   c.append(h('div', { class: 'page-head' }, h('h1', null, 'Workout'),
     h('div', { class: 'muted' }, new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }))));
 
   if (plan) {
     c.append(h('div', { class: 'card' },
-      h('div', { class: 'row' }, h('div', { class: 'grow' }, h('div', { class: 'eyebrow' }, 'Today'), h('div', { class: 'big' }, plan.name)),
+      h('div', { class: 'row' }, h('div', { class: 'grow' }, h('div', { class: 'eyebrow' }, o ? 'Today · switched' : 'Today'), h('div', { class: 'big' }, plan.name),
+        skipped ? h('div', { class: 'muted small' }, `Skipped ${skipped.name}`) : null),
         doneToday ? h('span', { class: 'tag' }, 'Done ✓') : null)),
       ...plan.items.map((it) => exerciseCard({ ...it, done: false }, false)),
-      h('button', { class: 'btn primary', onClick: () => startWorkout(plan.id) }, doneToday ? 'Start again' : 'Start workout'));
+      h('button', { class: 'btn primary', onClick: () => startWorkout(plan.id) }, doneToday ? 'Start again' : 'Start workout'),
+      h('button', { class: 'btn', onClick: switchToday }, "Switch today's workout"));
   } else {
     const n = nextWorkout();
     c.append(h('div', { class: 'card center' },
       h('div', { class: 'big' }, 'Rest day'),
-      h('div', { class: 'muted' }, n ? `Next: ${n.plan.name} on ${new Date(n.key + 'T00:00').toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}` : 'No workouts scheduled')));
+      h('div', { class: 'muted' }, n ? `Next: ${n.plan.name} on ${new Date(n.key + 'T00:00').toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}` : 'No workouts scheduled'),
+      skipped ? h('div', { class: 'muted small' }, `Skipped ${skipped.name}`) : null),
+      h('button', { class: 'btn primary', onClick: switchToday }, 'Train anyway: choose a workout'));
   }
+}
 
-  // Start something else
-  const sel = selectify(h('select', null,
-    ...state.plans.map((p) => h('option', { value: p.id }, p.name)),
-    h('option', { value: '' }, 'Empty workout')));
-  c.append(h('div', { class: 'card' },
-    h('div', { class: 'eyebrow' }, 'Start a different workout'),
-    sel,
-    h('button', { class: 'btn', onClick: () => startWorkout(sel.value || null) }, 'Start')));
+// Pick a different workout for today. Skipping the scheduled one drops it entirely:
+// tomorrow carries on with whatever the schedule says next.
+function switchToday() {
+  const key = dateKey();
+  const sched = scheduledPlan(state, key);
+  const current = planForDate(state, key);
+  const set = (plan, skippedId) => {
+    if (sched && plan && plan.id === sched.id) delete state.overrides[key]; // back to the normal plan
+    else state.overrides[key] = { plan: plan ? plan.id : null, skipped: skippedId || null };
+    save();
+  };
+  openSheet("Switch today's workout", (body, close) => {
+    body.append(h('p', { class: 'muted' }, sched ? `Scheduled today: ${sched.name}. Pick what you want to do instead.` : 'Nothing is scheduled today. Pick a workout.'));
+    const list = h('div', { class: 'opts' });
+    const row = (label, on, fn) => list.append(h('button', { type: 'button', class: 'opt' + (on ? ' on' : ''), onClick: async () => { close(); await fn(); } },
+      h('span', null, label), on ? icon('check') : null));
+
+    for (const p of state.plans) {
+      const isSched = sched && p.id === sched.id;
+      row(p.name + (isSched ? ' · scheduled' : ''), current && p.id === current.id, async () => {
+        if (current && p.id === current.id) return;
+        if (!sched || isSched) { set(p); toast(`Today: ${p.name}`); return; }
+        const choice = await ask(`Skip ${sched.name}?`,
+          `${sched.name} is scheduled for today. If you skip it, it's dropped completely and tomorrow carries on with the next day in your schedule.`,
+          [{ label: `Yes, skip ${sched.name}`, value: 'skip', primary: true },
+            { label: 'No, do both (this one as an extra)', value: 'both' }]);
+        if (choice === 'skip') { set(p, sched.id); toast(`Skipped ${sched.name}. Today: ${p.name}`); }
+        else if (choice === 'both') await startWorkout(p.id);
+      });
+    }
+    if (sched || current) {
+      row('Rest day (skip today)', !current, async () => {
+        if (!current && !sched) return;
+        const choice = sched ? await ask(`Skip ${sched.name}?`, 'Make today a rest day. Tomorrow carries on with the next day in your schedule.',
+          [{ label: `Yes, skip ${sched.name}`, value: 'skip', primary: true }, { label: 'Cancel', value: null }]) : 'skip';
+        if (choice === 'skip') { set(null, sched && sched.id); toast('Today is a rest day'); }
+      });
+    }
+    row('Empty workout (nothing from a plan)', false, () => startWorkout(null));
+    body.append(list);
+    if (state.overrides[key]) body.append(h('button', { class: 'btn', onClick: () => { close(); delete state.overrides[key]; save(); toast('Back to your schedule'); } }, 'Reset to scheduled plan'));
+  });
 }
 
 export const dayInfo = () => ({ idx: cycleIndex(state.schedule), len: state.schedule.days.length });

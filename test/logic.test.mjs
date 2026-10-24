@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { weekdayIdx, mondayOf, targetFor, cycleIndex, buildOnOff, planForDate, regionScores, scoreColor, plateauInfo, addDays, dateKey } from '../src/logic.js';
+import { scheduledPlan, weekdayIdx, mondayOf, targetFor, cycleIndex, buildOnOff, planForDate, regionScores, scoreColor, plateauInfo, addDays, dateKey } from '../src/logic.js';
 import { LIBRARY } from '../src/data.js';
 
 const mk = (over = {}) => ({
@@ -81,4 +81,17 @@ test('weekly schedule: Wed-Sun of week 1, week 2 off, repeats every 2 weeks acro
   assert.equal(planForDate(s, '2026-12-02').id, 'a');   // still on the same rhythm
   assert.equal(weekdayIdx('2026-10-19'), 0);
   assert.equal(mondayOf('2026-10-23'), '2026-10-19');
+});
+
+test('switching today: override wins today, tomorrow follows the schedule, skipped plan is not rescheduled', () => {
+  const days = Array(14).fill(null);
+  ['a', 'b', 'a', 'b', 'a'].forEach((id, i) => { days[2 + i] = id; }); // Wed..Sun
+  const s = mk({ schedule: { start: '2026-10-19', days }, overrides: {} });
+  assert.equal(scheduledPlan(s, '2026-10-23').id, 'a'); // Friday: scheduled
+  s.overrides['2026-10-23'] = { plan: 'b', skipped: 'a' };
+  assert.equal(planForDate(s, '2026-10-23').id, 'b');   // switched for today only
+  assert.equal(planForDate(s, '2026-10-24').id, 'b');   // Saturday: schedule says 'b', untouched
+  assert.equal(planForDate(s, '2026-10-25').id, 'a');   // Sunday untouched
+  s.overrides['2026-10-23'] = { plan: null, skipped: 'a' };
+  assert.equal(planForDate(s, '2026-10-23'), null);     // rest-day switch
 });

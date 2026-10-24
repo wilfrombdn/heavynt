@@ -33,6 +33,7 @@ function seed() {
     logs: [],
     active: null,
     snooze: {},
+    overrides: {},
   };
 }
 
@@ -98,6 +99,9 @@ function load() {
       const have = new Set(s.exercises.map((e) => e.id));
       for (const e of LIBRARY) if (!have.has(e.id)) s.exercises.push({ ...e });
       s.snooze ||= {};
+      s.overrides ||= {};
+      const old = dateKey(new Date(Date.now() - 60 * 86400000));
+      for (const k of Object.keys(s.overrides)) if (k < old) delete s.overrides[k]; // forget old switches
       s.settings = { ...DEFAULT_SETTINGS, ...s.settings };
       return s;
     }
@@ -125,5 +129,6 @@ export function importData(text) {
   Object.assign(state, migrate(s));
   state.settings = { ...DEFAULT_SETTINGS, ...state.settings };
   state.snooze ||= {};
+  state.overrides ||= {};
   save();
 }

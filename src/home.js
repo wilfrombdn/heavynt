@@ -1,6 +1,6 @@
 // Home tab: today's plan + anatomy strength map.
 import { state } from './store.js';
-import { planForDate, regionScores, scoreLabel } from './logic.js';
+import { planForDate, regionScores, scoreLabel, dateKey } from './logic.js';
 import { REGIONS } from './data.js';
 import { bodyMap } from './bodymap.js';
 import { h } from './ui.js';
@@ -32,7 +32,7 @@ export function renderHome(c, go) {
     const done = todaysLog(plan.id);
     today = h('div', { class: 'card row' },
       h('div', { class: 'grow' }, h('div', { class: 'eyebrow' }, `Today · ${weekLabel(idx, len)}`),
-        h('div', { class: 'big' }, plan.name), h('div', { class: 'muted' }, `${plan.items.length} exercises`)),
+        h('div', { class: 'big' }, plan.name), h('div', { class: 'muted' }, `${plan.items.length} exercises${state.overrides[dateKey()] ? ' · switched' : ''}`)),
       done ? h('span', { class: 'tag' }, 'Done ✓')
         : h('button', { class: 'btn primary slim', onClick: async () => { await startWorkout(plan.id); go('workout'); } }, 'Start'));
   } else {

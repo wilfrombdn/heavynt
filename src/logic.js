@@ -22,11 +22,20 @@ export function cycleIndex(schedule, key = dateKey()) {
   return ((dayDiff(key, schedule.start) % len) + len) % len;
 }
 
-export function planForDate(state, key = dateKey()) {
+// What the repeating schedule says for a date (ignores one-off switches).
+export function scheduledPlan(state, key = dateKey()) {
   const i = cycleIndex(state.schedule, key);
   if (i < 0) return null;
   const id = state.schedule.days[i];
   return id ? state.plans.find((p) => p.id === id) || null : null;
+}
+
+// What you are actually doing on a date: a one-off switch wins over the schedule.
+// state.overrides[key] = { plan: planId | null (rest), skipped: planId | null }
+export function planForDate(state, key = dateKey()) {
+  const o = state.overrides && state.overrides[key];
+  if (o) return o.plan ? state.plans.find((p) => p.id === o.plan) || null : null;
+  return scheduledPlan(state, key);
 }
 
 // Build an "X on / Y off" cycle, rotating through the given plan ids on the "on" days.
