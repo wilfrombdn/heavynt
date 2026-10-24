@@ -195,3 +195,26 @@ fun scoreRGB(score: Double): Triple<Int, Int, Int> {
     return if (score < 1) mix(intArrayOf(150, 62, 66), intArrayOf(240, 64, 70), minOf(1.0, (1 - score) / 0.5))
     else mix(intArrayOf(58, 118, 230), intArrayOf(110, 175, 255), minOf(1.0, (score - 1) / 0.4))
 }
+
+// ---------- supersets ----------
+/** A run of 2+ consecutive items where each item after the first is flagged "superset with previous". */
+data class SsGroup(val start: Int, val size: Int, val letter: Char)
+
+fun supersetGroups(flags: List<Boolean>): List<SsGroup> {
+    val out = mutableListOf<SsGroup>()
+    var i = 0
+    while (i < flags.size) {
+        var j = i + 1
+        while (j < flags.size && flags[j]) j++
+        if (j - i >= 2) out += SsGroup(i, j - i, 'A' + out.size)
+        i = j
+    }
+    return out
+}
+
+/** Older plans only said "A2 · superset…" in the note: turn that into real superset links. */
+fun inferSupersets(p: Plan): Plan {
+    if (p.items.any { it.ss }) return p
+    val tag = Regex("^[A-Z]2( |$)")
+    return p.copy(items = p.items.mapIndexed { i, it -> if (i > 0 && tag.containsMatchIn(it.note)) it.copy(ss = true) else it })
+}

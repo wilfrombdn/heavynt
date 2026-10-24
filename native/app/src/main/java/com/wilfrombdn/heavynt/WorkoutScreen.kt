@@ -58,7 +58,7 @@ fun PageHead(title: String, subtitle: String? = null, trailing: @Composable (() 
 }
 
 @Composable
-fun ItemCard(st: AppState, it: ActiveItem, interactive: Boolean, onTap: () -> Unit = {}, onLong: () -> Unit = {}) {
+fun ItemCard(st: AppState, it: ActiveItem, interactive: Boolean, badge: String? = null, onTap: () -> Unit = {}, onLong: () -> Unit = {}) {
     val ex = st.ex(it.ex) ?: return
     val last = remember(st.logs, it.ex) { exerciseHistory(st, it.ex).lastOrNull() }
     val plateau = interactive && plateauInfo(st, it.ex, it.weight) != null
@@ -78,7 +78,12 @@ fun ItemCard(st: AppState, it: ActiveItem, interactive: Boolean, onTap: () -> Un
             contentAlignment = Alignment.Center,
         ) { if (it.done) Text("✓", style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)) }
         Column(Modifier.weight(1f)) {
-            Text(ex.name, style = T.name)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (badge != null) Box(Modifier.clip(RoundedCornerShape(6.dp)).background(Color.White).padding(horizontal = 6.dp, vertical = 1.dp)) {
+                    Text(badge, style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.Black))
+                }
+                Text(ex.name, style = T.name, modifier = Modifier.weight(1f, fill = false))
+            }
             val hint = if (interactive && ex.bw <= 0 && it.weight <= 0) " · hold to set weight" else ""
             Text(describe(st, it.ex, it.sets, it.reps, it.weight) + hint, style = T.sub.copy(color = if (it.done) C.greenSoft else C.sub))
             if (it.note.isNotBlank()) Text(it.note, style = T.small.copy(color = Color(0xFFB9B9B9)))
@@ -91,11 +96,43 @@ fun ItemCard(st: AppState, it: ActiveItem, interactive: Boolean, onTap: () -> Un
     }
 }
 
+/** Exercises in order; supersets are boxed together under a "Superset" header with A1/A2 badges. */
+@Composable
+fun ItemList(st: AppState, items: List<ActiveItem>, interactive: Boolean, onTap: (Int) -> Unit = {}, onLong: (Int) -> Unit = {}) {
+    val groups = supersetGroups(items.map { it.ss })
+    var i = 0
+    while (i < items.size) {
+        val g = groups.firstOrNull { it.start == i }
+        if (g == null) {
+            val idx = i
+            ItemCard(st, items[idx], interactive, onTap = { onTap(idx) }, onLong = { onLong(idx) })
+            i++
+        } else {
+            val shape = RoundedCornerShape(20.dp)
+            Column(
+                Modifier.fillMaxWidth().border(1.5.dp, Color(0xFF8A8A8A), shape).padding(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Row(Modifier.padding(horizontal = 6.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Eyebrow("Superset ${g.letter}")
+                    Text("· back to back, rest after each round", style = T.small)
+                }
+                for (k in 0 until g.size) {
+                    val idx = g.start + k
+                    ItemCard(st, items[idx], interactive, badge = "${g.letter}${k + 1}", onTap = { onTap(idx) }, onLong = { onLong(idx) })
+                }
+            }
+            i += g.size
+        }
+    }
+}
+
 @Composable
 fun WorkoutScreen(st: AppState, vm: AppViewModel, goHome: () -> Unit) {
     val ctx = LocalContext.current
     val dialogs = LocalDialogs.current
     var editIdx by remember { mutableStateOf<Int?>(null) }
+    var promptIdx by remember { mutableStateOf<Int?>(null) }
     var showAdd by remember { mutableStateOf(false) }
     var showSwitch by remember { mutableStateOf(false) }
     var plateaus by remember { mutableStateOf<List<String>>(emptyList()) }
@@ -127,10 +164,8 @@ fun WorkoutScreen(st: AppState, vm: AppViewModel, goHome: () -> Unit) {
             Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(C.line)) {
                 Box(Modifier.fillMaxHeight().fillMaxWidth(if (a.items.isEmpty()) 0f else done / a.items.size.toFloat()).background(C.green))
             }
-            Text("$done/${a.items.size} done · tap to complete · hold to edit", style = T.small)
-            a.items.forEachIndexed { i, it ->
-                ItemCard(st, it, true, onTap = { vm.update { s -> s.toggleDone(i) } }, onLong = { editIdx = i })
-            }
+            Text("$done/${a.items.size} done · tap to complete · hold for sets & reps", style = T.small)
+            ItemList(st, a.items, true, onTap = { i -> if (a.items[i].done) vm.update { s -> s.toggleDone(i) } else promptIdx = i }, onLong = { i -> editIdx = i })
             HButton("+ Add exercise", { showAdd = true })
             HButton("Finish workout", { finish() }, style = BtnStyle.Primary)
         } else {
@@ -150,7 +185,7 @@ fun WorkoutScreen(st: AppState, vm: AppViewModel, goHome: () -> Unit) {
                         if (doneToday) Tag("Done ✓")
                     }
                 }
-                plan.items.forEach { ItemCard(st, ActiveItem(it.ex, it.sets, it.reps, it.weight, it.note), false) }
+                ItemList(st, plan.items.map { ActiveItem(it.ex, it.sets, it.reps, it.weight, it.note, ss = it.ss) }, false)
                 HButton(if (doneToday) "Start again" else "Start workout", { start(plan.id) }, style = BtnStyle.Primary)
                 HButton("Switch today's workout", { showSwitch = true })
             } else {
@@ -172,10 +207,56 @@ fun WorkoutScreen(st: AppState, vm: AppViewModel, goHome: () -> Unit) {
         val item = st.active?.items?.getOrNull(idx)
         if (item == null) editIdx = null else EditItemSheet(st, vm, idx, item, onDismiss = { editIdx = null })
     }
+    promptIdx?.let { idx ->
+        val item = st.active?.items?.getOrNull(idx)
+        if (item == null || item.done) promptIdx = null else WeightPromptSheet(st, vm, idx, item, onDismiss = { promptIdx = null })
+    }
     if (showAdd) AddExerciseSheet(st, vm, onDismiss = { showAdd = false })
     if (showSwitch) SwitchSheet(st, vm, onDismiss = { showSwitch = false }, start = { start(it) })
     plateaus.firstOrNull()?.let { exId ->
         PlateauSheet(st, vm, exId, onDone = { plateaus = plateaus.drop(1) })
+    }
+}
+
+/** Complete an item with the given numbers, then offer to make a changed set/rep/weight permanent in the plan. */
+private fun completeAndOfferPlanUpdate(vm: AppViewModel, dialogs: DialogHost, idx: Int, exId: String, s: Int, r: Int, weight: Double) {
+    vm.update { it.editItem(idx, s, r, weight, complete = true) }
+    val now = vm.state.value
+    val plan = now.plan(now.active?.planId)
+    val pi = plan?.items?.firstOrNull { it.ex == exId }
+    val ex = now.ex(exId)
+    if (plan != null && pi != null && ex != null && (pi.sets != s || pi.reps != r || pi.weight != weight)) {
+        dialogs.ask("Update the plan?",
+            "Change ${ex.name} from ${describe(now, ex.id, pi.sets, pi.reps, pi.weight)} to ${describe(now, ex.id, s, r, weight)} permanently in \"${plan.name}\"?",
+            DialogBtn("Yes, update the plan", primary = true) { vm.update { it.updatePlanItem(plan.id, ex.id, s, r, weight) } },
+            DialogBtn("Just this workout"))
+    }
+}
+
+/** Shown when you tap an exercise to check it off: confirm the total weight (or bodyweight) you actually used. */
+@Composable
+private fun WeightPromptSheet(st: AppState, vm: AppViewModel, idx: Int, item: ActiveItem, onDismiss: () -> Unit) {
+    val dialogs = LocalDialogs.current
+    val ex = st.ex(item.ex) ?: return
+    val last = remember { exerciseHistory(st, item.ex).lastOrNull() }
+    val start = if (item.weight > 0) item.weight else last?.weight ?: 0.0
+    var weight by remember { mutableStateOf(start) }
+    val unit = st.settings.unit
+    Sheet(ex.name, onDismiss) {
+        Muted("${item.sets} × ${item.reps} · how much did you lift?")
+        if (last != null) Muted("Last time: ${fmtNum(last.weight)} $unit${if (ex.pair) " total" else ""} · ${fmtShort(last.at)}")
+        Stepper(weight, { weight = it }, label = "Total weight ($unit)", step = weightStep(st.settings))
+        if (ex.pair) NoteBox(PAIR_NOTE)
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            HButton(if (weight > 0) "Complete · ${fmtNum(weight)} $unit" else "Complete · bodyweight", {
+                onDismiss()
+                completeAndOfferPlanUpdate(vm, dialogs, idx, item.ex, item.sets, item.reps, weight)
+            }, style = BtnStyle.Primary)
+            HButton("Bodyweight (no added weight)", {
+                onDismiss()
+                completeAndOfferPlanUpdate(vm, dialogs, idx, item.ex, item.sets, item.reps, 0.0)
+            })
+        }
     }
 }
 
@@ -198,19 +279,7 @@ private fun EditItemSheet(st: AppState, vm: AppViewModel, idx: Int, item: Active
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             HButton(if (item.done) "Save" else "Save & complete", {
                 onDismiss()
-                val s = sets.toInt(); val r = reps.toInt()
-                vm.update { it.editItem(idx, s, r, weight, complete = true) }
-                // offer to make the change permanent in the plan
-                val now = vm.state.value
-                val a = now.active
-                val plan = now.plan(a?.planId)
-                val pi = plan?.items?.firstOrNull { it.ex == item.ex }
-                if (plan != null && pi != null && (pi.sets != s || pi.reps != r || pi.weight != weight)) {
-                    dialogs.ask("Update the plan?",
-                        "Change ${ex.name} from ${describe(now, ex.id, pi.sets, pi.reps, pi.weight)} to ${describe(now, ex.id, s, r, weight)} permanently in \"${plan.name}\"?",
-                        DialogBtn("Yes, update the plan", primary = true) { vm.update { it.updatePlanItem(plan.id, ex.id, s, r, weight) } },
-                        DialogBtn("Just this workout"))
-                }
+                completeAndOfferPlanUpdate(vm, dialogs, idx, item.ex, sets.toInt(), reps.toInt(), weight)
             }, style = BtnStyle.Primary)
             HButton("Remove from this workout", { onDismiss(); vm.update { it.removeItem(idx) } }, style = BtnStyle.Danger)
         }

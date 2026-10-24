@@ -39,7 +39,7 @@ fun AppState.startWorkout(planId: String?): AppState {
     val p = plan(planId)
     return copy(active = Active(
         id = uid(), start = nowIso(), planId = p?.id, planName = p?.name ?: "Quick workout",
-        items = p?.items?.map { ActiveItem(it.ex, it.sets, it.reps, it.weight, it.note) } ?: emptyList(),
+        items = p?.items?.map { ActiveItem(it.ex, it.sets, it.reps, it.weight, it.note, ss = it.ss) } ?: emptyList(),
     ))
 }
 

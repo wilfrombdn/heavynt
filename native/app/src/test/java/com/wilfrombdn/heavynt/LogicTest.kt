@@ -74,4 +74,15 @@ class LogicTest {
         assertTrue(db.pair)
         assertEquals(1.0, db.std, 0.0001) // 0.5 per dumbbell -> 1.0 combined
     }
+
+    @Test fun supersetsGroupConsecutiveLinkedItems() {
+        val g = supersetGroups(listOf(false, false, true, false, true, true, false))
+        assertEquals(listOf(SsGroup(1, 2, 'A'), SsGroup(3, 3, 'B')), g)
+        assertTrue(supersetGroups(listOf(false, false)).isEmpty())
+    }
+
+    @Test fun oldA2NotesBecomeSupersets() {
+        val p = inferSupersets(Plan("p", "P", listOf(PlanItem("a"), PlanItem("b", note = "A1 · superset with c"), PlanItem("c", note = "A2 · rest"))))
+        assertEquals(listOf(false, false, true), p.items.map { it.ss })
+    }
 }

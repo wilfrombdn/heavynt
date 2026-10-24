@@ -39,6 +39,8 @@ data class PlanItem(
     val reps: Int = 10,
     val weight: Double = 0.0,
     val note: String = "",
+    /** Superset with the exercise above it. */
+    val ss: Boolean = false,
 )
 
 @Serializable
@@ -77,6 +79,7 @@ data class ActiveItem(
     val done: Boolean = false,
     val at: String? = null,
     val extra: Boolean = false,
+    val ss: Boolean = false,
 )
 
 @Serializable
@@ -94,7 +97,7 @@ data class Override(val plan: String? = null, val skipped: String? = null)
 
 @Serializable
 data class AppState(
-    val v: Int = 4,
+    val v: Int = 5,
     val settings: Settings = Settings(),
     val exercises: List<Exercise> = emptyList(),
     val plans: List<Plan> = emptyList(),

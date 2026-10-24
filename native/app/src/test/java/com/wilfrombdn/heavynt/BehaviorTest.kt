@@ -42,7 +42,11 @@ class BehaviorTest {
 
         rule.onNodeWithText(first).performClick()
         rule.waitForIdle()
-        assertTrue("tap should complete the first exercise", vm.state.value.active!!.items[0].done)
+        assertTrue("tap should ask for the weight first", !vm.state.value.active!!.items[0].done)
+        rule.onNodeWithText("Bodyweight (no added weight)").assertExists()
+        rule.onNodeWithText("Bodyweight (no added weight)").performClick()
+        rule.waitForIdle()
+        assertTrue("confirming the prompt completes the first exercise", vm.state.value.active!!.items[0].done)
         rule.onNodeWithText(first).performClick()
         rule.waitForIdle()
         assertTrue("tapping again should undo it", !vm.state.value.active!!.items[0].done)

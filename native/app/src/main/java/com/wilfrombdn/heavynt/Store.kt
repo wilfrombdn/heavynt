@@ -27,7 +27,7 @@ fun seedState(): AppState {
     return AppState(
         v = 4,
         exercises = LIBRARY,
-        plans = plans,
+        plans = plans.map(::inferSupersets),
         schedule = Schedule(mondayOf(dateKey()), days),
     )
 }
@@ -38,7 +38,8 @@ fun normalize(s: AppState): AppState {
     val merged = s.exercises + LIBRARY.filter { it.id !in have }
     val cutoff = dateKey(today().minusDays(60))
     val overrides = s.overrides.filterKeys { it >= cutoff }
-    return s.copy(exercises = merged, overrides = overrides)
+    val plans = if (s.v < 5) s.plans.map(::inferSupersets) else s.plans
+    return s.copy(v = 5, exercises = merged, plans = plans, overrides = overrides)
 }
 
 class Storage(private val file: File) {

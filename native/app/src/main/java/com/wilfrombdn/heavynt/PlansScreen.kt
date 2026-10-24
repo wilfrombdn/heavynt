@@ -121,6 +121,7 @@ private fun PlanEditor(st: AppState, vm: AppViewModel, planId: String, onDismiss
                     MiniNumber(if (ex?.pair == true) "Total (${st.settings.unit})" else "Weight (${st.settings.unit})", it.weight,
                         { v -> editItem(i) { x -> x.copy(weight = v) } }, Modifier.weight(1.4f))
                 }
+                if (i > 0) CheckRow(it.ss, { v -> editItem(i) { x -> x.copy(ss = v) } }, "Superset with the exercise above")
                 HTextField(it.note, { v -> editItem(i) { x -> x.copy(note = v) } }, placeholder = "Note (rest time, superset, finisher…)")
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)) {
                     IconBtn("↑", { move(i, -1) }); IconBtn("↓", { move(i, 1) })
