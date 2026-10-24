@@ -64,27 +64,23 @@ async function promptPlateaus(items) {
 
 // ---------- tap / hold ----------
 function pressable(el, { onTap, onHold }) {
-  let timer, sx, sy, held = false, active = false;
-  const cancel = () => { clearTimeout(timer); active = false; el.classList.remove('pressing'); };
+  let timer, sx, sy, held = false;
+  const cancel = () => { clearTimeout(timer); el.classList.remove('pressing'); };
   el.addEventListener('pointerdown', (e) => {
-    active = true; held = false; sx = e.clientX; sy = e.clientY;
+    held = false; sx = e.clientX; sy = e.clientY;
     el.classList.add('pressing');
     timer = setTimeout(() => { held = true; el.classList.remove('pressing'); buzz(40); onHold(); }, 480);
   });
-  el.addEventListener('pointermove', (e) => { if (active && Math.hypot(e.clientX - sx, e.clientY - sy) > 10) cancel(); });
-  el.addEventListener('pointerup', () => { if (active && !held) onTap(); cancel(); });
+  el.addEventListener('pointermove', (e) => { if (Math.hypot(e.clientX - sx, e.clientY - sy) > 10) cancel(); });
+  el.addEventListener('pointerup', cancel);
   el.addEventListener('pointercancel', cancel);
   el.addEventListener('pointerleave', cancel);
+  // A click is only delivered for a real tap (not a scroll); swallow the one that follows a hold.
+  el.addEventListener('click', () => { if (held) { held = false; return; } onTap(); });
   el.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
 function toggleDone(it) {
-  const ex = exById(it.ex);
-  if (!it.done && !ex.bw && !(it.weight > 0)) {
-    toast('Set a weight first');
-    editItem(it);
-    return;
-  }
   it.done = !it.done;
   it.at = it.done ? new Date().toISOString() : null;
   buzz(it.done ? 20 : 10);
@@ -106,7 +102,6 @@ function editItem(it) {
       h('div', { class: 'btn-col' },
         h('button', { class: 'btn primary', onClick: async () => {
           Object.assign(it, draft);
-          if (!ex.bw && !(it.weight > 0)) return toast('Set a weight to complete it');
           close();
           if (!it.done) { it.done = true; it.at = new Date().toISOString(); buzz(20); }
           save();
@@ -192,7 +187,7 @@ function exerciseCard(it, interactive) {
     h('div', { class: 'check' }, it.done ? '✓' : ''),
     h('div', { class: 'grow' },
       h('div', { class: 'name' }, ex.name),
-      h('div', { class: 'sub' }, describe(it)),
+      h('div', { class: 'sub' }, describe(it) + (interactive && !ex.bw && !(it.weight > 0) ? ' · hold to set weight' : '')),
       last && interactive ? h('div', { class: 'hint' }, `Last: ${last.sets} × ${last.reps} @ ${fmtNum(last.weight)} ${unit()}`) : null),
     plateau ? h('span', { class: 'tag' }, 'Plateau') : null);
   if (interactive) pressable(card, { onTap: () => toggleDone(it), onHold: () => editItem(it) });
