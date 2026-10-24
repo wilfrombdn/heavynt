@@ -1,5 +1,5 @@
 // Front/back anatomy outline as inline SVG. Each region is a group coloured by strength score.
-import { scoreColor } from './logic.js';
+import { scoreRGB, scoreStrength } from './logic.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 const sh = 'M46 74 a13 14 0 1 0 26 0 a13 14 0 1 0 -26 0';
@@ -64,8 +64,17 @@ function drawView(parent, x, parts, label, scores, selected, labels) {
   for (const [region, shapes] of Object.entries(parts)) {
     const sc = scores[region];
     const rg = el('g', { class: 'region' + (selected === region ? ' sel' : ''), 'data-region': region });
-    const fill = sc ? scoreColor(sc.score) : null;
-    rg.style.fill = fill || '#161616';
+    if (sc) {
+      // Ambient look: translucent tint, hairline edge in the same hue, soft glow that grows with the gap to target.
+      const c = scoreRGB(sc.score).join(',');
+      const k = scoreStrength(sc.score);
+      rg.style.fill = `rgba(${c},${(0.26 + 0.24 * k).toFixed(2)})`;
+      rg.style.setProperty('--rs', `rgba(${c},0.95)`);
+      rg.style.filter = `drop-shadow(0 0 ${(2.5 + 3 * k).toFixed(1)}px rgba(${c},${(0.55 + 0.3 * k).toFixed(2)}))`;
+      rg.classList.add('lit');
+    } else {
+      rg.style.fill = 'rgba(255,255,255,0.025)';
+    }
     for (const [d, mirror] of shapes) {
       rg.append(el('path', { d }));
       if (mirror) rg.append(el('path', { d, transform: 'translate(200 0) scale(-1 1)' }));

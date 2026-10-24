@@ -110,13 +110,19 @@ export function regionScores(state, now = new Date()) {
 // Under target = red (deeper the further under), at/above target = blue (brighter the further above).
 const RED_LO = [150, 62, 66], RED_HI = [240, 64, 70], BLUE_LO = [58, 118, 230], BLUE_HI = [110, 175, 255];
 const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
-export function scoreColor(score) {
-  if (score == null) return null;
-  const rgb = score < 1
+export function scoreRGB(score) {
+  return score < 1
     ? mix(RED_LO, RED_HI, Math.min(1, (1 - score) / 0.5))
     : mix(BLUE_LO, BLUE_HI, Math.min(1, (score - 1) / 0.4));
-  return `rgb(${rgb.join(',')})`;
 }
+
+export function scoreColor(score) {
+  if (score == null) return null;
+  return `rgb(${scoreRGB(score).join(',')})`;
+}
+
+// Distance from target (0..1) -> how strongly the region glows.
+export const scoreStrength = (score) => Math.min(1, Math.abs(score - 1) / 0.5);
 
 export function scoreLabel(score) {
   if (score < 0.6) return 'Well below target';

@@ -61,10 +61,13 @@ button.card { cursor: pointer; }
 .tag { border: 1px solid #555; border-radius: 99px; padding: 2px 10px; font-size: 12px; white-space: nowrap; }
 
 /* body map */
-.map-card { padding: 10px 8px 14px; }
+.map-card { padding: 10px 8px 14px; background: radial-gradient(ellipse at 50% 38%, #15171c 0%, #0b0b0d 62%, #070707 100%); }
 .bodymap { width: 100%; height: auto; display: block; }
 .bodymap .outline { fill: none; stroke: #6a6a6a; stroke-width: 1; }
-.bodymap .region path { stroke: rgba(255,255,255,0.55); stroke-width: 1; transition: fill 0.3s; cursor: pointer; }
+.bodymap .region path { stroke: var(--rs, rgba(255,255,255,0.28)); stroke-width: 0.9; transition: fill 0.4s; cursor: pointer; }
+.bodymap .region.lit { animation: breathe 5s ease-in-out infinite; }
+@keyframes breathe { 0%, 100% { opacity: 0.88; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .bodymap .region.lit { animation: none; } }
 .bodymap .region.sel path { stroke: #fff; stroke-width: 2.2; }
 .bodymap .view-label { fill: #666; font-size: 11px; letter-spacing: 0.2em; }
 .legend { display: flex; align-items: center; gap: 10px; margin: 6px 12px 0; font-size: 12px; color: var(--muted); }
