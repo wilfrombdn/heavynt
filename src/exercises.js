@@ -2,7 +2,7 @@
 import { state, save, uid, exById } from './store.js';
 import { exerciseHistory } from './logic.js';
 import { REGIONS, CATEGORIES, DEFAULT_STD } from './data.js';
-import { h, openSheet, ask, toast, fmtNum, fmtDate, fmtShort } from './ui.js';
+import { h, openSheet, ask, toast, selectify, fmtNum, fmtDate, fmtShort } from './ui.js';
 import { unit } from './workout.js';
 
 let query = '';
@@ -99,8 +99,9 @@ export function editExercise(ex) {
   const prim = new Set(d.primary), sec = new Set(d.secondary);
   openSheet(isNew ? 'New exercise' : 'Edit exercise', (body, close) => {
     const name = h('input', { class: 'text', value: d.name, placeholder: 'e.g. Incline Cable Fly' });
-    const cat = h('select', { class: 'select' }, ...CATEGORIES.map((c) => h('option', { value: c }, c)));
-    cat.value = d.cat;
+    const catNative = h('select', null, ...CATEGORIES.map((c) => h('option', { value: c }, c)));
+    catNative.value = d.cat;
+    const cat = selectify(catNative);
     const std = h('input', { class: 'text', type: 'number', inputmode: 'decimal', step: '0.05', value: d.std || '', placeholder: `Auto (${DEFAULT_STD[d.cat]}× bodyweight)` });
     const bw = h('input', { type: 'checkbox' });
     bw.checked = d.bw > 0;

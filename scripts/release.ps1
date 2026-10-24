@@ -3,4 +3,4 @@ param([Parameter(Mandatory)][string]$Version, [string]$Notes = 'Update')
 $ErrorActionPreference = 'Continue'
 Set-Location (Split-Path $PSScriptRoot -Parent)
 & "$PSScriptRoot\build-apk.ps1"
-gh release create "v$Version" dist\workout-tracker.apk --title "Workout Tracker $Version" --notes $Notes
+gh release create "v$Version" dist\workout-tracker.apk --title "Heavyn't $Version" --notes $Notes

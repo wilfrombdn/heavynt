@@ -1,7 +1,7 @@
 // Workout tab: start today's plan, tap a section to complete it, hold to edit, plateau prompts.
 import { state, save, uid, exById, planById } from './store.js';
 import { dateKey, planForDate, exerciseHistory, plateauInfo, addDays, cycleIndex } from './logic.js';
-import { h, ask, openSheet, stepper, exerciseSelect, toast, buzz, fmtNum, fmtDate, fmtShort } from './ui.js';
+import { h, ask, openSheet, stepper, exerciseSelect, selectify, toast, buzz, fmtNum, fmtDate, fmtShort } from './ui.js';
 
 export const weightStep = () => (state.settings.unit === 'kg' ? 2.5 : 5);
 export const unit = () => state.settings.unit;
@@ -105,11 +105,13 @@ function editItem(it) {
       stepper({ value: draft.weight, min: 0, step: weightStep(), label: `Weight (${unit()})`, onChange: (v) => { draft.weight = v; } }),
       h('div', { class: 'btn-col' },
         h('button', { class: 'btn primary', onClick: async () => {
-          close();
           Object.assign(it, draft);
+          if (!ex.bw && !(it.weight > 0)) return toast('Set a weight to complete it');
+          close();
+          if (!it.done) { it.done = true; it.at = new Date().toISOString(); buzz(20); }
           save();
           await offerPlanUpdate(it, a);
-        } }, 'Save'),
+        } }, it.done ? 'Save' : 'Save & complete'),
         h('button', { class: 'btn danger', onClick: () => { close(); a.items.splice(a.items.indexOf(it), 1); save(); } }, 'Remove from this workout')));
   });
 }
@@ -241,9 +243,9 @@ export function renderWorkout(c) {
   }
 
   // Start something else
-  const sel = h('select', { class: 'select' },
+  const sel = selectify(h('select', null,
     ...state.plans.map((p) => h('option', { value: p.id }, p.name)),
-    h('option', { value: '' }, 'Empty workout'));
+    h('option', { value: '' }, 'Empty workout')));
   c.append(h('div', { class: 'card' },
     h('div', { class: 'eyebrow' }, 'Start a different workout'),
     sel,

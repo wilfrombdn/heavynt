@@ -1,7 +1,7 @@
 // Plans tab: schedule (any on/off cycle) and plan editor with exercise drop-downs.
 import { state, save, uid, exById } from './store.js';
 import { dateKey, addDays, cycleIndex, buildOnOff, parseKey } from './logic.js';
-import { h, openSheet, ask, stepper, exerciseSelect, toast } from './ui.js';
+import { h, openSheet, ask, stepper, exerciseSelect, selectify, toast } from './ui.js';
 import { unit, weightStep } from './workout.js';
 
 const dayName = (key) => parseKey(key).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
@@ -124,9 +124,10 @@ function editSchedule() {
         h('div', { class: 'section-title' }, `Cycle days (${s.days.length})`));
 
       s.days.forEach((pid, i) => {
-        const sel = h('select', { class: 'select' }, h('option', { value: '' }, 'Rest'),
+        const native = h('select', null, h('option', { value: '' }, 'Rest'),
           ...state.plans.map((p) => h('option', { value: p.id }, p.name)));
-        sel.value = pid || '';
+        native.value = pid || '';
+        const sel = selectify(native);
         sel.addEventListener('change', () => { s.days[i] = sel.value || null; save(); });
         body.append(h('div', { class: 'day-row' },
           h('div', { class: 'dl' }, h('b', null, `Day ${i + 1}`), h('span', { class: 'muted' }, dayName(addDays(s.start, i)))), sel));

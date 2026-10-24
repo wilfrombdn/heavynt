@@ -111,8 +111,60 @@ export function stepper({ value, min = 0, max = 9999, step = 1, label, onChange 
 }
 
 // Native <select> grouped by category, so building a workout is a simple drop-down.
+// Replaces a native <select> with a themed button + bottom-sheet picker (searchable when long).
+// The returned button keeps `.value` and fires `change`, so it is a drop-in replacement.
+export function selectify(sel) {
+  const btn = h('button', { type: 'button', class: 'select' });
+  const label = () => {
+    const o = sel.options[sel.selectedIndex];
+    btn.textContent = o ? o.textContent : '';
+    btn.classList.toggle('placeholder', !sel.value);
+  };
+  Object.defineProperty(btn, 'value', { get: () => sel.value, set: (v) => { sel.value = v; label(); } });
+  label();
+  btn.addEventListener('click', () => {
+    openSheet(null, (body, close) => {
+      const items = [];
+      const list = h('div', { class: 'opts' });
+      const add = (o) => {
+        if (o.dataset.placeholder) return;
+        const row = h('button', { type: 'button', class: 'opt' + (o.value === sel.value ? ' on' : '') },
+          h('span', null, o.textContent), o.value === sel.value ? icon('check') : null);
+        row.addEventListener('click', () => {
+          sel.value = o.value; label(); close();
+          btn.dispatchEvent(new Event('change'));
+        });
+        items.push({ row, text: o.textContent.toLowerCase() });
+        return row;
+      };
+      const groups = [];
+      for (const child of sel.children) {
+        if (child.tagName === 'OPTGROUP') {
+          const title = h('div', { class: 'section-title' }, child.label);
+          list.append(title);
+          const rows = [...child.children].map(add);
+          rows.forEach((r) => list.append(r));
+          groups.push({ title, rows });
+        } else { const r = add(child); if (r) list.append(r); }
+      }
+      if (sel.options.length > 12) {
+        const q = h('input', { class: 'text', type: 'search', placeholder: 'Search…' });
+        q.addEventListener('input', () => {
+          const t = q.value.trim().toLowerCase();
+          items.forEach((i) => { i.row.hidden = !i.text.includes(t); });
+          groups.forEach((g) => { g.title.hidden = g.rows.every((r) => r.hidden); });
+        });
+        body.append(q);
+      }
+      body.append(list);
+      requestAnimationFrame(() => { const on = list.querySelector('.on'); if (on) on.scrollIntoView({ block: 'center' }); });
+    });
+  });
+  return btn;
+}
+
 export function exerciseSelect(exercises, { value, placeholder = 'Choose exercise…', onChange } = {}) {
-  const sel = h('select', { class: 'select' }, h('option', { value: '' }, placeholder));
+  const sel = h('select', null, h('option', { value: '', 'data-placeholder': '1' }, placeholder));
   const cats = [...new Set(exercises.map((e) => e.cat))];
   for (const c of cats) {
     const g = h('optgroup', { label: c });
@@ -121,8 +173,9 @@ export function exerciseSelect(exercises, { value, placeholder = 'Choose exercis
     sel.append(g);
   }
   if (value) sel.value = value;
-  sel.addEventListener('change', () => onChange && onChange(sel.value));
-  return sel;
+  const btn = selectify(sel);
+  btn.addEventListener('change', () => onChange && onChange(btn.value));
+  return btn;
 }
 
 export const icon = (name) => h('span', { class: 'ico', html: ICONS[name] });

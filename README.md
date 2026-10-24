@@ -1,4 +1,4 @@
-# Workout Tracker
+# Heavyn't
 
 Minimal black & white Android workout tracker. Logs the weight on every exercise and colours an anatomy map: blue = strong, red = weak.
 
