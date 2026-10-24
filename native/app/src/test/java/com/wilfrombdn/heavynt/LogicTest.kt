@@ -85,4 +85,14 @@ class LogicTest {
         val p = inferSupersets(Plan("p", "P", listOf(PlanItem("a"), PlanItem("b", note = "A1 · superset with c"), PlanItem("c", note = "A2 · rest"))))
         assertEquals(listOf(false, false, true), p.items.map { it.ss })
     }
+
+    @Test fun weighInIsAskedOnceAMonthUnlessTheWeightWasJustUpdated() {
+        val nov1 = java.time.LocalDate.parse("2026-11-01")
+        val s = state(emptyList()).let { it.copy(settings = it.settings.copy(bodyweightSetAt = "2026-10-24")) }
+        assertTrue(weighInDue(s, nov1))
+        assertTrue(!weighInDue(s, java.time.LocalDate.parse("2026-10-31")))
+        assertTrue(!weighInDue(s.copy(settings = s.settings.copy(weighInAsked = "2026-11")), nov1))
+        assertTrue(!weighInDue(s.copy(settings = s.settings.copy(bodyweightSetAt = "2026-11-01")), nov1))
+        assertTrue(!weighInDue(s.copy(settings = s.settings.copy(bodyweight = 0.0)), nov1))
+    }
 }

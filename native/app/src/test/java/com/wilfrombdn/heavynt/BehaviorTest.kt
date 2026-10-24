@@ -4,8 +4,10 @@ import android.app.Application
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
@@ -43,10 +45,11 @@ class BehaviorTest {
         rule.onNodeWithText(first).performClick()
         rule.waitForIdle()
         assertTrue("tap should ask for the weight first", !vm.state.value.active!!.items[0].done)
-        rule.onNodeWithText("Bodyweight (no added weight)").assertExists()
-        rule.onNodeWithText("Bodyweight (no added weight)").performClick()
+        rule.onNodeWithText("Bodyweight · 180 lb").assertExists()
+        rule.onNodeWithText("Bodyweight · 180 lb").performClick()
         rule.waitForIdle()
         assertTrue("confirming the prompt completes the first exercise", vm.state.value.active!!.items[0].done)
+        assertEquals("bodyweight comes from the profile", 180.0, vm.state.value.active!!.items[0].weight, 0.0)
         rule.onNodeWithText(first).performClick()
         rule.waitForIdle()
         assertTrue("tapping again should undo it", !vm.state.value.active!!.items[0].done)
@@ -58,6 +61,50 @@ class BehaviorTest {
         rule.onNodeWithText("Save & complete").performClick()
         rule.waitForIdle()
         assertTrue("saving the edit completes it", vm.state.value.active!!.items[1].done)
+    }
+
+    @Test
+    fun weightsSaveToThePlanAndKnownWeightsCompleteOnTap() {
+        val vm = vmWithActiveWorkout()
+        val planId = vm.state.value.active!!.planId!!
+        val items = vm.state.value.active!!.items
+        val first = vm.state.value.ex(items[0].ex)!!.name
+        rule.setContent { HeavyntTheme { App(vm) } }
+        rule.waitForIdle()
+
+        rule.onNodeWithText(first).performTouchInput { longClick() }
+        rule.waitForIdle()
+        rule.onAllNodesWithText("+")[2].performClick() // sets, reps, then weight
+        rule.onNodeWithText("Save & complete").performClick()
+        rule.waitForIdle()
+        val w = vm.state.value.active!!.items[0].weight
+        assertTrue("hold should set a weight", w > 0)
+        rule.onNodeWithText("Update the plan?").assertDoesNotExist()
+        assertEquals("the new weight goes into the plan by itself", w, vm.state.value.plan(planId)!!.items.first { it.ex == items[0].ex }.weight, 0.0)
+
+        vm.update { it.finishWorkout().startWorkout(planId) }
+        rule.waitForIdle()
+        rule.onNodeWithText(first).performClick()
+        rule.waitForIdle()
+        assertTrue("a known weight completes on one tap", vm.state.value.active!!.items[0].done)
+        assertEquals(w, vm.state.value.active!!.items[0].weight, 0.0)
+    }
+
+    @Test
+    fun finishCanDiscardTheWorkout() {
+        val vm = vmWithActiveWorkout()
+        vm.update { it.toggleDone(0) }
+        rule.setContent { HeavyntTheme { App(vm) } }
+        rule.waitForIdle()
+        rule.onNodeWithText("Finish workout").performScrollTo().performClick()
+        rule.waitForIdle()
+        rule.onNodeWithText("Discard workout").performClick()
+        rule.waitForIdle()
+        assertTrue("asks before throwing it away", vm.state.value.active != null)
+        rule.onNodeWithText("Discard workout").performClick()
+        rule.waitForIdle()
+        assertEquals(null, vm.state.value.active)
+        assertEquals(0, vm.state.value.logs.size)
     }
 
     @Test

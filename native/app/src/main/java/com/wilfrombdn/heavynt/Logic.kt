@@ -26,6 +26,13 @@ fun today(): LocalDate = LocalDate.now()
 fun dateKey(d: LocalDate = today()): String = d.toString()
 fun parseKey(k: String): LocalDate = LocalDate.parse(k)
 fun addDays(key: String, n: Int): String = parseKey(key).plusDays(n.toLong()).toString()
+
+/** A new month has started since the bodyweight was last saved, and we haven't asked about it yet this month. */
+fun weighInDue(st: AppState, day: LocalDate = today()): Boolean {
+    val s = st.settings
+    val month = day.toString().take(7)
+    return s.bodyweight > 0 && s.bodyweightSetAt.take(7) < month && s.weighInAsked != month
+}
 fun dayDiff(a: String, b: String): Int = ChronoUnit.DAYS.between(parseKey(b), parseKey(a)).toInt()
 fun weekdayIdx(key: String): Int = parseKey(key).dayOfWeek.value - 1 // Mon = 0
 fun mondayOf(key: String): String = addDays(key, -weekdayIdx(key))

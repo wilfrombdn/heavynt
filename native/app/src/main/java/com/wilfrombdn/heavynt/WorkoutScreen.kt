@@ -143,6 +143,10 @@ fun WorkoutScreen(st: AppState, vm: AppViewModel, goHome: () -> Unit) {
         plateaus = s.active?.items?.filter { plateauInfo(s, it.ex, it.weight) != null }?.map { it.ex }?.distinct() ?: emptyList()
     }
 
+    fun discard() = dialogs.ask("Discard this workout?", "Nothing from it will be saved.",
+        DialogBtn("Discard workout", danger = true) { vm.update { it.discardWorkout() }; toast(ctx, "Workout discarded"); goHome() },
+        DialogBtn("Keep it"))
+
     fun finish() {
         val a = st.active ?: return
         val done = a.items.count { it.done }
@@ -151,7 +155,8 @@ fun WorkoutScreen(st: AppState, vm: AppViewModel, goHome: () -> Unit) {
             done == 0 -> dialogs.ask("Nothing completed", "No exercises were checked off yet.",
                 DialogBtn("Keep going", primary = true), DialogBtn("Discard workout") { vm.update { it.discardWorkout() } })
             left > 0 -> dialogs.ask("Finish workout?", "$left exercise${if (left > 1) "s" else ""} not completed will be skipped.",
-                DialogBtn("Finish & save", primary = true) { vm.update { it.finishWorkout() }; toast(ctx, "Workout saved"); goHome() }, DialogBtn("Keep going"))
+                DialogBtn("Finish & save", primary = true) { vm.update { it.finishWorkout() }; toast(ctx, "Workout saved"); goHome() }, DialogBtn("Keep going"),
+                DialogBtn("Discard workout", danger = true) { discard() })
             else -> { vm.update { it.finishWorkout() }; toast(ctx, "Workout saved"); goHome() }
         }
     }
@@ -164,8 +169,16 @@ fun WorkoutScreen(st: AppState, vm: AppViewModel, goHome: () -> Unit) {
             Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(C.line)) {
                 Box(Modifier.fillMaxHeight().fillMaxWidth(if (a.items.isEmpty()) 0f else done / a.items.size.toFloat()).background(C.green))
             }
-            Text("$done/${a.items.size} done · tap to complete · hold for sets & reps", style = T.small)
-            ItemList(st, a.items, true, onTap = { i -> if (a.items[i].done) vm.update { s -> s.toggleDone(i) } else promptIdx = i }, onLong = { i -> editIdx = i })
+            Text("$done/${a.items.size} done · tap to complete · hold to change weight, sets & reps", style = T.small)
+            ItemList(st, a.items, true, onTap = { i ->
+                val item = a.items[i]
+                val last = exerciseHistory(st, item.ex).lastOrNull()
+                when {
+                    item.done -> vm.update { s -> s.toggleDone(i) }
+                    item.weight > 0 || last != null -> completeAndSaveToPlan(vm, dialogs, i, item.ex, item.sets, item.reps, if (item.weight > 0) item.weight else last!!.weight)
+                    else -> promptIdx = i
+                }
+            }, onLong = { i -> editIdx = i })
             HButton("+ Add exercise", { showAdd = true })
             HButton("Finish workout", { finish() }, style = BtnStyle.Primary)
         } else {
@@ -218,18 +231,19 @@ fun WorkoutScreen(st: AppState, vm: AppViewModel, goHome: () -> Unit) {
     }
 }
 
-/** Complete an item with the given numbers, then offer to make a changed set/rep/weight permanent in the plan. */
-private fun completeAndOfferPlanUpdate(vm: AppViewModel, dialogs: DialogHost, idx: Int, exId: String, s: Int, r: Int, weight: Double) {
+/** Complete an item and save its weight to the plan by itself; only a sets/reps change asks before becoming permanent. */
+private fun completeAndSaveToPlan(vm: AppViewModel, dialogs: DialogHost, idx: Int, exId: String, s: Int, r: Int, weight: Double) {
     vm.update { it.editItem(idx, s, r, weight, complete = true) }
     val now = vm.state.value
-    val plan = now.plan(now.active?.planId)
-    val pi = plan?.items?.firstOrNull { it.ex == exId }
-    val ex = now.ex(exId)
-    if (plan != null && pi != null && ex != null && (pi.sets != s || pi.reps != r || pi.weight != weight)) {
-        dialogs.ask("Update the plan?",
-            "Change ${ex.name} from ${describe(now, ex.id, pi.sets, pi.reps, pi.weight)} to ${describe(now, ex.id, s, r, weight)} permanently in \"${plan.name}\"?",
-            DialogBtn("Yes, update the plan", primary = true) { vm.update { it.updatePlanItem(plan.id, ex.id, s, r, weight) } },
-            DialogBtn("Just this workout"))
+    val plan = now.plan(now.active?.planId) ?: return
+    val pi = plan.items.firstOrNull { it.ex == exId } ?: return
+    if (pi.weight != weight) vm.update { it.updatePlanItem(plan.id, exId, pi.sets, pi.reps, weight) }
+    val ex = now.ex(exId) ?: return
+    if (pi.sets != s || pi.reps != r) {
+        dialogs.ask("Keep ${s} × ${r}?",
+            "Change ${ex.name} from ${pi.sets} × ${pi.reps} to ${s} × ${r} for every \"${plan.name}\" workout?",
+            DialogBtn("Yes, every time", primary = true) { vm.update { it.updatePlanItem(plan.id, exId, s, r, weight) } },
+            DialogBtn("Just today"))
     }
 }
 
@@ -250,11 +264,13 @@ private fun WeightPromptSheet(st: AppState, vm: AppViewModel, idx: Int, item: Ac
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             HButton(if (weight > 0) "Complete · ${fmtNum(weight)} $unit" else "Complete · bodyweight", {
                 onDismiss()
-                completeAndOfferPlanUpdate(vm, dialogs, idx, item.ex, item.sets, item.reps, weight)
+                completeAndSaveToPlan(vm, dialogs, idx, item.ex, item.sets, item.reps, weight)
             }, style = BtnStyle.Primary)
-            HButton("Bodyweight (no added weight)", {
+            // Bodyweight moves (pull-ups, dips) already count your bodyweight; anything else logs it as the weight.
+            val bwWeight = if (ex.bw <= 0) st.settings.bodyweight else 0.0
+            HButton(if (bwWeight > 0) "Bodyweight · ${fmtNum(bwWeight)} $unit" else "Bodyweight (no added weight)", {
                 onDismiss()
-                completeAndOfferPlanUpdate(vm, dialogs, idx, item.ex, item.sets, item.reps, 0.0)
+                completeAndSaveToPlan(vm, dialogs, idx, item.ex, item.sets, item.reps, bwWeight)
             })
         }
     }
@@ -279,7 +295,7 @@ private fun EditItemSheet(st: AppState, vm: AppViewModel, idx: Int, item: Active
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             HButton(if (item.done) "Save" else "Save & complete", {
                 onDismiss()
-                completeAndOfferPlanUpdate(vm, dialogs, idx, item.ex, sets.toInt(), reps.toInt(), weight)
+                completeAndSaveToPlan(vm, dialogs, idx, item.ex, sets.toInt(), reps.toInt(), weight)
             }, style = BtnStyle.Primary)
             HButton("Remove from this workout", { onDismiss(); vm.update { it.removeItem(idx) } }, style = BtnStyle.Danger)
         }

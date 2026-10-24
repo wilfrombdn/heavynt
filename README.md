@@ -7,9 +7,10 @@ Minimal black & white Android workout tracker. Logs the weight on every exercise
 ## Features
 - Home: today's workout + front/back body map scored from your lifts (estimated 1RM ÷ bodyweight vs. an intermediate lifter, best set in last 90 days)
 - Plans built from an exercise drop-down; any on/off cycle (7 on / 7 off preset, or set every day yourself)
-- Workout: tap an exercise to complete it, hold to change sets/reps/weight (asks whether to update the plan permanently)
+- Workout: tap an exercise to complete it, hold to change sets/reps/weight. Weights save to the plan by themselves (sets/reps changes still ask); once an exercise has a weight, one tap checks it off
 - Plateau prompts to raise the weight after N sessions (default 3) or ~4 weeks at the same weight
 - Workout date & time recorded automatically; per-exercise weight history and charts
+- "Bodyweight" on an exercise logs the bodyweight from your profile; on the 1st of each month a notification + in-app prompt asks you to update it (skipped if you already did that month)
 - Add your own exercises in-app; optional reminders on workout days; copy/paste backup
 
 ## Native app (v3+)

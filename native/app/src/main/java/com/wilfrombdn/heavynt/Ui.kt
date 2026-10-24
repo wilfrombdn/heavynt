@@ -185,7 +185,7 @@ fun Sheet(title: String?, onDismiss: () -> Unit, content: @Composable ColumnScop
     }
 }
 
-class DialogBtn(val label: String, val primary: Boolean = false, val onClick: () -> Unit = {})
+class DialogBtn(val label: String, val primary: Boolean = false, val danger: Boolean = false, val onClick: () -> Unit = {})
 class DialogSpec(val title: String, val message: String?, val buttons: List<DialogBtn>)
 
 class DialogHost {
@@ -203,7 +203,7 @@ fun DialogLayer() {
         if (spec.message != null) Muted(spec.message)
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             spec.buttons.forEach { b ->
-                HButton(b.label, { host.spec = null; b.onClick() }, style = if (b.primary) BtnStyle.Primary else BtnStyle.Outline)
+                HButton(b.label, { host.spec = null; b.onClick() }, style = if (b.primary) BtnStyle.Primary else if (b.danger) BtnStyle.Danger else BtnStyle.Outline)
             }
         }
     }

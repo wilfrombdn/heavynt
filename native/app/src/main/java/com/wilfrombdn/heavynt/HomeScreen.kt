@@ -193,6 +193,7 @@ fun ProfileSheet(st: AppState, vm: AppViewModel, onDismiss: () -> Unit) {
     var cm by remember { mutableStateOf(startCm.roundToInt().toDouble()) }
     var level by remember { mutableStateOf(s.level) }
 
+    val notifPerm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     fun markAsked() { if (!s.profileAsked) vm.update { it.withSettings { x -> x.copy(profileAsked = true) } } }
     Sheet("Your profile", onDismiss = { markAsked(); onDismiss() }) {
         Muted("Targets are worked out from your sex, age, height and weight, then compared to what you actually lift. Under target shows red, on or above target shows blue.")
@@ -210,7 +211,9 @@ fun ProfileSheet(st: AppState, vm: AppViewModel, onDismiss: () -> Unit) {
         HButton("Save", {
             if (bw <= 0) toast(ctx, "Enter your bodyweight") else {
                 val h = if (imperial) Math.round((ft * 12 + inch) * 2.54 * 10) / 10.0 else cm
-                vm.update { it.withSettings { x -> x.copy(sex = sex, age = age.toInt(), bodyweight = bw, heightCm = h, level = level, profileAsked = true) } }
+                vm.update { it.withSettings { x -> x.copy(sex = sex, age = age.toInt(), bodyweight = bw, heightCm = h, level = level, profileAsked = true, bodyweightSetAt = dateKey()) } }
+                // The monthly weigh-in reminder is a notification, so ask for permission once the weight is in.
+                if (Build.VERSION.SDK_INT >= 33) notifPerm.launch(Manifest.permission.POST_NOTIFICATIONS)
                 toast(ctx, "Profile saved"); onDismiss()
             }
         }, style = BtnStyle.Primary)

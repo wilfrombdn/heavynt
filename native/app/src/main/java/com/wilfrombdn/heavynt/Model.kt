@@ -17,6 +17,8 @@ data class Settings(
     val reminderTime: String = "07:00",
     val openOnLaunch: Boolean = true,
     val profileAsked: Boolean = false,
+    val bodyweightSetAt: String = "",
+    val weighInAsked: String = "",
 )
 
 @Serializable

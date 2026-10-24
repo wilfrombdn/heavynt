@@ -14,3 +14,4 @@ native/.gradle/
 native/build/
 native/app/build/
 native/local.properties
+native/.kotlin/

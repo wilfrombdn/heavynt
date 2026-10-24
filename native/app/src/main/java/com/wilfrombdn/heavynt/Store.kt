@@ -39,7 +39,9 @@ fun normalize(s: AppState): AppState {
     val cutoff = dateKey(today().minusDays(60))
     val overrides = s.overrides.filterKeys { it >= cutoff }
     val plans = if (s.v < 5) s.plans.map(::inferSupersets) else s.plans
-    return s.copy(v = 5, exercises = merged, plans = plans, overrides = overrides)
+    // Weights saved before the monthly weigh-in existed count as current, so nobody is asked straight after updating.
+    val settings = if (s.settings.bodyweight > 0 && s.settings.bodyweightSetAt.isEmpty()) s.settings.copy(bodyweightSetAt = dateKey()) else s.settings
+    return s.copy(v = 5, exercises = merged, plans = plans, overrides = overrides, settings = settings)
 }
 
 class Storage(private val file: File) {
@@ -47,6 +49,7 @@ class Storage(private val file: File) {
         if (file.exists()) normalize(AppJson.decodeFromString<AppState>(file.readText())) else null
     } catch (e: Exception) { null }
 
+    @Synchronized
     fun save(s: AppState) {
         val tmp = File(file.parentFile, file.name + ".tmp")
         tmp.writeText(AppJson.encodeToString(s))

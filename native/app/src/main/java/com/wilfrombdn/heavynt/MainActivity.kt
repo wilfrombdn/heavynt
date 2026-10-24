@@ -75,6 +75,17 @@ fun App(vm: AppViewModel) {
     // First run: ask for the profile so the body map has something to compare against.
     LaunchedEffect(Unit) { if (st.settings.bodyweight <= 0 && !st.settings.profileAsked) profile = true }
 
+    // New month: ask once to update the bodyweight, unless it was already changed this month.
+    LaunchedEffect(Unit) {
+        if (weighInDue(st)) {
+            vm.update { it.withSettings { x -> x.copy(weighInAsked = dateKey().take(7)) } }
+            dialogs.ask("New month: weigh in", "Your bodyweight is ${fmtNum(st.settings.bodyweight)} ${st.settings.unit}. Update it so your strength targets stay accurate.",
+                DialogBtn("Update weight", primary = true) { profile = true }, DialogBtn("Still the same") {
+                    vm.update { it.withSettings { x -> x.copy(bodyweightSetAt = dateKey()) } }
+                })
+        }
+    }
+
     // Keep reminders in sync with the schedule.
     LaunchedEffect(st.schedule, st.plans, st.logs, st.overrides, st.settings.reminderOn, st.settings.reminderTime) {
         delay(1500)

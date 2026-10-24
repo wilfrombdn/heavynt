@@ -17,6 +17,7 @@ import java.time.ZoneId
 object Reminders {
     private const val CHANNEL = "workout-reminders"
     private const val BASE = 7000
+    private const val WEIGH_IN = 7100
 
     private fun pending(ctx: Context, i: Int, title: String?, text: String?): PendingIntent {
         val intent = Intent(ctx, ReminderReceiver::class.java).putExtra("title", title).putExtra("text", text)
@@ -25,9 +26,10 @@ object Reminders {
 
     fun schedule(ctx: Context, st: AppState) {
         val am = ctx.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val time = runCatching { LocalTime.parse(st.settings.reminderTime) }.getOrDefault(LocalTime.of(7, 0))
+        scheduleWeighIn(ctx, am, time)
         for (i in 0..30) am.cancel(pending(ctx, i, null, null))
         if (!st.settings.reminderOn) return
-        val time = runCatching { LocalTime.parse(st.settings.reminderTime) }.getOrDefault(LocalTime.of(7, 0))
         for (i in 0..30) {
             val key = addDays(dateKey(), i)
             val plan = planForDate(st, key) ?: continue
@@ -38,25 +40,39 @@ object Reminders {
         }
     }
 
+    /** Weigh-in nudge on the 1st of next month; the receiver drops it if the weight was already updated that month. */
+    private fun scheduleWeighIn(ctx: Context, am: AlarmManager, time: LocalTime) {
+        val intent = Intent(ctx, ReminderReceiver::class.java).putExtra("weighIn", true)
+        val pi = PendingIntent.getBroadcast(ctx, WEIGH_IN, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val first = today().withDayOfMonth(1).plusMonths(1)
+        am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, LocalDateTime.of(first, time).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(), pi)
+    }
+
     fun ensureChannel(ctx: Context) {
         val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (nm.getNotificationChannel(CHANNEL) == null)
             nm.createNotificationChannel(NotificationChannel(CHANNEL, "Workout reminders", NotificationManager.IMPORTANCE_DEFAULT))
     }
 
-    fun show(ctx: Context, title: String, text: String) {
+    fun show(ctx: Context, title: String, text: String, id: Int = 42) {
         ensureChannel(ctx)
         if (!NotificationManagerCompat.from(ctx).areNotificationsEnabled()) return
         val open = PendingIntent.getActivity(ctx, 1, Intent(ctx, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         val n = NotificationCompat.Builder(ctx, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_workout).setContentTitle(title).setContentText(text)
             .setContentIntent(open).setAutoCancel(true).build()
-        try { NotificationManagerCompat.from(ctx).notify(42, n) } catch (_: SecurityException) { /* permission revoked */ }
+        try { NotificationManagerCompat.from(ctx).notify(id, n) } catch (_: SecurityException) { /* permission revoked */ }
     }
 }
 
 class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
+        if (intent.getBooleanExtra("weighIn", false)) {
+            val st = storageFor(ctx).loadOrNull() ?: return
+            if (weighInDue(st)) Reminders.show(ctx, "New month: weigh in", "Update your bodyweight so your strength targets stay accurate.", id = 43)
+            Reminders.schedule(ctx, st) // queue next month's
+            return
+        }
         val title = intent.getStringExtra("title") ?: return
         Reminders.show(ctx, title, intent.getStringExtra("text") ?: "")
     }
