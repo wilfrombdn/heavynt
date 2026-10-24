@@ -64,6 +64,8 @@ function editPlan(plan) {
           inp.addEventListener('input', () => { it[key] = parseFloat(inp.value) || 0; save(); });
           return h('div', { class: 'mini' }, h('label', null, label), inp);
         };
+        const note = h('input', { class: 'text', placeholder: 'Note (rest time, superset, finisher…)', value: it.note || '' });
+        note.addEventListener('input', () => { it.note = note.value; save(); });
         body.append(h('div', { class: 'plan-row' },
           exerciseSelect(state.exercises, { value: it.ex, onChange: (v) => { it.ex = v; save(); draw(); } }),
           exById(it.ex) && exById(it.ex).pair ? h('div', { class: 'hint note' }, `Weight is both dumbbells combined. ${PAIR_NOTE}`) : null,
@@ -71,7 +73,8 @@ function editPlan(plan) {
             h('div', { class: 'row-actions' },
               h('button', { class: 'icon-btn', 'aria-label': 'Move up', onClick: () => { move(i, -1); } }, '↑'),
               h('button', { class: 'icon-btn', 'aria-label': 'Move down', onClick: () => { move(i, 1); } }, '↓'),
-              h('button', { class: 'icon-btn', 'aria-label': 'Remove', onClick: () => { plan.items.splice(i, 1); save(); draw(); } }, '✕')))));
+              h('button', { class: 'icon-btn', 'aria-label': 'Remove', onClick: () => { plan.items.splice(i, 1); save(); draw(); } }, '✕'))),
+          note));
       });
 
       body.append(

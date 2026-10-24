@@ -185,6 +185,8 @@ const RAW = [
   E('donkey-calf', 'Donkey Calf Raise', 'Legs', ['calves'], [], 1.8),
   E('leg-press-calf', 'Leg Press Calf Raise', 'Legs', ['calves'], [], 2.5),
   E('db-calf', 'Single-Leg Dumbbell Calf Raise', 'Legs', ['calves'], [], 0.5),
+  E('machine-lateral', 'Machine Lateral Raise', 'Shoulders', ['shoulders'], [], 0.4),
+  E('cable-rear-fly', 'Rear-Delt Cable Fly', 'Shoulders', ['shoulders'], ['upperBack'], 0.2),
   // Olympic / power
   E('power-clean', 'Power Clean', 'Olympic', ['upperBack', 'glutes', 'hamstrings'], ['quads', 'lowerBack', 'shoulders'], 1.0),
   E('hang-clean', 'Hang Clean', 'Olympic', ['upperBack', 'glutes', 'hamstrings'], ['quads', 'shoulders'], 0.9),
@@ -197,12 +199,61 @@ export const DEFAULT_STD = {
   Chest: 1.0, Back: 0.9, Shoulders: 0.5, Arms: 0.5, Core: 0.5, Legs: 1.4, Olympic: 0.9,
 };
 
-// Starter plans (weights start at 0 so the app asks you to set them on first use).
+// Starter programme: [exercise id, sets, reps, note]. Weights start at 0 so you set your own.
+// Day numbers are the day of the 7-day "on" block; days 1 and 7 are left as rest.
 export const STARTER_PLANS = [
-  { name: 'Push', items: [['bench', 4, 8], ['incline-db', 3, 10], ['ohp', 3, 8], ['lateral', 3, 15], ['pushdown', 3, 12]] },
-  { name: 'Pull', items: [['deadlift', 3, 5], ['pullup', 3, 8], ['row', 3, 8], ['face-pull', 3, 15], ['bb-curl', 3, 10]] },
-  { name: 'Legs', items: [['squat', 4, 6], ['rdl', 3, 8], ['leg-press', 3, 12], ['leg-curl', 3, 12], ['calf-raise', 4, 15]] },
+  { day: 2, name: 'Push', items: [
+    ['bench', 5, 5, 'Heavy · 4–6 reps · rest 3 min'],
+    ['incline-db', 3, 8, 'A1 · superset with lateral raise'],
+    ['cable-lateral', 3, 8, 'A2 · 8–10 per side · rest 75 s'],
+    ['dip', 3, 8, 'B1 · weighted · superset with triceps extension'],
+    ['oh-rope', 3, 8, 'B2 · overhead cable · 8–10 reps · rest 75 s'],
+    ['pec-deck', 1, 20, 'Finisher · triple drop: 20 → drop 25% → max → drop 25% → max'],
+    ['machine-lateral', 2, 20, 'Finisher · 20–25 reps · rest 45 s'],
+  ] },
+  { day: 3, name: 'Pull', items: [
+    ['pullup', 5, 5, 'Heavy 1 · weighted pull-up (or heavy lat pulldown) · 4–6 reps · rest 3 min'],
+    ['row', 3, 5, 'Heavy 2 · rest 2.5 min'],
+    ['one-arm-cable-row', 3, 8, 'A1 · per side · superset with face pull'],
+    ['face-pull', 3, 10, 'A2 · 10–12 reps · rest 75 s'],
+    ['incline-curl', 3, 8, 'B1 · superset with reverse pec deck'],
+    ['reverse-pec-deck', 3, 10, 'B2 · rest 75 s'],
+    ['lat-pulldown', 1, 15, 'Finisher · myo-reps: 15–20, then 4–5 mini-sets of 5 with 15 s rest'],
+  ] },
+  { day: 4, name: 'Legs + Abs', items: [
+    ['leg-press', 5, 5, 'Heavy · 5–6 reps · rest 3 min'],
+    ['rdl', 3, 8, 'A1 · superset with calf raise'],
+    ['db-calf', 3, 8, 'A2 · single-leg · 8–10 per side · rest 90 s'],
+    ['seated-leg-curl', 3, 8, 'B1 · seated or lying · superset with cable crunch'],
+    ['cable-crunch', 3, 10, 'B2 · rest 75 s'],
+    ['leg-ext', 1, 20, 'Finisher · 20 + one drop to failure'],
+  ] },
+  { day: 5, name: 'Shoulders + Arms', items: [
+    ['ohp', 5, 5, 'Heavy · standing · 4–6 reps · rest 3 min'],
+    ['cgbp', 3, 8, 'A1 · superset with EZ-bar curl'],
+    ['ez-curl', 3, 8, 'A2 · rest 90 s'],
+    ['lateral', 4, 10, 'B1 · superset with rear-delt fly'],
+    ['cable-rear-fly', 3, 10, 'B2 · rest 60 s'],
+    ['cable-curl', 2, 25, 'Finisher · arm burnout: cable curl 25 → rope pushdown 25, no rest · rest 60 s'],
+    ['rope-pushdown', 2, 25, 'Finisher · arm burnout, straight after the curls'],
+    ['cable-lateral', 1, 12, 'Finisher · drop set per side: to failure, drop, to failure'],
+  ] },
+  { day: 6, name: 'Upper Volume', items: [
+    ['incline-bench', 5, 5, 'Heavy 1 · 4–6 reps · rest 3 min'],
+    ['row', 3, 5, 'Heavy 2 · rest 2.5 min'],
+    ['chest-row', 3, 8, 'A1 · chest-supported T-bar row · superset with machine chest press'],
+    ['machine-chest', 3, 8, 'A2 · rest 90 s'],
+    ['close-pulldown', 3, 8, 'B1 · neutral-grip lat pulldown · superset with cable fly'],
+    ['low-cable-fly', 3, 8, 'B2 · low-to-high · 8–10 reps · rest 75 s'],
+    ['straight-arm', 1, 25, 'Finisher'],
+    ['pushup', 2, 15, 'Finisher · max reps · rest 60 s'],
+  ] },
 ];
+
+// Cycle: 7 days on (days 2-6 are workouts), 7 days off. Today is placed on `todayIsDay`.
+export const STARTER_ON_DAYS = 7;
+export const STARTER_OFF_DAYS = 7;
+export const STARTER_TODAY_IS_DAY = 4;
 
 // Dumbbell lifts done with a pair: the app takes the COMBINED weight (both dumbbells added up).
 // Their `std` is therefore the combined-weight benchmark.

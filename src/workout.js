@@ -192,6 +192,7 @@ function exerciseCard(it, interactive) {
     h('div', { class: 'grow' },
       h('div', { class: 'name' }, ex.name),
       h('div', { class: 'sub' }, describe(it) + (interactive && !ex.bw && !(it.weight > 0) ? ' · hold to set weight' : '')),
+      it.note ? h('div', { class: 'hint note-line' }, it.note) : null,
       last && interactive ? h('div', { class: 'hint' }, `Last: ${last.sets} × ${last.reps} @ ${fmtNum(last.weight)} ${unit()}${ex.pair ? ' total' : ''}`) : null),
     plateau ? h('span', { class: 'tag' }, 'Plateau') : null);
   if (interactive) pressable(card, { onTap: () => toggleDone(it), onHold: () => editItem(it) });

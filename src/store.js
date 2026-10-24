@@ -1,6 +1,6 @@
 // App state, persistence (localStorage) and first-run seeding.
-import { LIBRARY, STARTER_PLANS, PAIRED } from './data.js';
-import { dateKey, buildOnOff } from './logic.js';
+import { LIBRARY, STARTER_PLANS, PAIRED, STARTER_ON_DAYS, STARTER_OFF_DAYS, STARTER_TODAY_IS_DAY } from './data.js';
+import { dateKey, addDays } from './logic.js';
 
 const KEY = 'workout-tracker-v1';
 export const DEFAULT_SETTINGS = {
@@ -10,18 +10,26 @@ export const DEFAULT_SETTINGS = {
 
 export const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
 
+const makePlans = () => STARTER_PLANS.map((p) => ({
+  id: uid(), name: p.name, day: p.day,
+  items: p.items.map(([ex, sets, reps, note]) => ({ ex, sets, reps, weight: 0, note })),
+}));
+
+// Day 1..N of the on-block get their plan, everything else is rest; today lands on STARTER_TODAY_IS_DAY.
+function starterSchedule(plans) {
+  const days = Array(STARTER_ON_DAYS + STARTER_OFF_DAYS).fill(null);
+  plans.forEach((p) => { days[p.day - 1] = p.id; });
+  return { start: addDays(dateKey(), -(STARTER_TODAY_IS_DAY - 1)), days };
+}
+
 function seed() {
-  const plans = STARTER_PLANS.map((p) => ({
-    id: uid(),
-    name: p.name,
-    items: p.items.map(([ex, sets, reps]) => ({ ex, sets, reps, weight: 0 })),
-  }));
+  const plans = makePlans();
   return {
-    v: 2,
+    v: 3,
     settings: { ...DEFAULT_SETTINGS },
     exercises: LIBRARY.map((e) => ({ ...e })),
     plans,
-    schedule: { start: dateKey(), days: buildOnOff(7, 7, plans.map((p) => p.id)) },
+    schedule: starterSchedule(plans),
     logs: [],
     active: null,
     snooze: {},
@@ -39,6 +47,23 @@ function migrate(s) {
     (s.logs || []).forEach((l) => l.entries.forEach(dbl));
     if (s.active) s.active.items.forEach(dbl);
     s.v = 2;
+  }
+  if (s.v < 3) {
+    // v2 -> v3: swap the untouched generic starter plans for the real programme.
+    const old = new Set(['Push', 'Pull', 'Legs']);
+    const untouched = (p) => old.has(p.name) && p.items.every((i) => !i.weight) && !s.logs.some((l) => l.planId === p.id);
+    const removed = new Set(s.plans.filter(untouched).map((p) => p.id));
+    s.plans = s.plans.filter((p) => !removed.has(p.id));
+    const fresh = makePlans().filter((p) => !s.plans.some((q) => q.name === p.name));
+    s.plans.push(...fresh);
+    const usingOnlyOld = s.schedule.days.every((d) => !d || removed.has(d));
+    if (usingOnlyOld) {
+      const all = makePlans().map((p) => s.plans.find((q) => q.name === p.name) || p);
+      all.forEach((p, i) => { p.day = STARTER_PLANS[i].day; });
+      s.schedule = starterSchedule(all);
+    }
+    s.plans.forEach((p) => delete p.day);
+    s.v = 3;
   }
   return s;
 }
