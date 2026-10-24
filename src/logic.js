@@ -33,73 +33,98 @@ export function buildOnOff(on, off, planIds) {
 
 // ---------- strength ----------
 export const est1RM = (weight, reps) => (reps <= 1 ? weight : weight * (1 + reps / 30)); // Epley
+export const LB_PER_KG = 2.20462;
+const REF_KG = 82; // the bodyweight the library's "std" ratios are based on
+export const LEVELS = { novice: 0.7, intermediate: 1, advanced: 1.35 };
 
-export function loadOf(ex, weight, bodyweight) {
-  return (ex.bw || 0) * bodyweight + (weight || 0);
+// What a lifter with this profile "should" lift for std = 1:
+// strength scales with bodyweight^0.67, excess weight (BMI > 27) counts half,
+// then adjust for sex, age and the chosen target level.
+export function strengthFactors(st) {
+  const unit = st.unit || 'lb';
+  const kg = unit === 'lb' ? (st.bodyweight || 0) / LB_PER_KG : st.bodyweight || 0;
+  let eff = kg;
+  if (st.heightCm) {
+    const m = st.heightCm / 100, cap = 27 * m * m;
+    if (kg > cap) eff = cap + 0.5 * (kg - cap);
+  }
+  const age = st.age || 30;
+  const sexF = st.sex === 'female' ? 0.7 : 1;
+  const ageF = age < 18 ? 0.85 : age <= 35 ? 1 : Math.max(0.6, 1 - 0.01 * (age - 35));
+  const baseKg = REF_KG * Math.pow(eff / REF_KG, 0.67) * sexF * ageF * (LEVELS[st.level] || 1);
+  return { baseKg, unitPerKg: unit === 'lb' ? LB_PER_KG : 1 };
 }
 
-// Weight 0 is valid for bodyweight moves; otherwise no weight = no data.
-export function entryScore(ex, entry, bodyweight) {
-  if (!bodyweight) return null;
+// Target estimated 1RM for an exercise, in the user's unit.
+export function targetFor(ex, st) {
+  const f = strengthFactors(st);
+  return ex.std * f.baseKg * f.unitPerKg;
+}
+
+export function entryScore(ex, entry, st) {
+  const bw = st.bodyweight;
+  if (!bw) return null;
   if (!ex.bw && !(entry.weight > 0)) return null;
-  const load = loadOf(ex, entry.weight, bodyweight);
+  const load = (ex.bw || 0) * bw + (entry.weight || 0);
   if (load <= 0) return null;
-  return est1RM(load, entry.reps) / (bodyweight * ex.std);
+  const e = est1RM(load, entry.reps);
+  return { score: e / targetFor(ex, st), e1rm: e, target: targetFor(ex, st) };
 }
 
 const SECONDARY_WEIGHT = 0.35;
 const WINDOW_DAYS = 90;
 
-// Returns { regionKey: { score, lifts:[{name, score}] } } for regions with data.
+// Returns { regionKey: { score, lifts:[{name, score, e1rm, target, primary}] } } for regions with data.
 export function regionScores(state, now = new Date()) {
-  const bw = state.settings.bodyweight;
+  const st = state.settings;
   const cutoff = now.getTime() - WINDOW_DAYS * 86400000;
-  const best = new Map(); // exId -> best score in window
+  const best = new Map(); // exId -> best result in window
   for (const log of state.logs) {
     if (new Date(log.start).getTime() < cutoff) continue;
     for (const e of log.entries) {
       const ex = state.exercises.find((x) => x.id === e.ex);
       if (!ex) continue;
-      const s = entryScore(ex, e, bw);
-      if (s != null && s > (best.get(ex.id) ?? 0)) best.set(ex.id, s);
+      const r = entryScore(ex, e, st);
+      if (r && r.score > (best.get(ex.id)?.score ?? 0)) best.set(ex.id, r);
     }
   }
   const acc = {};
-  for (const [exId, s] of best) {
+  for (const [exId, r] of best) {
     const ex = state.exercises.find((x) => x.id === exId);
-    const add = (r, w) => {
-      if (!REGIONS[r]) return;
-      (acc[r] ||= { sum: 0, w: 0, lifts: [] });
-      acc[r].sum += s * w; acc[r].w += w;
-      acc[r].lifts.push({ name: ex.name, score: s, primary: w === 1 });
+    const add = (reg, w) => {
+      if (!REGIONS[reg]) return;
+      (acc[reg] ||= { sum: 0, w: 0, lifts: [] });
+      acc[reg].sum += r.score * w; acc[reg].w += w;
+      acc[reg].lifts.push({ name: ex.name, ...r, primary: w === 1 });
     };
-    ex.primary.forEach((r) => add(r, 1));
-    ex.secondary.forEach((r) => add(r, SECONDARY_WEIGHT));
+    ex.primary.forEach((reg) => add(reg, 1));
+    ex.secondary.forEach((reg) => add(reg, SECONDARY_WEIGHT));
   }
   const out = {};
-  for (const [r, a] of Object.entries(acc)) {
-    out[r] = { score: a.sum / a.w, lifts: a.lifts.sort((x, y) => y.score - x.score) };
+  for (const [reg, a] of Object.entries(acc)) {
+    out[reg] = { score: a.sum / a.w, lifts: a.lifts.sort((x, y) => y.score - x.score) };
   }
   return out;
 }
 
-// Map a score to a colour: red (weak) -> grey (average) -> blue (strong).
-const RED = [229, 72, 77], GREY = [110, 110, 110], BLUE = [59, 130, 246];
+// Under target = red (deeper the further under), at/above target = blue (brighter the further above).
+const RED_LO = [150, 62, 66], RED_HI = [240, 64, 70], BLUE_LO = [58, 118, 230], BLUE_HI = [110, 175, 255];
 const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
 export function scoreColor(score) {
   if (score == null) return null;
   const rgb = score < 1
-    ? mix(GREY, RED, Math.min(1, (1 - score) / 0.45))
-    : mix(GREY, BLUE, Math.min(1, (score - 1) / 0.5));
+    ? mix(RED_LO, RED_HI, Math.min(1, (1 - score) / 0.5))
+    : mix(BLUE_LO, BLUE_HI, Math.min(1, (score - 1) / 0.4));
   return `rgb(${rgb.join(',')})`;
 }
 
 export function scoreLabel(score) {
-  if (score < 0.6) return 'Weak';
-  if (score < 0.85) return 'Below average';
-  if (score < 1.15) return 'Average';
-  if (score < 1.4) return 'Strong';
-  return 'Very strong';
+  if (score < 0.6) return 'Well below target';
+  if (score < 0.85) return 'Below target';
+  if (score < 1) return 'Almost there';
+  if (score < 1.15) return 'On target';
+  if (score < 1.4) return 'Above target';
+  return 'Well above target';
 }
 
 // ---------- history helpers ----------

@@ -3,6 +3,10 @@ import { LIBRARY, STARTER_PLANS } from './data.js';
 import { dateKey, buildOnOff } from './logic.js';
 
 const KEY = 'workout-tracker-v1';
+export const DEFAULT_SETTINGS = {
+  unit: 'lb', bodyweight: 0, heightCm: 0, age: 30, sex: 'male', level: 'intermediate',
+  plateauSessions: 3, reminderOn: false, reminderTime: '07:00',
+};
 
 export const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
 
@@ -14,7 +18,7 @@ function seed() {
   }));
   return {
     v: 1,
-    settings: { unit: 'lb', bodyweight: 0, plateauSessions: 3, reminderOn: false, reminderTime: '07:00' },
+    settings: { ...DEFAULT_SETTINGS },
     exercises: LIBRARY.map((e) => ({ ...e })),
     plans,
     schedule: { start: dateKey(), days: buildOnOff(7, 7, plans.map((p) => p.id)) },
@@ -33,6 +37,7 @@ function load() {
       const have = new Set(s.exercises.map((e) => e.id));
       for (const e of LIBRARY) if (!have.has(e.id)) s.exercises.push({ ...e });
       s.snooze ||= {};
+      s.settings = { ...DEFAULT_SETTINGS, ...s.settings };
       return s;
     }
   } catch (e) { /* corrupted storage: fall through to a fresh state */ }
@@ -57,5 +62,7 @@ export function importData(text) {
   if (!s || !Array.isArray(s.exercises) || !Array.isArray(s.logs)) throw new Error('Not a workout backup');
   Object.keys(state).forEach((k) => delete state[k]);
   Object.assign(state, s);
+  state.settings = { ...DEFAULT_SETTINGS, ...state.settings };
+  state.snooze ||= {};
   save();
 }

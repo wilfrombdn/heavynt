@@ -10,6 +10,7 @@ import { renderPlans } from './plans.js';
 import { renderExercises } from './exercises.js';
 import { renderHistory } from './history.js';
 import { scheduleReminders } from './reminders.js';
+import { openProfile } from './profile.js';
 
 const TABS = [
   { id: 'home', label: 'Home', render: renderHome },
@@ -61,3 +62,4 @@ const hashTab = location.hash.slice(1);
 if (TABS.some((t) => t.id === hashTab)) current = hashTab; // dev shortcut: index.html#plans
 render();
 scheduleReminders();
+if (!state.settings.bodyweight && !state.settings.profileAsked) setTimeout(openProfile, 350);

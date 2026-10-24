@@ -2,6 +2,7 @@
 import { Capacitor } from '@capacitor/core';
 import { state, save, exportData, importData } from './store.js';
 import { h, openSheet, ask, stepper, toast } from './ui.js';
+import { openProfile, profileSummary } from './profile.js';
 
 const LB = 2.20462;
 const round = (n) => Math.round(n * 2) / 2;
@@ -44,7 +45,8 @@ export function openSettings() {
 
       body.append(
         h('div', { class: 'field' }, h('label', null, 'Units'), seg),
-        stepper({ value: s.bodyweight, min: 0, max: 700, step: 1, label: `Bodyweight (${s.unit}), used to score strength`, onChange: (v) => { s.bodyweight = v; save(); } }),
+        h('button', { class: 'card tap', onClick: () => { close(); openProfile(); } },
+          h('div', { class: 'eyebrow' }, 'Profile & targets'), h('div', null, profileSummary())),
         stepper({ value: s.plateauSessions, min: 2, max: 12, label: 'Suggest a heavier weight after this many sessions at the same weight', onChange: (v) => { s.plateauSessions = v; save(); } }),
         h('label', { class: 'check-row' }, open, h('span', null, "Open to today's workout on launch")),
         h('label', { class: 'check-row' }, remind, h('span', null, 'Remind me on workout days')),

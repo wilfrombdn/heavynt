@@ -6,6 +6,7 @@ import { bodyMap } from './bodymap.js';
 import { h } from './ui.js';
 import { startWorkout, todaysLog, nextWorkout, dayInfo } from './workout.js';
 import { openSettings } from './settings.js';
+import { openProfile } from './profile.js';
 
 let selected = null;
 
@@ -43,14 +44,14 @@ export function renderHome(c, go) {
   // Map
   const mapCard = h('div', { class: 'card map-card' });
   mapCard.append(bodyMap(scores, selected, (r) => { selected = selected === r ? null : r; rerender(); }));
-  mapCard.append(h('div', { class: 'legend' }, h('span', null, 'Weak'), h('div', { class: 'bar' }), h('span', null, 'Strong')));
+  mapCard.append(h('div', { class: 'legend' }, h('span', null, 'Under target'), h('div', { class: 'bar' }), h('span', null, 'On / above')));
   c.append(mapCard);
 
   if (!state.settings.bodyweight) {
-    c.append(h('button', { class: 'card note', onClick: openSettings },
-      h('b', null, 'Set your bodyweight'), h('div', { class: 'muted' }, 'Strength is scored relative to bodyweight. Tap to set it.')));
+    c.append(h('button', { class: 'card note', onClick: openProfile },
+      h('b', null, 'Set up your profile'), h('div', { class: 'muted' }, 'Add your age, height and weight so the map knows what you should be lifting. Tap to start.')));
   } else if (!hasData) {
-    c.append(h('div', { class: 'card note muted' }, 'Finish a workout with weights and the map will colour in: blue = strong, red = weak, grey = average.'));
+    c.append(h('div', { class: 'card note muted' }, 'Finish a workout with weights and the map colours in: red = under your target, blue = on target or better.'));
   }
 
   if (selected) c.append(regionCard(selected, scores[selected]));
@@ -64,18 +65,23 @@ function regionCard(key, sc) {
     h('div', { class: 'grow big' }, REGIONS[key]),
     sc ? h('span', { class: 'tag' }, scoreLabel(sc.score)) : h('span', { class: 'tag' }, 'No data')));
   if (!sc) { card.append(h('p', { class: 'muted' }, 'No logged lifts hit this area in the last 90 days.')); return card; }
-  card.append(h('div', { class: 'muted' }, `${Math.round(sc.score * 100)}% of intermediate strength`));
+  card.append(h('div', { class: 'muted' }, `${Math.round(sc.score * 100)}% of your target`));
+  const u = state.settings.unit;
   sc.lifts.slice(0, 5).forEach((l) => card.append(
-    h('div', { class: 'line' }, h('span', null, l.name + (l.primary ? '' : ' (assist)')), h('span', { class: 'muted' }, `${Math.round(l.score * 100)}%`))));
+    h('div', { class: 'line' },
+      h('span', null, l.name + (l.primary ? '' : ' (assist)'), h('div', { class: 'hint' }, `est. max ${Math.round(l.e1rm)} ${u} · target ${Math.round(l.target)} ${u}`)),
+      h('span', { class: l.score >= 1 ? 'good' : 'bad' }, `${Math.round(l.score * 100)}%`))));
   return card;
 }
 
 function summary(scores) {
   const arr = Object.entries(scores).sort((a, b) => a[1].score - b[1].score);
-  const list = (items) => items.map(([k]) => REGIONS[k]).join(', ') || '–';
+  const names = (items) => items.map(([k]) => REGIONS[k]).join(', ');
+  const behind = arr.filter(([, v]) => v.score < 1);
+  const ok = arr.filter(([, v]) => v.score >= 1).reverse();
   const untracked = Object.keys(REGIONS).filter((k) => !scores[k]);
   return h('div', { class: 'card' },
-    h('div', { class: 'line' }, h('span', { class: 'muted' }, 'Weakest'), h('span', null, list(arr.slice(0, 3)))),
-    h('div', { class: 'line' }, h('span', { class: 'muted' }, 'Strongest'), h('span', null, list(arr.slice(-3).reverse()))),
-    untracked.length ? h('div', { class: 'line' }, h('span', { class: 'muted' }, 'Untrained'), h('span', null, untracked.map((k) => REGIONS[k]).join(', '))) : null);
+    behind.length ? h('div', { class: 'line' }, h('span', { class: 'muted' }, 'Behind target'), h('span', { class: 'bad' }, names(behind.slice(0, 4)))) : null,
+    ok.length ? h('div', { class: 'line' }, h('span', { class: 'muted' }, 'On target or better'), h('span', { class: 'good' }, names(ok.slice(0, 4)))) : null,
+    untracked.length ? h('div', { class: 'line' }, h('span', { class: 'muted' }, 'Untrained'), h('span', null, names(untracked.map((k) => [k])))) : null);
 }
