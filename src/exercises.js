@@ -29,7 +29,7 @@ export function renderExercises(c) {
         const last = hist[hist.length - 1];
         list.append(h('button', { class: 'card tap row', onClick: () => detail(ex) },
           h('div', { class: 'grow' }, h('div', { class: 'name' }, ex.name),
-            h('div', { class: 'muted small' }, last ? `${fmtNum(last.weight)} ${unit()} · ${fmtShort(last.at)}` : 'Not logged yet')),
+            h('div', { class: 'muted small' }, last ? `${fmtNum(last.weight)} ${unit()}${ex.pair ? ' total' : ''} · ${fmtShort(last.at)}` : 'Not logged yet')),
           sparkline(hist.map((x) => x.weight))));
       }
     }
@@ -68,7 +68,7 @@ function detail(ex) {
         h('div', { class: 'line' }, h('span', { class: 'muted' }, 'Sessions'), h('span', null, hist.length)),
         h('div', { class: 'section-title' }, 'History'),
         ...hist.slice().reverse().slice(0, 30).map((x) => h('div', { class: 'line' },
-          h('span', { class: 'muted' }, fmtDate(x.at)), h('span', null, `${x.sets} × ${x.reps} @ ${fmtNum(x.weight)} ${unit()}`))));
+          h('span', { class: 'muted' }, fmtDate(x.at)), h('span', null, `${x.sets} × ${x.reps} @ ${fmtNum(x.weight)} ${unit()}${ex.pair ? ' total' : ''}`))));
     } else body.append(h('p', { class: 'muted' }, 'No sets logged yet.'));
     body.append(h('div', { class: 'btn-col' },
       h('button', { class: 'btn', onClick: () => { close(); editExercise(ex); } }, 'Edit exercise'),
@@ -95,7 +95,7 @@ function chips(selected, onToggle) {
 
 export function editExercise(ex) {
   const isNew = !ex;
-  const d = ex ? { ...ex } : { name: '', cat: 'Chest', primary: [], secondary: [], std: 0, bw: 0 };
+  const d = ex ? { ...ex } : { name: '', cat: 'Chest', primary: [], secondary: [], std: 0, bw: 0, pair: false };
   const prim = new Set(d.primary), sec = new Set(d.secondary);
   openSheet(isNew ? 'New exercise' : 'Edit exercise', (body, close) => {
     const name = h('input', { class: 'text', value: d.name, placeholder: 'e.g. Incline Cable Fly' });
@@ -105,6 +105,8 @@ export function editExercise(ex) {
     const std = h('input', { class: 'text', type: 'number', inputmode: 'decimal', step: '0.05', value: d.std || '', placeholder: `Auto (${DEFAULT_STD[d.cat]}× bodyweight)` });
     const bw = h('input', { type: 'checkbox' });
     bw.checked = d.bw > 0;
+    const pair = h('input', { type: 'checkbox' });
+    pair.checked = !!d.pair;
     body.append(
       h('div', { class: 'field' }, h('label', null, 'Name'), name),
       h('div', { class: 'field' }, h('label', null, 'Category'), cat),
@@ -112,13 +114,14 @@ export function editExercise(ex) {
       h('div', { class: 'field' }, h('label', null, 'Helper muscles'), chips(sec, (k) => { sec.has(k) ? sec.delete(k) : sec.add(k); })),
       h('div', { class: 'field' }, h('label', null, 'Intermediate lift (× bodyweight, optional)'), std,
         h('div', { class: 'hint' }, 'How heavy a solid intermediate lifts this for one rep. Used to colour the body map.')),
+      h('label', { class: 'check-row' }, pair, h('span', null, 'Done with a pair of dumbbells (enter both added together)')),
       h('label', { class: 'check-row' }, bw, h('span', null, 'Bodyweight movement (pull-ups, dips…) – weight is extra added load')),
       h('div', { class: 'btn-col' }, h('button', { class: 'btn primary', onClick: () => {
         if (!name.value.trim()) return toast('Give it a name');
         if (!prim.size) return toast('Pick at least one main muscle');
         const out = {
           name: name.value.trim(), cat: cat.value, primary: [...prim], secondary: [...sec].filter((k) => !prim.has(k)),
-          std: parseFloat(std.value) || DEFAULT_STD[cat.value], bw: bw.checked ? (d.bw || 1) : 0,
+          std: parseFloat(std.value) || DEFAULT_STD[cat.value], bw: bw.checked ? (d.bw || 1) : 0, pair: pair.checked,
         };
         if (isNew) state.exercises.push({ id: 'c-' + uid(), custom: true, ...out });
         else Object.assign(ex, out);

@@ -15,7 +15,7 @@ export function renderHistory(c) {
     for (const e of log.entries) {
       const ex = exById(e.ex);
       body.append(h('div', { class: 'line' }, h('span', null, ex ? ex.name : 'Removed exercise'),
-        h('span', { class: 'muted' }, `${e.sets} × ${e.reps} @ ${fmtNum(e.weight)} ${unit()}`)));
+        h('span', { class: 'muted' }, `${e.sets} × ${e.reps} @ ${fmtNum(e.weight)} ${unit()}${ex && ex.pair ? ' total' : ''}`)));
     }
     body.append(h('button', { class: 'btn danger slim', onClick: async () => {
       const ok = await ask('Delete workout?', 'This also removes it from your strength map.',

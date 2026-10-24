@@ -48,7 +48,14 @@ const el = (tag, attrs) => {
   return n;
 };
 
-function drawView(parent, x, parts, label, scores, selected) {
+// [x, y, rotation, text] per region, one label each.
+const LABELS_FRONT = { chest: [100, 86, 0, 'Chest'], shoulders: [59, 75, 0, 'Delts'], biceps: [51, 114, -90, 'Biceps'],
+  forearms: [46, 171, -90, 'Forearms'], abs: [100, 131, 0, 'Core'], quads: [87, 211, -90, 'Quads'], calves: [86, 303, -90, 'Calves'] };
+const LABELS_BACK = { upperBack: [100, 94, 0, 'Upper back'], shoulders: [59, 75, 0, 'Delts'], triceps: [51, 114, -90, 'Triceps'],
+  forearms: [46, 171, -90, 'Forearms'], lowerBack: [100, 150, 0, 'Low back'], glutes: [100, 186, 0, 'Glutes'],
+  hamstrings: [87, 230, -90, 'Hamstrings'], calves: [86, 302, -90, 'Calves'] };
+
+function drawView(parent, x, parts, label, scores, selected, labels) {
   const g = el('g', { transform: `translate(${x} 0)` });
   for (const [d, mirror] of OUTLINE) {
     g.append(el('path', { d, class: 'outline' }));
@@ -65,6 +72,11 @@ function drawView(parent, x, parts, label, scores, selected) {
     }
     g.append(rg);
   }
+  for (const [lx, ly, rot, text] of Object.values(labels)) {
+    const tx = el('text', { transform: `translate(${lx} ${ly}) rotate(${rot})`, class: 'region-label', 'text-anchor': 'middle', 'dominant-baseline': 'central' });
+    tx.textContent = text;
+    g.append(tx);
+  }
   const t = el('text', { x: 100, y: 392, class: 'view-label', 'text-anchor': 'middle' });
   t.textContent = label;
   g.append(t);
@@ -73,8 +85,8 @@ function drawView(parent, x, parts, label, scores, selected) {
 
 export function bodyMap(scores, selected, onPick) {
   const svg = el('svg', { viewBox: '0 0 420 400', class: 'bodymap', role: 'img', 'aria-label': 'Body strength map' });
-  drawView(svg, 0, FRONT, 'FRONT', scores, selected);
-  drawView(svg, 220, BACK, 'BACK', scores, selected);
+  drawView(svg, 0, FRONT, 'FRONT', scores, selected, LABELS_FRONT);
+  drawView(svg, 220, BACK, 'BACK', scores, selected, LABELS_BACK);
   svg.addEventListener('click', (e) => {
     const r = e.target.closest('[data-region]');
     if (r) onPick(r.getAttribute('data-region'));

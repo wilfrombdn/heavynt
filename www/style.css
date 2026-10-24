@@ -152,3 +152,6 @@ textarea.text { resize: vertical; }
 
 .good { color: #6aaaff; font-weight: 700; } .bad { color: #ff6b70; font-weight: 700; }
 .seg { max-width: 100%; } .seg button { padding: 9px 16px; }
+
+.bodymap .region-label { fill: #fff; font-size: 7.5px; font-weight: 700; pointer-events: none; stroke: #000; stroke-width: 2.2px; paint-order: stroke; letter-spacing: 0.02em; }
+.hint.note { margin: 6px 0 0; padding: 8px 10px; border: 1px solid #333; border-radius: 10px; color: #cfcfcf; }

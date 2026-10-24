@@ -5,6 +5,8 @@ import { h, ask, openSheet, stepper, exerciseSelect, selectify, toast, buzz, fmt
 
 export const weightStep = () => (state.settings.unit === 'kg' ? 2.5 : 5);
 export const unit = () => state.settings.unit;
+export const weightLabel = (ex) => (ex && ex.pair ? `Weight (${unit()}) · both dumbbells combined` : `Weight (${unit()})`);
+export const PAIR_NOTE = 'Add both dumbbells together, e.g. two 40s = 80.';
 
 const lastEntry = (exId) => exerciseHistory(state, exId).slice(-1)[0];
 export const todaysLog = (planId) =>
@@ -12,7 +14,7 @@ export const todaysLog = (planId) =>
 
 export function describe(it) {
   const ex = exById(it.ex);
-  const w = it.weight > 0 ? ` @ ${fmtNum(it.weight)} ${unit()}` : ex && ex.bw ? ' · bodyweight' : '';
+  const w = it.weight > 0 ? ` @ ${fmtNum(it.weight)} ${unit()}${ex && ex.pair ? ' total' : ''}` : ex && ex.bw ? ' · bodyweight' : '';
   return `${it.sets} × ${it.reps}${w}`;
 }
 
@@ -93,12 +95,13 @@ function editItem(it) {
   const draft = { sets: it.sets, reps: it.reps, weight: it.weight };
   openSheet(ex.name, (body, close) => {
     const last = lastEntry(it.ex);
-    if (last) body.append(h('p', { class: 'muted' }, `Last time: ${last.sets} × ${last.reps} @ ${fmtNum(last.weight)} ${unit()} · ${fmtShort(last.at)}`));
+    if (last) body.append(h('p', { class: 'muted' }, `Last time: ${last.sets} × ${last.reps} @ ${fmtNum(last.weight)} ${unit()}${ex.pair ? ' total' : ''} · ${fmtShort(last.at)}`));
     body.append(
       h('div', { class: 'grid2' },
         stepper({ value: draft.sets, min: 1, max: 20, label: 'Sets', onChange: (v) => { draft.sets = v; } }),
         stepper({ value: draft.reps, min: 1, max: 100, label: 'Reps', onChange: (v) => { draft.reps = v; } })),
-      stepper({ value: draft.weight, min: 0, step: weightStep(), label: `Weight (${unit()})`, onChange: (v) => { draft.weight = v; } }),
+      stepper({ value: draft.weight, min: 0, step: weightStep(), label: weightLabel(ex), onChange: (v) => { draft.weight = v; } }),
+      ex.pair ? h('div', { class: 'hint note' }, PAIR_NOTE) : null,
       h('div', { class: 'btn-col' },
         h('button', { class: 'btn primary', onClick: async () => {
           Object.assign(it, draft);
@@ -131,7 +134,8 @@ function addExtra() {
         h('div', { class: 'grid2' },
           stepper({ value: draft.sets, min: 1, max: 20, label: 'Sets', onChange: (v) => { draft.sets = v; } }),
           stepper({ value: draft.reps, min: 1, max: 100, label: 'Reps', onChange: (v) => { draft.reps = v; } })),
-        stepper({ value: draft.weight, min: 0, step: weightStep(), label: `Weight (${unit()})`, onChange: (v) => { draft.weight = v; } }));
+        stepper({ value: draft.weight, min: 0, step: weightStep(), label: weightLabel(exById(exId)), onChange: (v) => { draft.weight = v; } }),
+        exId && exById(exId).pair ? h('div', { class: 'hint note' }, PAIR_NOTE) : null);
     };
     fields();
     body.append(
@@ -188,7 +192,7 @@ function exerciseCard(it, interactive) {
     h('div', { class: 'grow' },
       h('div', { class: 'name' }, ex.name),
       h('div', { class: 'sub' }, describe(it) + (interactive && !ex.bw && !(it.weight > 0) ? ' · hold to set weight' : '')),
-      last && interactive ? h('div', { class: 'hint' }, `Last: ${last.sets} × ${last.reps} @ ${fmtNum(last.weight)} ${unit()}`) : null),
+      last && interactive ? h('div', { class: 'hint' }, `Last: ${last.sets} × ${last.reps} @ ${fmtNum(last.weight)} ${unit()}${ex.pair ? ' total' : ''}`) : null),
     plateau ? h('span', { class: 'tag' }, 'Plateau') : null);
   if (interactive) pressable(card, { onTap: () => toggleDone(it), onHold: () => editItem(it) });
   return card;

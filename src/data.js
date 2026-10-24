@@ -29,7 +29,7 @@ const E = (id, name, cat, primary, secondary, std, bw = 0) => ({
   id, name, cat, primary, secondary, std, bw, custom: false,
 });
 
-export const LIBRARY = [
+const RAW = [
   // Chest
   E('bench', 'Barbell Bench Press', 'Chest', ['chest'], ['shoulders', 'triceps'], 1.25),
   E('incline-bench', 'Incline Barbell Bench Press', 'Chest', ['chest'], ['shoulders', 'triceps'], 1.0),
@@ -203,3 +203,13 @@ export const STARTER_PLANS = [
   { name: 'Pull', items: [['deadlift', 3, 5], ['pullup', 3, 8], ['row', 3, 8], ['face-pull', 3, 15], ['bb-curl', 3, 10]] },
   { name: 'Legs', items: [['squat', 4, 6], ['rdl', 3, 8], ['leg-press', 3, 12], ['leg-curl', 3, 12], ['calf-raise', 4, 15]] },
 ];
+
+// Dumbbell lifts done with a pair: the app takes the COMBINED weight (both dumbbells added up).
+// Their `std` is therefore the combined-weight benchmark.
+export const PAIRED = new Set(['db-bench', 'incline-db', 'decline-db', 'db-press', 'arnold', 'lateral', 'rear-delt', 'db-curl',
+  'hammer', 'incline-curl', 'zottman', 'db-fly', 'front-raise', 'kickback', 'lunge', 'split-squat', 'walking-lunge',
+  'reverse-lunge', 'step-up', 'db-rdl', 'db-shrug', 'farmers-walk']);
+
+export const LIBRARY = RAW.map((e) => (PAIRED.has(e.id)
+  ? { ...e, pair: true, std: Math.round(e.std * 2 * 100) / 100 }
+  : { ...e, pair: false }));

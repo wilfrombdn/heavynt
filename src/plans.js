@@ -2,7 +2,7 @@
 import { state, save, uid, exById } from './store.js';
 import { dateKey, addDays, cycleIndex, buildOnOff, parseKey } from './logic.js';
 import { h, openSheet, ask, stepper, exerciseSelect, selectify, toast } from './ui.js';
-import { unit, weightStep } from './workout.js';
+import { unit, weightStep, PAIR_NOTE } from './workout.js';
 
 const dayName = (key) => parseKey(key).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
 const planName = (id) => (state.plans.find((p) => p.id === id) || {}).name;
@@ -65,8 +65,9 @@ function editPlan(plan) {
           return h('div', { class: 'mini' }, h('label', null, label), inp);
         };
         body.append(h('div', { class: 'plan-row' },
-          exerciseSelect(state.exercises, { value: it.ex, onChange: (v) => { it.ex = v; save(); } }),
-          h('div', { class: 'minis' }, num('Sets', 'sets', 1), num('Reps', 'reps', 1), num(`Weight (${unit()})`, 'weight', weightStep()),
+          exerciseSelect(state.exercises, { value: it.ex, onChange: (v) => { it.ex = v; save(); draw(); } }),
+          exById(it.ex) && exById(it.ex).pair ? h('div', { class: 'hint note' }, `Weight is both dumbbells combined. ${PAIR_NOTE}`) : null,
+          h('div', { class: 'minis' }, num('Sets', 'sets', 1), num('Reps', 'reps', 1), num(exById(it.ex) && exById(it.ex).pair ? `Total (${unit()})` : `Weight (${unit()})`, 'weight', weightStep()),
             h('div', { class: 'row-actions' },
               h('button', { class: 'icon-btn', 'aria-label': 'Move up', onClick: () => { move(i, -1); } }, '↑'),
               h('button', { class: 'icon-btn', 'aria-label': 'Move down', onClick: () => { move(i, 1); } }, '↓'),

@@ -1,5 +1,5 @@
 // App state, persistence (localStorage) and first-run seeding.
-import { LIBRARY, STARTER_PLANS } from './data.js';
+import { LIBRARY, STARTER_PLANS, PAIRED } from './data.js';
 import { dateKey, buildOnOff } from './logic.js';
 
 const KEY = 'workout-tracker-v1';
@@ -17,7 +17,7 @@ function seed() {
     items: p.items.map(([ex, sets, reps]) => ({ ex, sets, reps, weight: 0 })),
   }));
   return {
-    v: 1,
+    v: 2,
     settings: { ...DEFAULT_SETTINGS },
     exercises: LIBRARY.map((e) => ({ ...e })),
     plans,
@@ -28,11 +28,26 @@ function seed() {
   };
 }
 
+// v1 -> v2: dumbbell lifts used to store ONE dumbbell; they now store both combined.
+function migrate(s) {
+  const lib = new Map(LIBRARY.map((e) => [e.id, e]));
+  for (const e of s.exercises) { if (e.pair == null) e.pair = !!(lib.get(e.id) || {}).pair; }
+  if ((s.v || 1) < 2) {
+    for (const e of s.exercises) if (PAIRED.has(e.id)) { e.pair = true; e.std = Math.round(e.std * 2 * 100) / 100; }
+    const dbl = (o) => { if (o.weight > 0 && PAIRED.has(o.ex)) o.weight *= 2; };
+    (s.plans || []).forEach((p) => p.items.forEach(dbl));
+    (s.logs || []).forEach((l) => l.entries.forEach(dbl));
+    if (s.active) s.active.items.forEach(dbl);
+    s.v = 2;
+  }
+  return s;
+}
+
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) {
-      const s = JSON.parse(raw);
+      const s = migrate(JSON.parse(raw)); // migrate first: only already-saved exercises need converting
       // Pick up library additions shipped in newer app versions without touching user data.
       const have = new Set(s.exercises.map((e) => e.id));
       for (const e of LIBRARY) if (!have.has(e.id)) s.exercises.push({ ...e });
@@ -61,7 +76,7 @@ export function importData(text) {
   const s = JSON.parse(text);
   if (!s || !Array.isArray(s.exercises) || !Array.isArray(s.logs)) throw new Error('Not a workout backup');
   Object.keys(state).forEach((k) => delete state[k]);
-  Object.assign(state, s);
+  Object.assign(state, migrate(s));
   state.settings = { ...DEFAULT_SETTINGS, ...state.settings };
   state.snooze ||= {};
   save();
