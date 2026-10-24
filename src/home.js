@@ -9,6 +9,8 @@ import { openSettings } from './settings.js';
 import { openProfile } from './profile.js';
 
 let selected = null;
+const DAY = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const weekLabel = (idx, len) => `${DAY[idx % 7]}${len > 7 ? ` · week ${Math.floor(idx / 7) + 1} of ${len / 7}` : ''}`;
 
 export function renderHome(c, go) {
   const plan = planForDate(state);
@@ -29,14 +31,14 @@ export function renderHome(c, go) {
   } else if (plan) {
     const done = todaysLog(plan.id);
     today = h('div', { class: 'card row' },
-      h('div', { class: 'grow' }, h('div', { class: 'eyebrow' }, `Today · day ${idx + 1} of ${len}`),
+      h('div', { class: 'grow' }, h('div', { class: 'eyebrow' }, `Today · ${weekLabel(idx, len)}`),
         h('div', { class: 'big' }, plan.name), h('div', { class: 'muted' }, `${plan.items.length} exercises`)),
       done ? h('span', { class: 'tag' }, 'Done ✓')
         : h('button', { class: 'btn primary slim', onClick: async () => { await startWorkout(plan.id); go('workout'); } }, 'Start'));
   } else {
     const n = nextWorkout();
     today = h('div', { class: 'card' },
-      h('div', { class: 'eyebrow' }, `Rest day${len ? ` · day ${idx + 1} of ${len}` : ''}`),
+      h('div', { class: 'eyebrow' }, `Rest day${len ? ` · ${weekLabel(idx, len)}` : ''}`),
       h('div', { class: 'muted' }, n ? `Next: ${n.plan.name} on ${new Date(n.key + 'T00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}` : 'Nothing scheduled'));
   }
   c.append(today);

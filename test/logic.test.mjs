@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { targetFor, cycleIndex, buildOnOff, planForDate, regionScores, scoreColor, plateauInfo, addDays, dateKey } from '../src/logic.js';
+import { weekdayIdx, mondayOf, targetFor, cycleIndex, buildOnOff, planForDate, regionScores, scoreColor, plateauInfo, addDays, dateKey } from '../src/logic.js';
 import { LIBRARY } from '../src/data.js';
 
 const mk = (over = {}) => ({
@@ -66,4 +66,19 @@ test('colour: under target is red, on/above target is blue', () => {
   assert.ok(c(0.9)[0] > c(0.9)[2], 'red-ish at 0.9');
   assert.ok(c(1.0)[2] > c(1.0)[0], 'blue at exactly target');
   assert.ok(c(1.3)[2] > c(1.3)[0]);
+});
+
+test('weekly schedule: Wed-Sun of week 1, week 2 off, repeats every 2 weeks across month ends', () => {
+  const days = Array(14).fill(null);
+  ['a', 'b', 'a', 'b', 'a'].forEach((id, i) => { days[2 + i] = id; });
+  const s = mk({ schedule: { start: '2026-10-19', days } }); // Monday of the week containing Fri Oct 23
+  assert.equal(planForDate(s, '2026-10-23').id, 'a');   // Friday, week 1
+  assert.equal(planForDate(s, '2026-10-21').id, 'a');   // Wednesday = first workout
+  assert.equal(planForDate(s, '2026-10-20'), null);     // Tuesday = rest
+  assert.equal(planForDate(s, '2026-10-28'), null);     // week 2 Wednesday = off
+  assert.equal(planForDate(s, '2026-11-04').id, 'a');   // two weeks later, next month: on again
+  assert.equal(planForDate(s, '2026-11-11'), null);     // off week
+  assert.equal(planForDate(s, '2026-12-02').id, 'a');   // still on the same rhythm
+  assert.equal(weekdayIdx('2026-10-19'), 0);
+  assert.equal(mondayOf('2026-10-23'), '2026-10-19');
 });

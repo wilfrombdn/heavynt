@@ -1,6 +1,6 @@
 // Plans tab: schedule (any on/off cycle) and plan editor with exercise drop-downs.
 import { state, save, uid, exById } from './store.js';
-import { dateKey, addDays, cycleIndex, buildOnOff, parseKey } from './logic.js';
+import { dateKey, addDays, cycleIndex, mondayOf, parseKey, WEEKDAYS } from './logic.js';
 import { h, openSheet, ask, stepper, exerciseSelect, selectify, toast } from './ui.js';
 import { unit, weightStep, PAIR_NOTE } from './workout.js';
 
@@ -9,8 +9,9 @@ const planName = (id) => (state.plans.find((p) => p.id === id) || {}).name;
 
 function cycleSummary() {
   const d = state.schedule.days;
+  const weeks = d.length / 7;
   const on = d.filter(Boolean).length;
-  return `${d.length}-day cycle · ${on} on / ${d.length - on} off`;
+  return `Repeats ${weeks === 1 ? 'every week' : `every ${weeks} weeks`} · ${on} workout${on === 1 ? '' : 's'} per cycle`;
 }
 
 export function renderPlans(c) {
@@ -30,7 +31,7 @@ export function renderPlans(c) {
     h('div', { class: 'page-head' }, h('h1', null, 'Plans')),
     h('div', { class: 'card' },
       h('div', { class: 'row' }, h('div', { class: 'grow' }, h('div', { class: 'eyebrow' }, 'Schedule'),
-        h('div', { class: 'muted' }, cycleSummary() + (idx >= 0 ? ` · today is day ${idx + 1}` : ''))),
+        h('div', { class: 'muted' }, cycleSummary() + (idx >= 0 && state.schedule.days.length > 7 ? ` · this is week ${Math.floor(idx / 7) + 1}` : ''))),
         h('button', { class: 'btn slim', onClick: editSchedule }, 'Edit')),
       h('div', { class: 'strip-wrap' }, strip)),
     h('div', { class: 'section-title' }, 'Workout plans'),
@@ -105,43 +106,68 @@ function editPlan(plan) {
 }
 
 // ---------- schedule editor ----------
+// 1) put plans on weekdays  2) say how many weeks it repeats  3) say which week this is.
 function editSchedule() {
   openSheet('Schedule', (body, close) => {
     const s = state.schedule;
-    let on = Math.min(7, s.days.length) || 7;
-    let off = Math.max(0, s.days.length - on);
+    const weeks = () => s.days.length / 7;
+    const thisWeek = () => Math.floor(cycleIndex(s, dateKey()) / 7);
+    let tab = Math.max(0, thisWeek());
+
+    const resize = (n) => {
+      const len = n * 7;
+      while (s.days.length < len) s.days.push(null);
+      s.days.length = len;
+      if (tab >= n) tab = n - 1;
+      save(); draw();
+    };
+
     const draw = () => {
       body.replaceChildren();
-      const start = h('input', { type: 'date', class: 'text', value: s.start });
-      start.addEventListener('change', () => { if (start.value) { s.start = start.value; save(); draw(); } });
-      body.append(
-        h('p', { class: 'muted' }, 'Your plans repeat in a cycle. Pick a pattern, or set each day yourself.'),
-        h('div', { class: 'grid2' },
-          stepper({ value: on, min: 0, max: 30, label: 'Days on', onChange: (v) => { on = v; } }),
-          stepper({ value: off, min: 0, max: 30, label: 'Days off', onChange: (v) => { off = v; } })),
-        h('button', { class: 'btn', onClick: () => {
-          if (on + off < 1) return toast('Need at least one day');
-          s.days = buildOnOff(on, off, state.plans.map((p) => p.id));
-          save(); draw(); toast('Pattern applied, plans rotate across the on-days');
-        } }, `Apply ${on} on / ${off} off`),
-        h('div', { class: 'field' }, h('label', null, 'Cycle day 1 is'), start),
-        h('div', { class: 'section-title' }, `Cycle days (${s.days.length})`));
+      const n = weeks();
+      const today = dateKey();
+      const len = s.days.length;
 
-      s.days.forEach((pid, i) => {
+      const repeat = h('div', { class: 'seg wrap' }, ...[1, 2, 3, 4].map((k) => h('button', {
+        class: n === k ? 'on' : '', onClick: () => resize(k) }, k === 1 ? 'Every week' : `Every ${k} weeks`)));
+
+      body.append(
+        h('p', { class: 'muted' }, 'Pick what you train on each weekday. If your pattern spans more than one week, choose how often it repeats.'),
+        h('div', { class: 'field' }, h('label', null, 'How often does this repeat?'), repeat));
+
+      if (n > 1) {
+        const which = h('div', { class: 'seg' }, ...Array.from({ length: n }, (_, k) => h('button', {
+          class: thisWeek() === k ? 'on' : '',
+          onClick: () => { s.start = addDays(mondayOf(today), -7 * k); save(); tab = k; draw(); } }, `Week ${k + 1}`)));
+        const tabs = h('div', { class: 'seg' }, ...Array.from({ length: n }, (_, k) => h('button', {
+          class: tab === k ? 'on' : '', onClick: () => { tab = k; draw(); } }, `Week ${k + 1}`)));
+        body.append(
+          h('div', { class: 'field' }, h('label', null, 'Which week is THIS week?'), which),
+          h('div', { class: 'section-title' }, 'Set up each week'), tabs);
+      } else {
+        body.append(h('div', { class: 'section-title' }, 'Your week'));
+      }
+
+      for (let d = 0; d < 7; d++) {
+        const i = tab * 7 + d;
+        const base = addDays(s.start, i);
+        const gap = Math.ceil((parseKey(today) - parseKey(base)) / 86400000 / len);
+        const next = gap > 0 ? addDays(base, gap * len) : base;
+        const isToday = next === today;
         const native = h('select', null, h('option', { value: '' }, 'Rest'),
           ...state.plans.map((p) => h('option', { value: p.id }, p.name)));
-        native.value = pid || '';
+        native.value = s.days[i] || '';
         const sel = selectify(native);
         sel.addEventListener('change', () => { s.days[i] = sel.value || null; save(); });
         body.append(h('div', { class: 'day-row' },
-          h('div', { class: 'dl' }, h('b', null, `Day ${i + 1}`), h('span', { class: 'muted' }, dayName(addDays(s.start, i)))), sel));
-      });
+          h('div', { class: 'dl' }, h('b', null, WEEKDAYS[d]),
+            h('span', { class: 'muted' }, isToday ? 'Today' : `Next: ${parseKey(next).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`)),
+          sel));
+      }
 
-      body.append(
-        h('div', { class: 'grid2' },
-          h('button', { class: 'btn', onClick: () => { s.days.push(null); save(); draw(); } }, '+ Add day'),
-          h('button', { class: 'btn', onClick: () => { if (s.days.length > 1) { s.days.pop(); save(); draw(); } } }, '− Remove last')),
-        h('button', { class: 'btn primary', onClick: close }, 'Done'));
+      body.append(h('div', { class: 'btn-col' },
+        h('button', { class: 'btn', onClick: () => { for (let d = 0; d < 7; d++) s.days[tab * 7 + d] = null; save(); draw(); } }, 'Clear this week'),
+        h('button', { class: 'btn primary', onClick: close }, 'Done')));
     };
     draw();
   });

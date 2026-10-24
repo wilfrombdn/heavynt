@@ -200,9 +200,8 @@ export const DEFAULT_STD = {
 };
 
 // Starter programme: [exercise id, sets, reps, note]. Weights start at 0 so you set your own.
-// Day numbers are the day of the 7-day "on" block; days 1 and 7 are left as rest.
 export const STARTER_PLANS = [
-  { day: 2, name: 'Push', items: [
+  { weekday: 2, name: 'Push', items: [
     ['bench', 5, 5, 'Heavy · 4–6 reps · rest 3 min'],
     ['incline-db', 3, 8, 'A1 · superset with lateral raise'],
     ['cable-lateral', 3, 8, 'A2 · 8–10 per side · rest 75 s'],
@@ -211,7 +210,7 @@ export const STARTER_PLANS = [
     ['pec-deck', 1, 20, 'Finisher · triple drop: 20 → drop 25% → max → drop 25% → max'],
     ['machine-lateral', 2, 20, 'Finisher · 20–25 reps · rest 45 s'],
   ] },
-  { day: 3, name: 'Pull', items: [
+  { weekday: 3, name: 'Pull', items: [
     ['pullup', 5, 5, 'Heavy 1 · weighted pull-up (or heavy lat pulldown) · 4–6 reps · rest 3 min'],
     ['row', 3, 5, 'Heavy 2 · rest 2.5 min'],
     ['one-arm-cable-row', 3, 8, 'A1 · per side · superset with face pull'],
@@ -220,7 +219,7 @@ export const STARTER_PLANS = [
     ['reverse-pec-deck', 3, 10, 'B2 · rest 75 s'],
     ['lat-pulldown', 1, 15, 'Finisher · myo-reps: 15–20, then 4–5 mini-sets of 5 with 15 s rest'],
   ] },
-  { day: 4, name: 'Legs + Abs', items: [
+  { weekday: 4, name: 'Legs + Abs', items: [
     ['leg-press', 5, 5, 'Heavy · 5–6 reps · rest 3 min'],
     ['rdl', 3, 8, 'A1 · superset with calf raise'],
     ['db-calf', 3, 8, 'A2 · single-leg · 8–10 per side · rest 90 s'],
@@ -228,7 +227,7 @@ export const STARTER_PLANS = [
     ['cable-crunch', 3, 10, 'B2 · rest 75 s'],
     ['leg-ext', 1, 20, 'Finisher · 20 + one drop to failure'],
   ] },
-  { day: 5, name: 'Shoulders + Arms', items: [
+  { weekday: 5, name: 'Shoulders + Arms', items: [
     ['ohp', 5, 5, 'Heavy · standing · 4–6 reps · rest 3 min'],
     ['cgbp', 3, 8, 'A1 · superset with EZ-bar curl'],
     ['ez-curl', 3, 8, 'A2 · rest 90 s'],
@@ -238,7 +237,7 @@ export const STARTER_PLANS = [
     ['rope-pushdown', 2, 25, 'Finisher · arm burnout, straight after the curls'],
     ['cable-lateral', 1, 12, 'Finisher · drop set per side: to failure, drop, to failure'],
   ] },
-  { day: 6, name: 'Upper Volume', items: [
+  { weekday: 6, name: 'Upper Volume', items: [
     ['incline-bench', 5, 5, 'Heavy 1 · 4–6 reps · rest 3 min'],
     ['row', 3, 5, 'Heavy 2 · rest 2.5 min'],
     ['chest-row', 3, 8, 'A1 · chest-supported T-bar row · superset with machine chest press'],
@@ -250,10 +249,8 @@ export const STARTER_PLANS = [
   ] },
 ];
 
-// Cycle: 7 days on (days 2-6 are workouts), 7 days off. Today is placed on `todayIsDay`.
-export const STARTER_ON_DAYS = 7;
-export const STARTER_OFF_DAYS = 7;
-export const STARTER_TODAY_IS_DAY = 4;
+// Schedule: weekday index (Mon = 0) for each plan. Wed-Sun of "week 1"; week 2 is the week off (repeats every 2 weeks).
+export const STARTER_WEEKS = 2;
 
 // Dumbbell lifts done with a pair: the app takes the COMBINED weight (both dumbbells added up).
 // Their `std` is therefore the combined-weight benchmark.

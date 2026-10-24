@@ -160,3 +160,5 @@ textarea.text { resize: vertical; }
 .hint.note { margin: 6px 0 0; padding: 8px 10px; border: 1px solid #333; border-radius: 10px; color: #cfcfcf; }
 
 .hint.note-line { color: #b9b9b9; }
+
+.seg.wrap { flex-wrap: wrap; }

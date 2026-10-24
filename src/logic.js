@@ -8,8 +8,14 @@ export const parseKey = (k) => { const [y, m, d] = k.split('-').map(Number); ret
 export const dayDiff = (a, b) => Math.round((parseKey(a) - parseKey(b)) / 86400000);
 export const addDays = (key, n) => { const d = parseKey(key); d.setDate(d.getDate() + n); return dateKey(d); };
 
+// Monday-based weekday: Mon = 0 ... Sun = 6
+export const weekdayIdx = (key) => (parseKey(key).getDay() + 6) % 7;
+export const mondayOf = (key) => addDays(key, -weekdayIdx(key));
+export const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
 // ---------- schedule ----------
-// schedule = { start: 'YYYY-MM-DD', days: [planId|null, ...] }  (cycle repeats forever)
+// schedule = { start: 'YYYY-MM-DD' (a Monday = first day of "week 1"), days: [planId|null, ...] }
+// days holds 7 entries per week (Mon..Sun) and the whole pattern repeats every days.length/7 weeks.
 export function cycleIndex(schedule, key = dateKey()) {
   const len = schedule.days.length;
   if (!len) return -1;

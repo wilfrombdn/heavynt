@@ -1,6 +1,6 @@
 // App state, persistence (localStorage) and first-run seeding.
-import { LIBRARY, STARTER_PLANS, PAIRED, STARTER_ON_DAYS, STARTER_OFF_DAYS, STARTER_TODAY_IS_DAY } from './data.js';
-import { dateKey, addDays } from './logic.js';
+import { LIBRARY, STARTER_PLANS, PAIRED, STARTER_WEEKS } from './data.js';
+import { dateKey, addDays, mondayOf, weekdayIdx } from './logic.js';
 
 const KEY = 'workout-tracker-v1';
 export const DEFAULT_SETTINGS = {
@@ -11,24 +11,24 @@ export const DEFAULT_SETTINGS = {
 export const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
 
 const makePlans = () => STARTER_PLANS.map((p) => ({
-  id: uid(), name: p.name, day: p.day,
+  id: uid(), name: p.name, weekday: p.weekday,
   items: p.items.map(([ex, sets, reps, note]) => ({ ex, sets, reps, weight: 0, note })),
 }));
 
-// Day 1..N of the on-block get their plan, everything else is rest; today lands on STARTER_TODAY_IS_DAY.
+// Weekly pattern: each plan sits on its weekday in week 1; this week is week 1.
 function starterSchedule(plans) {
-  const days = Array(STARTER_ON_DAYS + STARTER_OFF_DAYS).fill(null);
-  plans.forEach((p) => { days[p.day - 1] = p.id; });
-  return { start: addDays(dateKey(), -(STARTER_TODAY_IS_DAY - 1)), days };
+  const days = Array(7 * STARTER_WEEKS).fill(null);
+  plans.forEach((p) => { days[p.weekday] = p.id; });
+  return { start: mondayOf(dateKey()), days };
 }
 
 function seed() {
   const plans = makePlans();
   return {
-    v: 3,
+    v: 4,
     settings: { ...DEFAULT_SETTINGS },
     exercises: LIBRARY.map((e) => ({ ...e })),
-    plans,
+    plans: plans.map(({ weekday, ...p }) => p),
     schedule: starterSchedule(plans),
     logs: [],
     active: null,
@@ -59,11 +59,32 @@ function migrate(s) {
     const usingOnlyOld = s.schedule.days.every((d) => !d || removed.has(d));
     if (usingOnlyOld) {
       const all = makePlans().map((p) => s.plans.find((q) => q.name === p.name) || p);
-      all.forEach((p, i) => { p.day = STARTER_PLANS[i].day; });
+      all.forEach((p, i) => { p.weekday = STARTER_PLANS[i].weekday; });
       s.schedule = starterSchedule(all);
     }
-    s.plans.forEach((p) => delete p.day);
+    s.plans.forEach((p) => { delete p.day; delete p.weekday; });
     s.v = 3;
+  }
+  if (s.v < 4) {
+    // v3 -> v4: schedules are calendar-based (Monday-anchored weeks that repeat every N weeks).
+    const names = new Set(STARTER_PLANS.map((p) => p.name));
+    const byId = new Map(s.plans.map((p) => [p.id, p]));
+    const starterOnly = s.schedule.days.every((d) => !d || (byId.get(d) && names.has(byId.get(d).name)));
+    if (starterOnly) {
+      const mine = STARTER_PLANS.map((sp) => {
+        const p = s.plans.find((q) => q.name === sp.name);
+        return p && { id: p.id, weekday: sp.weekday };
+      }).filter(Boolean);
+      s.schedule = starterSchedule(mine);
+    } else {
+      // keep the user's pattern, but re-anchor it to Monday and pad to whole weeks
+      const w = weekdayIdx(s.schedule.start);
+      const len = Math.ceil(s.schedule.days.length / 7) * 7;
+      const days = Array(len).fill(null);
+      s.schedule.days.forEach((d, i) => { days[(i + w) % len] = d; });
+      s.schedule = { start: mondayOf(s.schedule.start), days };
+    }
+    s.v = 4;
   }
   return s;
 }
