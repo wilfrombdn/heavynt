@@ -12,7 +12,15 @@ Minimal black & white Android workout tracker. Logs the weight on every exercise
 - Workout date & time recorded automatically; per-exercise weight history and charts
 - Add your own exercises in-app; optional reminders on workout days; copy/paste backup
 
-## Develop
+## Native app (v3+)
+`native/` is a true native Android app (Kotlin + Jetpack Compose), not a web view. It reads the same JSON backup format as the original web/Capacitor version (`src/` + `android/`, kept for reference), so data can be restored straight across.
+```
+.\scriptsuild-native.ps1                  # tests + signed APK -> dist\heavynt.apk
+.\scriptselease-native.ps1 3.0.1 "notes"  # builds + publishes a GitHub Release
+```
+`node scripts/gen-kotlin-data.mjs` regenerates the exercise library for Kotlin from `src/data.js`.
+
+## Develop (legacy web version)
 ```
 npm install
 npm run build        # bundles src/ -> www/app.js (open www/index.html#home in a browser to preview)
