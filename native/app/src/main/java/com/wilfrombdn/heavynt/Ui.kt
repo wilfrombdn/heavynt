@@ -3,6 +3,7 @@
 package com.wilfrombdn.heavynt
 
 import android.content.Context
+import android.os.SystemClock
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -49,16 +51,20 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.addPathNodes
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -217,15 +223,29 @@ fun HTextField(
     keyboard: KeyboardType = KeyboardType.Text, singleLine: Boolean = true, minLines: Int = 1, center: Boolean = false, big: Boolean = false,
 ) {
     val shape = RoundedCornerShape(12.dp)
+    var field by remember { mutableStateOf(TextFieldValue(value, TextRange(value.length))) }
+    if (field.text != value) field = TextFieldValue(value, TextRange(value.length))
+    // Tapping in selects everything, so typing replaces the old value; the tap's own cursor move lands just after focus, so keep the selection for a moment.
+    var focusedAt by remember { mutableStateOf(0L) }
     BasicTextField(
-        value = value, onValueChange = onChange, singleLine = singleLine, minLines = minLines,
+        value = field, singleLine = singleLine, minLines = minLines,
+        onValueChange = { v ->
+            val justFocused = SystemClock.uptimeMillis() - focusedAt < 400
+            field = if (justFocused && v.text == field.text && singleLine) v.copy(selection = TextRange(0, v.text.length)) else v
+            if (v.text != value) onChange(v.text)
+        },
         keyboardOptions = KeyboardOptions(keyboardType = keyboard),
         textStyle = TextStyle(
             fontSize = if (big) 18.sp else 15.sp, fontWeight = if (big) FontWeight.SemiBold else FontWeight.Normal, color = Color.White,
             textAlign = if (center) TextAlign.Center else TextAlign.Start,
         ),
         cursorBrush = SolidColor(Color.White),
-        modifier = modifier,
+        modifier = modifier.onFocusChanged { f ->
+            if (!f.isFocused) focusedAt = 0L
+            else if (singleLine && focusedAt == 0L) {
+                field = field.copy(selection = TextRange(0, field.text.length)); focusedAt = SystemClock.uptimeMillis()
+            }
+        },
         decorationBox = { inner ->
             Box(Modifier.fillMaxWidth().clip(shape).background(C.field).border(1.dp, C.fieldLine, shape).padding(horizontal = 12.dp, vertical = 12.dp),
                 contentAlignment = if (center) Alignment.Center else Alignment.CenterStart) {
@@ -319,7 +339,8 @@ fun Chips(selected: Set<String>, onToggle: (String) -> Unit) {
 class Opt(val value: String, val label: String, val group: String? = null)
 
 @Composable
-fun PickerField(options: List<Opt>, value: String, onChange: (String) -> Unit, modifier: Modifier = Modifier, placeholder: String = "Choose…") {
+fun PickerField(options: List<Opt>, value: String, onChange: (String) -> Unit, modifier: Modifier = Modifier, placeholder: String = "Choose…",
+                onAddNew: ((String) -> Unit)? = null) {
     var open by remember { mutableStateOf(false) }
     val shape = RoundedCornerShape(12.dp)
     val current = options.firstOrNull { it.value == value }
@@ -333,19 +354,40 @@ fun PickerField(options: List<Opt>, value: String, onChange: (String) -> Unit, m
     if (open) {
         Sheet(null, onDismiss = { open = false }) {
             var q by remember { mutableStateOf("") }
-            if (options.size > 12) HTextField(q, { q = it }, placeholder = "Search…")
+            val searchable = options.size > 12
             val shown = options.filter { it.label.contains(q.trim(), ignoreCase = true) }
-            var lastGroup: String? = null
-            shown.forEach { o ->
-                if (o.group != null && o.group != lastGroup) { SectionTitle(o.group); lastGroup = o.group }
-                val on = o.value == value
-                Row(Modifier.fillMaxWidth().clickable { onChange(o.value); open = false }.padding(vertical = 13.dp, horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(o.label, style = TextStyle(fontSize = 16.sp, color = Color.White, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal), modifier = Modifier.weight(1f))
-                    if (on) Icon(Icons.check, null, tint = Color.White, modifier = Modifier.size(20.dp))
+            fun pick(o: Opt) { onChange(o.value); open = false }
+            if (!searchable) {
+                shown.forEach { o -> PickerRow(o, o.value == value) { pick(o) } }
+            } else {
+                HTextField(q, { q = it }, placeholder = "Search…")
+                // Fixed height (half the screen) so the list doesn't jump around as results change.
+                val listHeight = (LocalConfiguration.current.screenHeightDp * 0.5f).dp
+                LazyColumn(Modifier.fillMaxWidth().height(listHeight)) {
+                    if (shown.isEmpty()) item {
+                        Column(Modifier.fillMaxWidth().padding(vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Muted(if (onAddNew != null) "No exercise found" else "No matches")
+                            if (onAddNew != null && q.isNotBlank()) HButton("+ Add \"${q.trim()}\"", { open = false; onAddNew(q.trim()) })
+                        }
+                    }
+                    shown.forEachIndexed { i, o ->
+                        if (o.group != null && o.group != shown.getOrNull(i - 1)?.group) item { SectionTitle(o.group) }
+                        item { PickerRow(o, o.value == value) { pick(o) } }
+                    }
                 }
-                Box(Modifier.fillMaxWidth().height(1.dp).background(C.line))
             }
         }
+    }
+}
+
+@Composable
+private fun PickerRow(o: Opt, on: Boolean, onClick: () -> Unit) {
+    Column {
+        Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 13.dp, horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(o.label, style = TextStyle(fontSize = 16.sp, color = Color.White, fontWeight = if (on) FontWeight.Bold else FontWeight.Normal), modifier = Modifier.weight(1f))
+            if (on) Icon(Icons.check, null, tint = Color.White, modifier = Modifier.size(20.dp))
+        }
+        Box(Modifier.fillMaxWidth().height(1.dp).background(C.line))
     }
 }
 
@@ -353,10 +395,13 @@ fun exerciseOptions(exercises: List<Exercise>): List<Opt> =
     CATEGORIES.flatMap { cat -> exercises.filter { it.cat == cat }.sortedBy { it.name }.map { Opt(it.id, it.name, cat) } } +
         exercises.filter { it.cat !in CATEGORIES }.sortedBy { it.name }.map { Opt(it.id, it.name, it.cat) }
 
+/** Exercise drop-down; a search with no match offers to create the exercise, then picks it. */
 @Composable
-fun ExercisePicker(exercises: List<Exercise>, value: String, onChange: (String) -> Unit, modifier: Modifier = Modifier) {
+fun ExercisePicker(vm: AppViewModel, exercises: List<Exercise>, value: String, onChange: (String) -> Unit, modifier: Modifier = Modifier) {
     val opts = remember(exercises) { exerciseOptions(exercises) }
-    PickerField(opts, value, onChange, modifier, placeholder = "Choose exercise…")
+    var newName by remember { mutableStateOf<String?>(null) }
+    PickerField(opts, value, onChange, modifier, placeholder = "Choose exercise…", onAddNew = { newName = it })
+    newName?.let { n -> ExerciseEditor(vm, null, initialName = n, onSaved = onChange) { newName = null } }
 }
 
 // ---------- icons ----------

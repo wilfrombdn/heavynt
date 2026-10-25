@@ -177,9 +177,9 @@ private fun Compare(st: AppState, ex: Exercise, hist: List<HistEntry>) {
 }
 
 @Composable
-private fun ExerciseEditor(vm: AppViewModel, ex: Exercise?, onDismiss: () -> Unit) {
+fun ExerciseEditor(vm: AppViewModel, ex: Exercise?, initialName: String = "", onSaved: (String) -> Unit = {}, onDismiss: () -> Unit) {
     val ctx = LocalContext.current
-    var name by remember { mutableStateOf(ex?.name ?: "") }
+    var name by remember { mutableStateOf(ex?.name ?: initialName) }
     var cat by remember { mutableStateOf(ex?.cat ?: "Chest") }
     var prim by remember { mutableStateOf(ex?.primary?.toSet() ?: emptySet()) }
     var sec by remember { mutableStateOf(ex?.secondary?.toSet() ?: emptySet()) }
@@ -216,7 +216,7 @@ private fun ExerciseEditor(vm: AppViewModel, ex: Exercise?, onDismiss: () -> Uni
                         stdF = if (ex != null && ex.std == newStd) ex.stdF else 0.0,
                         bw = if (bw) (ex?.bw?.takeIf { it > 0 } ?: 1.0) else 0.0, pair = pair,
                     )
-                    vm.update { it.upsertExercise(built) }
+                    vm.update { it.upsertExercise(built) }; onSaved(built.id)
                     toast(ctx, if (ex == null) "Exercise added" else "Saved"); onDismiss()
                 }
             }

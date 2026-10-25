@@ -98,7 +98,7 @@ private fun EditLogSheet(st: AppState, vm: AppViewModel, log: Log, onDismiss: ()
         rows.forEachIndexed { i, r ->
             val ex = st.ex(r.ex)
             Column(Modifier.fillMaxWidth().border(1.dp, C.line, RoundedCornerShape(14.dp)).padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ExercisePicker(st.exercises, r.ex, { v -> r.ex = v })
+                ExercisePicker(vm, st.exercises, r.ex, { v -> r.ex = v })
                 if (ex?.pair == true) NoteBox("Weight is both dumbbells combined. $PAIR_NOTE")
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     MiniNumber("Sets", r.sets, { r.sets = it }, Modifier.weight(1f))

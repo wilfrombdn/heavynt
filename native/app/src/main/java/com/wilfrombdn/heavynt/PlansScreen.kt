@@ -178,7 +178,7 @@ private fun PlanEditor(st: AppState, vm: AppViewModel, planId: String, onDismiss
         plan.items.forEachIndexed { i, it ->
             val ex = st.ex(it.ex)
             Column(Modifier.fillMaxWidth().border(1.dp, C.line, RoundedCornerShape(14.dp)).padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ExercisePicker(st.exercises, it.ex, { v -> editItem(i) { x -> x.copy(ex = v) } })
+                ExercisePicker(vm, st.exercises, it.ex, { v -> editItem(i) { x -> x.copy(ex = v) } })
                 if (ex?.pair == true) NoteBox("Weight is both dumbbells combined. $PAIR_NOTE")
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     MiniNumber("Sets", it.sets.toDouble(), { v -> editItem(i) { x -> x.copy(sets = v.toInt()) } }, Modifier.weight(1f))

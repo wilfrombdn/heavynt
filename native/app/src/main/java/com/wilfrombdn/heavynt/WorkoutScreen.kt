@@ -318,7 +318,7 @@ private fun AddExerciseSheet(st: AppState, vm: AppViewModel, onDismiss: () -> Un
     var weight by remember { mutableStateOf(0.0) }
     val ex = st.ex(exId)
     Sheet("Add exercise", onDismiss) {
-        ExercisePicker(st.exercises, exId, { id ->
+        ExercisePicker(vm, st.exercises, exId, { id ->
             exId = id
             exerciseHistory(st, id).lastOrNull()?.let { sets = it.sets.toDouble(); reps = it.reps.toDouble(); weight = it.weight }
         })
