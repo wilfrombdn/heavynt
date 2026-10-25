@@ -31,10 +31,12 @@ import androidx.compose.ui.input.pointer.pointerInput
 
 // Front/back anatomy figure drawn with real Canvas paths. Region shapes are SVG path data in a 200x400 box per view.
 
-/** dx shifts the shape sideways; sx < 1 slims it around the arm's centre line. */
-private class Shape(val d: String, val mirror: Boolean, val dx: Float = 0f, val sx: Float = 1f)
+/** dx shifts the shape sideways; sx < 1 slims it around the arm's centre line; rot swings it out from the shoulder (degrees). */
+private class Shape(val d: String, val mirror: Boolean, val dx: Float = 0f, val sx: Float = 1f, val rot: Float = 0f)
 
 private const val ARM_CX = 50f
+private const val SHOULDER_X = 60f
+private const val SHOULDER_Y = 97f
 
 /** height < 1 draws the whole figure shorter, kept centred at the same middle line. */
 private class Figure(val front: Map<String, List<Shape>>, val back: Map<String, List<Shape>>, val outline: List<Shape>, val height: Float = 1f)
@@ -103,13 +105,14 @@ private const val ARM_IN = 7f
 private const val ARM_SLIM = 0.8f
 private const val F_DELT_IN = "M80 70C75 67 70 66 66 68C65 76 66 84 68 89C72 84 76 80 80 77C82 75 82 72 80 70Z"
 private const val F_DELT_OUT = "M63 69C58 71 55 76 55 81C54 90 57 96 62 97C64 94 65 91 66 89C64 82 63 76 63 69Z"
-private fun arm(d: String) = Shape(d, true, ARM_IN, ARM_SLIM)
+/** Arms angle slightly away from the body, still straight. */
+private const val ARM_OUT = 7f
+private fun arm(d: String) = Shape(d, true, ARM_IN, ARM_SLIM, ARM_OUT)
 
 private val FEMALE = Figure(
     front = linkedMapOf(
         "neck" to listOf(Shape("M95 48C95 52 94 55 92 57C94 59 97 60 99 60L99 49C98 49 96 49 95 48Z", true)),
-        "hipFlexors" to listOf(Shape("M88 158C92 159 96 159 99 158L99 167C94 166 90 165 86 165C86 162 87 160 88 158Z", true)),
-        "abductors" to listOf(Shape("M75 161C70 165 66 172 65 180C64 184 65 188 66 191C67 184 70 177 74 171C76 167 76 164 75 161Z", true)),
+        "hipFlexors" to listOf(Shape("M81 160C84 161 88 163 91 166C90 168 88 169 86 168C83 166 80 164 78 162C79 161 80 160 81 160Z", true)),
         "upperChest" to listOf(Shape("M98 69C92 67 86 67 81 70C80 73 80 76 81 79C87 78 93 78 98 80Z", true)),
         "chest" to listOf(Shape("M98 83C90 80 82 81 78 87C73 95 75 105 83 109C90 112 95 109 98 104Z", true)),
         "shoulders" to listOf(Shape(F_DELT_IN, true)),
@@ -118,8 +121,7 @@ private val FEMALE = Figure(
         "forearms" to listOf(arm(FOREARM)),
         "abs" to listOf(Shape("M98 113C94 113 91 114 90 117C89 128 89 142 91 151C93 155 96 156 98 155Z", true)),
         "obliques" to listOf(Shape("M83 111C82 119 84 126 86 132C85 142 80 151 74 159C79 160 84 160 88 158C87 145 87 128 88 115C86 114 84 113 83 111Z", true)),
-        "quads" to listOf(Shape("M77 168C67 186 67 226 79 256C86 261 92 260 96 255C97 246 96 236 93 228C90 212 89 192 91 172C86 169 82 168 77 168Z", true)),
-        "adductors" to listOf(Shape("M93 169C96 169 98 169 99 170L99 238C98 236 97 232 96 229C93 214 92 194 93 176C93 173 93 171 93 169Z", true)),
+        "quads" to listOf(Shape("M73 164C63 183 67 226 79 256C86 261 93 260 97 255C100 232 100 200 98 172C95 171 92 170 89 170C84 168 79 166 73 164Z", true)),
         "calves" to listOf(Shape("M89 267C91 267 93 266 95 265C99 288 98 320 93 345C92 346 90 346 89 346C88 320 88 292 89 267Z", true)),
         "tibialis" to listOf(Shape("M78 265C73 286 77 318 84 345C85 346 86 346 87 346C86 320 86 292 87 267C84 267 81 266 78 265Z", true)),
     ),
@@ -143,10 +145,10 @@ private val FEMALE = Figure(
         Shape("M100 13C109 13 115 21 115 31C115 41 109 49 100 49C91 49 85 41 85 31C85 21 91 13 100 13Z", false),
         Shape("M95 48C95 52 94 55 92 57M105 48C105 52 106 55 108 57", false),
         Shape("M92 57C87 60 80 63 72 67", true),
-        Shape("M37 201C32 207 34 217 41 219C47 217 49 208 47 201", true, ARM_IN, ARM_SLIM),
+        Shape("M37 201C32 207 34 217 41 219C47 217 49 208 47 201", true, ARM_IN, ARM_SLIM, ARM_OUT),
         Shape("M79 350C75 361 78 371 85 372C90 372 93 368 93 360L93 350", true),
     ),
-    height = 0.92f,
+    height = 0.88f,
 )
 
 private val MIRROR = Matrix().apply { translate(200f, 0f); scale(-1f, 1f) }
@@ -156,6 +158,7 @@ private fun build(sh: Shape): List<Path> {
     val base = PathParser().parsePathString(d).toPath().apply {
         if (sh.sx != 1f) transform(Matrix().apply { translate(ARM_CX * (1 - sh.sx), 0f); scale(sh.sx, 1f) })
         if (dx != 0f) transform(offsetMatrix(dx))
+        if (sh.rot != 0f) transform(Matrix().apply { translate(SHOULDER_X, SHOULDER_Y); rotateZ(sh.rot); translate(-SHOULDER_X, -SHOULDER_Y) })
     }
     return if (mirror) listOf(base, Path().apply { addPath(base); transform(MIRROR) }) else listOf(base)
 }
@@ -234,39 +237,43 @@ fun BodyMap(scores: Map<String, RegionScore>, selected: String?, onPick: (String
                     })
                 }
             }
+            fun colorOf(b: Built): Triple<Int, Int, Int>? = scores[b.key]?.let { scoreRGB(it.score, female) }
+            fun argb(c: Triple<Int, Int, Int>, a: Float) = android.graphics.Color.argb((a.coerceIn(0f, 1f) * 255).toInt(), c.first, c.second, c.third)
+            // Pass 1: every glow behind everything, so a muscle's glow never paints over its neighbour's fill.
+            // Layered glow: wide translucent strokes that fade outwards (no blur filters, so it renders identically everywhere).
+            for (b in all) {
+                val sc = scores[b.key] ?: continue
+                val c = colorOf(b)!!
+                val k = scoreStrength(sc.score)
+                val layers = 8
+                for (i in layers - 1 downTo 0) {
+                    val width = (2.2f + i * 2.4f) * (1f + 0.45f * k)
+                    val alpha = 0.2f * (1f - i / layers.toFloat()) * (0.8f + 0.6f * k) * pulse.value
+                    val halo = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                        style = Paint.Style.STROKE; strokeWidth = width; color = argb(c, alpha)
+                        strokeJoin = Paint.Join.ROUND; strokeCap = Paint.Cap.ROUND
+                    }
+                    for (p in b.paths) nc.drawPath(p.asAndroidPath(), halo)
+                }
+            }
+            // Pass 2: fills and edges on top.
             for (b in all) {
                 val sc = scores[b.key]
                 val isSel = b.key == selected
-                if (sc != null) {
-                    val (r, g, bl) = scoreRGB(sc.score, female)
-                    val k = scoreStrength(sc.score)
-                    val breathe = pulse.value
-                    fun argb(a: Float) = android.graphics.Color.argb((a.coerceIn(0f, 1f) * 255).toInt(), r, g, bl)
-                    // layered glow: wide translucent strokes that fade outwards (no blur filters, so it renders identically everywhere)
-                    val layers = 8
-                    for (i in layers - 1 downTo 0) {
-                        val width = (2.2f + i * 2.4f) * (1f + 0.45f * k)
-                        val alpha = 0.2f * (1f - i / layers.toFloat()) * (0.8f + 0.6f * k) * breathe
-                        val halo = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                            style = Paint.Style.STROKE; strokeWidth = width; color = argb(alpha)
-                            strokeJoin = Paint.Join.ROUND; strokeCap = Paint.Cap.ROUND
-                        }
-                        for (p in b.paths) nc.drawPath(p.asAndroidPath(), halo)
-                    }
-                    val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL; color = argb(0.3f + 0.28f * k) }
-                    val edge = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                        style = Paint.Style.STROKE; strokeWidth = if (isSel) 2.4f else 1f; strokeJoin = Paint.Join.ROUND
-                        color = if (isSel) android.graphics.Color.WHITE else argb(1f)
-                    }
-                    for (p in b.paths) { nc.drawPath(p.asAndroidPath(), fill); nc.drawPath(p.asAndroidPath(), edge) }
-                } else {
-                    val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL; color = android.graphics.Color.argb(9, 255, 255, 255) }
-                    val edge = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                        style = Paint.Style.STROKE; strokeWidth = if (isSel) 2.4f else 1f; strokeJoin = Paint.Join.ROUND
-                        color = if (isSel) android.graphics.Color.WHITE else android.graphics.Color.argb(72, 255, 255, 255)
-                    }
-                    for (p in b.paths) { nc.drawPath(p.asAndroidPath(), fill); nc.drawPath(p.asAndroidPath(), edge) }
+                val c = colorOf(b)
+                val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    style = Paint.Style.FILL
+                    color = if (c != null) argb(c, 0.3f + 0.28f * scoreStrength(sc!!.score)) else android.graphics.Color.argb(9, 255, 255, 255)
                 }
+                val edge = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    style = Paint.Style.STROKE; strokeWidth = if (isSel) 2.4f else 1f; strokeJoin = Paint.Join.ROUND
+                    color = when {
+                        isSel -> android.graphics.Color.WHITE
+                        c != null -> argb(c, 1f)
+                        else -> android.graphics.Color.argb(72, 255, 255, 255)
+                    }
+                }
+                for (p in b.paths) { nc.drawPath(p.asAndroidPath(), fill); nc.drawPath(p.asAndroidPath(), edge) }
             }
             nc.restore()
             nc.drawText("FRONT", 100f * s, fig.labelY * s, labelPaint)
