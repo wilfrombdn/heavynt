@@ -2,6 +2,8 @@
 
 package com.wilfrombdn.heavynt
 
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -45,10 +47,14 @@ import androidx.compose.foundation.layout.IntrinsicSize
 
 @Composable
 fun Screen(content: @Composable () -> Unit) {
-    Column(
-        Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) { content() }
+    // Short pages sit in the middle of the screen; long ones scroll from the top as usual.
+    androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize()) {
+        val h = maxHeight
+        Column(
+            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).heightIn(min = h).padding(horizontal = 24.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
+        ) { content() }
+    }
 }
 
 @Composable
