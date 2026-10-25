@@ -165,9 +165,11 @@ private fun SummaryLine(label: String, value: String, color: Color) {
 
 // ---------------- profile ----------------
 private val LEVEL_INFO = mapOf(
+    "beginner" to "Beginner: just starting out",
     "novice" to "Novice: about 6 months of training",
     "intermediate" to "Intermediate: a couple of solid years",
     "advanced" to "Advanced: serious, multi-year lifter",
+    "elite" to "Elite: competitive strength athlete",
 )
 
 fun profileSummary(s: Settings): String {
@@ -205,8 +207,8 @@ fun ProfileSheet(st: AppState, vm: AppViewModel, onDismiss: () -> Unit) {
             Stepper(inch, { inch = it }, Modifier.weight(1f), "Height (in)", min = 0.0, max = 11.0)
         } else Stepper(cm, { cm = it }, label = "Height (cm)", min = 120.0, max = 230.0)
         Labeled("Where should your strength be?") {
-            Segmented(listOf("novice" to "Novice", "intermediate" to "Intermediate", "advanced" to "Advanced"), level, { level = it })
-            Text(LEVEL_INFO[level] ?: "", style = T.small)
+            PickerField(LEVELS.map { Opt(it, LEVEL_INFO[it] ?: it) }, level, { level = it })
+            Text("Intermediate = the average lifter with your sex, age and weight.", style = T.small)
         }
         HButton("Save", {
             if (bw <= 0) toast(ctx, "Enter your bodyweight") else {

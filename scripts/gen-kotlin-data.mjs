@@ -1,12 +1,24 @@
 // Generates native/.../LibraryData.kt from src/data.js so the native app and the web source share one library.
-import { LIBRARY, STARTER_PLANS, STARTER_WEEKS } from '../src/data.js';
+import { LIBRARY, STARTER_PLANS, STARTER_WEEKS, STANDARDS } from '../src/data.js';
 import { writeFileSync } from 'node:fs';
 
 const d = (x) => (Number.isInteger(x) ? x + ".0" : String(x));
 const q = (s) => JSON.stringify(s).replace(/\$/g, '\$');
 const list = (a) => `listOf(${a.map(q).join(', ')})`;
 const lines = LIBRARY.map((e) =>
-  `    Exercise(${q(e.id)}, ${q(e.name)}, ${q(e.cat)}, ${list(e.primary)}, ${list(e.secondary)}, ${d(e.std)}, ${d(e.bw)}, ${e.pair})`);
+  `    Exercise(${q(e.id)}, ${q(e.name)}, ${q(e.cat)}, ${list(e.primary)}, ${list(e.secondary)}, ${d(e.std)}, ${d(e.bw)}, ${e.pair}, stdF = ${d(e.stdF)})`);
+const S = STANDARDS;
+const nums = (o) => `mapOf(${Object.entries(o).map(([k, v]) => `${q(k)} to ${d(v)}`).join(', ')})`;
+const sex = (x) => `SexStandard(${d(x.refKg)}, ${d(x.exponent)}, ${nums(x.levels)})`;
+const standards = `val STANDARDS = Standards(
+    male = ${sex(S.male)},
+    female = ${sex(S.female)},
+    age = listOf(${S.age.map(([a, f]) => `${d(a)} to ${d(f)}`).join(', ')}),
+    percentiles = ${nums(S.percentiles)},
+    femaleRatio = ${nums(S.femaleRatio)},
+    femaleRatioDefault = ${d(S.femaleRatioDefault)},
+    bodyweightFloor = ${d(S.bodyweightFloor)},
+)`;
 const plans = STARTER_PLANS.map((p) =>
   `    StarterPlan(${q(p.name)}, ${p.weekday}, listOf(\n${p.items.map(([ex, sets, reps, note]) =>
     `        PlanItem(${q(ex)}, ${sets}, ${reps}, 0.0, ${q(note || '')})`).join(',\n')}\n    ))`);
@@ -20,6 +32,8 @@ ${lines.join(',\n')}
 )
 
 const val STARTER_WEEKS = ${STARTER_WEEKS}
+
+${standards}
 
 val STARTER_PLANS: List<StarterPlan> = listOf(
 ${plans.join(',\n')}

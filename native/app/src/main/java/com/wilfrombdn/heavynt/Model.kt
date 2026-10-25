@@ -32,6 +32,8 @@ data class Exercise(
     val bw: Double = 0.0,
     val pair: Boolean = false,
     val custom: Boolean = false,
+    /** Women's benchmark (same units as std); 0 = work it out from std and the muscle it trains. */
+    val stdF: Double = 0.0,
 )
 
 @Serializable
@@ -103,7 +105,7 @@ data class SavedPlan(val id: String, val name: String, val plans: List<Plan>, va
 
 @Serializable
 data class AppState(
-    val v: Int = 6,
+    val v: Int = 7,
     val settings: Settings = Settings(),
     val exercises: List<Exercise> = emptyList(),
     val plans: List<Plan> = emptyList(),

@@ -35,16 +35,18 @@ fun seedState(): AppState {
 /** Library additions shipped in newer versions are merged in without touching user data. */
 fun normalize(s: AppState): AppState {
     val have = s.exercises.map { it.id }.toSet()
-    // v6 split shoulders/back/core into finer muscles: built-in exercises take the new muscle tags.
+    // v7: finer muscle map and research-based benchmarks, so built-in exercises take the library's muscles and benchmarks.
     val lib = LIBRARY.associateBy { it.id }
-    val retagged = if (s.v < 6) s.exercises.map { e -> lib[e.id]?.takeIf { !e.custom }?.let { e.copy(primary = it.primary, secondary = it.secondary) } ?: e } else s.exercises
+    val retagged = if (s.v < 7) s.exercises.map { e ->
+        lib[e.id]?.takeIf { !e.custom }?.let { e.copy(primary = it.primary, secondary = it.secondary, std = it.std, stdF = it.stdF) } ?: e
+    } else s.exercises
     val merged = retagged + LIBRARY.filter { it.id !in have }
     val cutoff = dateKey(today().minusDays(60))
     val overrides = s.overrides.filterKeys { it >= cutoff }
     val plans = if (s.v < 5) s.plans.map(::inferSupersets) else s.plans
     // Weights saved before the monthly weigh-in existed count as current, so nobody is asked straight after updating.
     val settings = if (s.settings.bodyweight > 0 && s.settings.bodyweightSetAt.isEmpty()) s.settings.copy(bodyweightSetAt = dateKey()) else s.settings
-    return s.copy(v = 6, exercises = merged, plans = plans, overrides = overrides, settings = settings)
+    return s.copy(v = 7, exercises = merged, plans = plans, overrides = overrides, settings = settings)
 }
 
 class Storage(private val file: File) {

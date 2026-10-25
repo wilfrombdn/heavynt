@@ -29,7 +29,7 @@ export const REGION_GROUPS = {
   Lower: ['glutes', 'quads', 'hamstrings', 'calves'],
 };
 
-export const CATEGORIES = ['Chest', 'Back', 'Shoulders', 'Arms', 'Core', 'Legs', 'Olympic'];
+export const CATEGORIES = ['Chest', 'Back', 'Shoulders', 'Arms', 'Core', 'Legs', 'Olympic', 'Neck'];
 
 const E = (id, name, cat, primary, secondary, std, bw = 0) => ({
   id, name, cat, primary, secondary, std, bw, custom: false,
@@ -37,36 +37,36 @@ const E = (id, name, cat, primary, secondary, std, bw = 0) => ({
 
 const RAW = [
   // Chest
-  E('bench', 'Barbell Bench Press', 'Chest', ['chest'], ['shoulders', 'triceps'], 1.25),
-  E('incline-bench', 'Incline Barbell Bench Press', 'Chest', ['upperChest'], ['shoulders', 'triceps'], 1.0),
-  E('db-bench', 'Dumbbell Bench Press', 'Chest', ['chest'], ['shoulders', 'triceps'], 0.5),
-  E('incline-db', 'Incline Dumbbell Press', 'Chest', ['upperChest'], ['shoulders', 'triceps'], 0.42),
+  E('bench', 'Barbell Bench Press', 'Chest', ['chest'], ['shoulders', 'triceps'], 1.22),
+  E('incline-bench', 'Incline Barbell Bench Press', 'Chest', ['upperChest'], ['shoulders', 'triceps'], 1.08),
+  E('db-bench', 'Dumbbell Bench Press', 'Chest', ['chest'], ['shoulders', 'triceps'], 0.49),
+  E('incline-db', 'Incline Dumbbell Press', 'Chest', ['upperChest'], ['shoulders', 'triceps'], 0.45),
   E('chest-fly', 'Cable Chest Fly', 'Chest', ['chest'], ['shoulders'], 0.3),
   E('pushup', 'Push-Up', 'Chest', ['chest'], ['shoulders', 'triceps'], 1.0, 0.64),
   E('dip', 'Dip', 'Chest', ['chest', 'triceps'], ['shoulders'], 1.5, 1),
   // Back
-  E('deadlift', 'Deadlift', 'Back', ['lowerBack', 'glutes', 'hamstrings'], ['traps', 'lats', 'forearms', 'quads'], 1.75),
-  E('row', 'Barbell Row', 'Back', ['lats', 'upperBack'], ['rearDelts', 'biceps', 'lowerBack', 'forearms'], 0.9),
+  E('deadlift', 'Deadlift', 'Back', ['lowerBack', 'glutes', 'hamstrings'], ['traps', 'lats', 'forearms', 'quads'], 1.93),
+  E('row', 'Barbell Row', 'Back', ['lats', 'upperBack'], ['rearDelts', 'biceps', 'lowerBack', 'forearms'], 1.1),
   E('pullup', 'Pull-Up', 'Back', ['lats'], ['upperBack', 'biceps', 'forearms'], 1.3, 1),
   E('chinup', 'Chin-Up', 'Back', ['lats', 'biceps'], ['upperBack', 'forearms'], 1.4, 1),
-  E('lat-pulldown', 'Lat Pulldown', 'Back', ['lats'], ['upperBack', 'biceps'], 0.9),
-  E('cable-row', 'Seated Cable Row', 'Back', ['upperBack', 'lats'], ['rearDelts', 'biceps'], 0.9),
-  E('db-row', 'Dumbbell Row', 'Back', ['lats'], ['upperBack', 'biceps', 'forearms'], 0.45),
-  E('tbar-row', 'T-Bar Row', 'Back', ['upperBack', 'lats'], ['rearDelts', 'biceps', 'lowerBack'], 0.8),
+  E('lat-pulldown', 'Lat Pulldown', 'Back', ['lats'], ['upperBack', 'biceps'], 1.05),
+  E('cable-row', 'Seated Cable Row', 'Back', ['upperBack', 'lats'], ['rearDelts', 'biceps'], 1.08),
+  E('db-row', 'Dumbbell Row', 'Back', ['lats'], ['upperBack', 'biceps', 'forearms'], 0.55),
+  E('tbar-row', 'T-Bar Row', 'Back', ['upperBack', 'lats'], ['rearDelts', 'biceps', 'lowerBack'], 0.97),
   E('back-ext', 'Back Extension', 'Back', ['lowerBack'], ['glutes', 'hamstrings'], 0.75, 0.5),
   E('shrug', 'Barbell Shrug', 'Back', ['traps'], ['forearms'], 1.1),
   // Shoulders
-  E('ohp', 'Overhead Press', 'Shoulders', ['shoulders'], ['sideDelts', 'triceps', 'traps'], 0.75),
-  E('db-press', 'Dumbbell Shoulder Press', 'Shoulders', ['shoulders'], ['sideDelts', 'triceps'], 0.34),
-  E('arnold', 'Arnold Press', 'Shoulders', ['shoulders', 'sideDelts'], ['triceps'], 0.3),
-  E('lateral', 'Lateral Raise', 'Shoulders', ['sideDelts'], ['traps'], 0.16),
-  E('rear-delt', 'Rear Delt Fly', 'Shoulders', ['rearDelts'], ['upperBack'], 0.16),
+  E('ohp', 'Overhead Press', 'Shoulders', ['shoulders'], ['sideDelts', 'triceps', 'traps'], 0.78),
+  E('db-press', 'Dumbbell Shoulder Press', 'Shoulders', ['shoulders'], ['sideDelts', 'triceps'], 0.39),
+  E('arnold', 'Arnold Press', 'Shoulders', ['shoulders', 'sideDelts'], ['triceps'], 0.34),
+  E('lateral', 'Lateral Raise', 'Shoulders', ['sideDelts'], ['traps'], 0.21),
+  E('rear-delt', 'Rear Delt Fly', 'Shoulders', ['rearDelts'], ['upperBack'], 0.18),
   E('face-pull', 'Face Pull', 'Shoulders', ['rearDelts', 'upperBack'], ['traps'], 0.35),
   // Arms
-  E('bb-curl', 'Barbell Curl', 'Arms', ['biceps'], ['forearms'], 0.6),
-  E('db-curl', 'Dumbbell Curl', 'Arms', ['biceps'], ['forearms'], 0.28),
+  E('bb-curl', 'Barbell Curl', 'Arms', ['biceps'], ['forearms'], 0.58),
+  E('db-curl', 'Dumbbell Curl', 'Arms', ['biceps'], ['forearms'], 0.27),
   E('hammer', 'Hammer Curl', 'Arms', ['biceps', 'forearms'], [], 0.3),
-  E('pushdown', 'Triceps Pushdown', 'Arms', ['triceps'], [], 0.65),
+  E('pushdown', 'Triceps Pushdown', 'Arms', ['triceps'], [], 0.7),
   E('skull', 'Skull Crusher', 'Arms', ['triceps'], [], 0.55),
   E('oh-tri', 'Overhead Triceps Extension', 'Arms', ['triceps'], [], 0.45),
   E('cgbp', 'Close-Grip Bench Press', 'Arms', ['triceps'], ['chest', 'shoulders'], 1.05),
@@ -77,16 +77,16 @@ const RAW = [
   E('crunch', 'Crunch', 'Core', ['abs'], [], 0.5, 0.3),
   E('russian', 'Russian Twist', 'Core', ['obliques'], ['abs'], 0.25),
   // Legs
-  E('squat', 'Back Squat', 'Legs', ['quads', 'glutes'], ['hamstrings', 'lowerBack'], 1.5),
-  E('front-squat', 'Front Squat', 'Legs', ['quads'], ['glutes', 'abs'], 1.2),
-  E('leg-press', 'Leg Press', 'Legs', ['quads', 'glutes'], ['hamstrings'], 3.0),
-  E('rdl', 'Romanian Deadlift', 'Legs', ['hamstrings', 'glutes'], ['lowerBack', 'forearms'], 1.5),
+  E('squat', 'Back Squat', 'Legs', ['quads', 'glutes'], ['hamstrings', 'lowerBack'], 1.66),
+  E('front-squat', 'Front Squat', 'Legs', ['quads'], ['glutes', 'abs'], 1.3),
+  E('leg-press', 'Leg Press', 'Legs', ['quads', 'glutes'], ['hamstrings'], 2.87),
+  E('rdl', 'Romanian Deadlift', 'Legs', ['hamstrings', 'glutes'], ['lowerBack', 'forearms'], 1.56),
   E('lunge', 'Dumbbell Lunge', 'Legs', ['quads', 'glutes'], ['hamstrings'], 0.4),
   E('split-squat', 'Bulgarian Split Squat', 'Legs', ['quads', 'glutes'], ['hamstrings'], 0.4),
-  E('leg-ext', 'Leg Extension', 'Legs', ['quads'], [], 1.0),
-  E('leg-curl', 'Leg Curl', 'Legs', ['hamstrings'], [], 0.8),
-  E('hip-thrust', 'Hip Thrust', 'Legs', ['glutes'], ['hamstrings'], 1.75),
-  E('calf-raise', 'Standing Calf Raise', 'Legs', ['calves'], [], 1.75),
+  E('leg-ext', 'Leg Extension', 'Legs', ['quads'], [], 1.28),
+  E('leg-curl', 'Leg Curl', 'Legs', ['hamstrings'], [], 1.03),
+  E('hip-thrust', 'Hip Thrust', 'Legs', ['glutes'], ['hamstrings'], 1.86),
+  E('calf-raise', 'Standing Calf Raise', 'Legs', ['calves'], [], 1.76),
   E('seated-calf', 'Seated Calf Raise', 'Legs', ['calves'], [], 1.0),
 
   // ---- Extended library ----
@@ -107,21 +107,21 @@ const RAW = [
   E('decline-pushup', 'Decline Push-Up', 'Chest', ['upperChest', 'shoulders'], ['triceps'], 1.1, 0.7),
   E('diamond-pushup', 'Diamond Push-Up', 'Chest', ['triceps'], ['chest', 'shoulders'], 0.9, 0.64),
   // Back
-  E('pendlay-row', 'Pendlay Row', 'Back', ['lats', 'upperBack'], ['rearDelts', 'biceps', 'lowerBack'], 0.85),
-  E('chest-row', 'Chest-Supported Row', 'Back', ['upperBack', 'lats'], ['rearDelts', 'biceps'], 0.7),
-  E('machine-row', 'Machine Row', 'Back', ['upperBack', 'lats'], ['rearDelts', 'biceps'], 0.9),
-  E('meadows-row', 'Meadows Row', 'Back', ['lats'], ['upperBack', 'biceps', 'forearms'], 0.5),
-  E('seal-row', 'Seal Row', 'Back', ['upperBack', 'lats'], ['rearDelts', 'biceps'], 0.7),
+  E('pendlay-row', 'Pendlay Row', 'Back', ['lats', 'upperBack'], ['rearDelts', 'biceps', 'lowerBack'], 1.03),
+  E('chest-row', 'Chest-Supported Row', 'Back', ['upperBack', 'lats'], ['rearDelts', 'biceps'], 0.85),
+  E('machine-row', 'Machine Row', 'Back', ['upperBack', 'lats'], ['rearDelts', 'biceps'], 1.08),
+  E('meadows-row', 'Meadows Row', 'Back', ['lats'], ['upperBack', 'biceps', 'forearms'], 0.6),
+  E('seal-row', 'Seal Row', 'Back', ['upperBack', 'lats'], ['rearDelts', 'biceps'], 0.85),
   E('inverted-row', 'Inverted Row', 'Back', ['upperBack', 'lats'], ['rearDelts', 'biceps'], 0.9, 0.6),
-  E('one-arm-cable-row', 'One-Arm Cable Row', 'Back', ['lats'], ['upperBack', 'biceps'], 0.4),
-  E('wide-pulldown', 'Wide-Grip Lat Pulldown', 'Back', ['lats'], ['upperBack', 'biceps'], 0.9),
-  E('close-pulldown', 'Close-Grip Lat Pulldown', 'Back', ['lats'], ['upperBack', 'biceps'], 0.9),
-  E('straight-arm', 'Straight-Arm Pulldown', 'Back', ['lats'], ['triceps'], 0.4),
+  E('one-arm-cable-row', 'One-Arm Cable Row', 'Back', ['lats'], ['upperBack', 'biceps'], 0.5),
+  E('wide-pulldown', 'Wide-Grip Lat Pulldown', 'Back', ['lats'], ['upperBack', 'biceps'], 1.05),
+  E('close-pulldown', 'Close-Grip Lat Pulldown', 'Back', ['lats'], ['upperBack', 'biceps'], 1.05),
+  E('straight-arm', 'Straight-Arm Pulldown', 'Back', ['lats'], ['triceps'], 0.45),
   E('neutral-pullup', 'Neutral-Grip Pull-Up', 'Back', ['lats'], ['upperBack', 'biceps', 'forearms'], 1.35, 1),
   E('wide-pullup', 'Wide-Grip Pull-Up', 'Back', ['lats'], ['upperBack', 'biceps', 'forearms'], 1.25, 1),
-  E('rack-pull', 'Rack Pull', 'Back', ['traps', 'lowerBack'], ['upperBack', 'glutes', 'forearms'], 2.0),
-  E('sumo-deadlift', 'Sumo Deadlift', 'Back', ['glutes', 'quads', 'hamstrings'], ['lowerBack', 'traps', 'forearms'], 1.75),
-  E('trap-bar-deadlift', 'Trap Bar Deadlift', 'Back', ['quads', 'glutes', 'lowerBack'], ['hamstrings', 'traps', 'forearms'], 1.9),
+  E('rack-pull', 'Rack Pull', 'Back', ['traps', 'lowerBack'], ['upperBack', 'glutes', 'forearms'], 2.2),
+  E('sumo-deadlift', 'Sumo Deadlift', 'Back', ['glutes', 'quads', 'hamstrings'], ['lowerBack', 'traps', 'forearms'], 1.9),
+  E('trap-bar-deadlift', 'Trap Bar Deadlift', 'Back', ['quads', 'glutes', 'lowerBack'], ['hamstrings', 'traps', 'forearms'], 2.05),
   E('good-morning', 'Good Morning', 'Back', ['lowerBack', 'hamstrings'], ['glutes'], 0.8),
   E('db-shrug', 'Dumbbell Shrug', 'Back', ['traps'], ['forearms'], 0.5),
   E('reverse-hyper', 'Reverse Hyperextension', 'Back', ['lowerBack', 'glutes'], ['hamstrings'], 0.7),
@@ -138,7 +138,7 @@ const RAW = [
   E('hspu', 'Handstand Push-Up', 'Shoulders', ['shoulders'], ['sideDelts', 'triceps', 'traps'], 1.3, 0.9),
   E('pike-pushup', 'Pike Push-Up', 'Shoulders', ['shoulders'], ['triceps', 'upperChest'], 1.0, 0.6),
   // Arms
-  E('ez-curl', 'EZ-Bar Curl', 'Arms', ['biceps'], ['forearms'], 0.6),
+  E('ez-curl', 'EZ-Bar Curl', 'Arms', ['biceps'], ['forearms'], 0.58),
   E('preacher', 'Preacher Curl', 'Arms', ['biceps'], [], 0.5),
   E('incline-curl', 'Incline Dumbbell Curl', 'Arms', ['biceps'], [], 0.22),
   E('cable-curl', 'Cable Curl', 'Arms', ['biceps'], ['forearms'], 0.45),
@@ -148,7 +148,7 @@ const RAW = [
   E('drag-curl', 'Drag Curl', 'Arms', ['biceps'], ['forearms'], 0.5),
   E('zottman', 'Zottman Curl', 'Arms', ['biceps', 'forearms'], [], 0.2),
   E('reverse-curl', 'Reverse Curl', 'Arms', ['forearms'], ['biceps'], 0.4),
-  E('rope-pushdown', 'Rope Pushdown', 'Arms', ['triceps'], [], 0.6),
+  E('rope-pushdown', 'Rope Pushdown', 'Arms', ['triceps'], [], 0.65),
   E('oh-rope', 'Overhead Rope Extension', 'Arms', ['triceps'], [], 0.45),
   E('jm-press', 'JM Press', 'Arms', ['triceps'], ['chest'], 0.9),
   E('tate-press', 'Tate Press', 'Arms', ['triceps'], [], 0.25),
@@ -167,14 +167,14 @@ const RAW = [
   E('pallof', 'Pallof Press', 'Core', ['obliques', 'abs'], [], 0.2),
   E('side-bend', 'Dumbbell Side Bend', 'Core', ['obliques'], [], 0.4),
   // Legs
-  E('hack-squat', 'Hack Squat', 'Legs', ['quads'], ['glutes'], 1.8),
-  E('smith-squat', 'Smith Machine Squat', 'Legs', ['quads', 'glutes'], ['hamstrings'], 1.4),
+  E('hack-squat', 'Hack Squat', 'Legs', ['quads'], ['glutes'], 2.0),
+  E('smith-squat', 'Smith Machine Squat', 'Legs', ['quads', 'glutes'], ['hamstrings'], 1.55),
   E('goblet', 'Goblet Squat', 'Legs', ['quads', 'glutes'], ['abs'], 0.45),
-  E('box-squat', 'Box Squat', 'Legs', ['quads', 'glutes'], ['hamstrings', 'lowerBack'], 1.5),
-  E('pause-squat', 'Pause Squat', 'Legs', ['quads', 'glutes'], ['hamstrings', 'lowerBack'], 1.4),
-  E('zercher', 'Zercher Squat', 'Legs', ['quads', 'glutes'], ['abs', 'biceps'], 1.1),
-  E('safety-squat', 'Safety Bar Squat', 'Legs', ['quads', 'glutes'], ['hamstrings', 'upperBack'], 1.45),
-  E('belt-squat', 'Belt Squat', 'Legs', ['quads', 'glutes'], [], 1.5),
+  E('box-squat', 'Box Squat', 'Legs', ['quads', 'glutes'], ['hamstrings', 'lowerBack'], 1.66),
+  E('pause-squat', 'Pause Squat', 'Legs', ['quads', 'glutes'], ['hamstrings', 'lowerBack'], 1.5),
+  E('zercher', 'Zercher Squat', 'Legs', ['quads', 'glutes'], ['abs', 'biceps'], 1.2),
+  E('safety-squat', 'Safety Bar Squat', 'Legs', ['quads', 'glutes'], ['hamstrings', 'upperBack'], 1.6),
+  E('belt-squat', 'Belt Squat', 'Legs', ['quads', 'glutes'], [], 1.65),
   E('walking-lunge', 'Walking Lunge', 'Legs', ['quads', 'glutes'], ['hamstrings'], 0.4),
   E('reverse-lunge', 'Reverse Lunge', 'Legs', ['quads', 'glutes'], ['hamstrings'], 0.4),
   E('step-up', 'Dumbbell Step-Up', 'Legs', ['quads', 'glutes'], [], 0.4),
@@ -182,12 +182,12 @@ const RAW = [
   E('db-rdl', 'Dumbbell Romanian Deadlift', 'Legs', ['hamstrings', 'glutes'], ['lowerBack', 'forearms'], 0.6),
   E('sl-rdl', 'Single-Leg Romanian Deadlift', 'Legs', ['hamstrings', 'glutes'], ['lowerBack'], 0.35),
   E('nordic', 'Nordic Hamstring Curl', 'Legs', ['hamstrings'], ['calves'], 1.0, 0.6),
-  E('seated-leg-curl', 'Seated Leg Curl', 'Legs', ['hamstrings'], [], 0.75),
-  E('lying-leg-curl', 'Lying Leg Curl', 'Legs', ['hamstrings'], [], 0.75),
-  E('glute-bridge', 'Barbell Glute Bridge', 'Legs', ['glutes'], ['hamstrings'], 1.2),
+  E('seated-leg-curl', 'Seated Leg Curl', 'Legs', ['hamstrings'], [], 1.03),
+  E('lying-leg-curl', 'Lying Leg Curl', 'Legs', ['hamstrings'], [], 0.9),
+  E('glute-bridge', 'Barbell Glute Bridge', 'Legs', ['glutes'], ['hamstrings'], 1.3),
   E('pull-through', 'Cable Pull-Through', 'Legs', ['glutes', 'hamstrings'], ['lowerBack'], 0.7),
   E('kb-swing', 'Kettlebell Swing', 'Legs', ['glutes', 'hamstrings'], ['lowerBack', 'shoulders'], 0.5),
-  E('hip-abduction', 'Hip Abduction Machine', 'Legs', ['glutes'], [], 1.0),
+  E('hip-abduction', 'Hip Abduction Machine', 'Legs', ['glutes'], [], 1.2),
   E('donkey-calf', 'Donkey Calf Raise', 'Legs', ['calves'], [], 1.8),
   E('leg-press-calf', 'Leg Press Calf Raise', 'Legs', ['calves'], [], 2.5),
   E('db-calf', 'Single-Leg Dumbbell Calf Raise', 'Legs', ['calves'], [], 0.5),
@@ -198,11 +198,50 @@ const RAW = [
   E('hang-clean', 'Hang Clean', 'Olympic', ['traps', 'glutes', 'hamstrings'], ['quads', 'upperBack'], 0.9),
   E('snatch', 'Snatch', 'Olympic', ['shoulders', 'glutes', 'quads'], ['traps', 'upperBack', 'hamstrings'], 0.75),
   E('clean-jerk', 'Clean & Jerk', 'Olympic', ['shoulders', 'quads', 'glutes'], ['traps', 'triceps'], 0.9),
+  // Smaller muscles that need their own work
+  E('hip-adduction', 'Hip Adduction Machine', 'Legs', ['adductors'], [], 1.27),
+  E('tibialis-raise', 'Tibialis Raise', 'Legs', ['tibialis'], [], 0.25),
+  E('neck-curl', 'Neck Curl', 'Neck', ['neck'], [], 0.2),
+  E('neck-ext', 'Neck Extension', 'Neck', ['neck'], ['traps'], 0.25),
 ];
 
 // Fallback benchmark for custom exercises when the user leaves it blank.
 export const DEFAULT_STD = {
-  Chest: 1.0, Back: 0.9, Shoulders: 0.5, Arms: 0.5, Core: 0.5, Legs: 1.4, Olympic: 0.9,
+  Chest: 1.0, Back: 0.9, Shoulders: 0.5, Arms: 0.5, Core: 0.5, Legs: 1.4, Olympic: 0.9, Neck: 0.2,
+};
+
+// ---------- strength standards ----------
+// Everything that decides "how strong should this person be" lives here, so it can be swapped for a real database later.
+// Source: strengthlevel.com strength standards (self-reported lifts from its users), read 2026-10-24. See docs/strength-standards.md.
+export const STANDARDS = {
+  // Target = std × refKg × (bodyweight / refKg)^exponent, where std is the intermediate 1RM as a multiple of bodyweight at refKg.
+  // Fitted to bench / squat / deadlift / press tables: men's lifts grow almost in step with bodyweight, women's more slowly.
+  male: { refKg: 82, exponent: 0.85, levels: { beginner: 0.52, novice: 0.74, intermediate: 1, advanced: 1.3, elite: 1.63 } },
+  female: { refKg: 65, exponent: 0.72, levels: { beginner: 0.37, novice: 0.64, intermediate: 1, advanced: 1.44, elite: 1.94 } },
+  // Strength by age as a share of the 25-40 peak (same curve for men and women within 1%).
+  age: [[15, 0.855], [20, 0.976], [25, 1], [40, 1], [45, 0.948], [50, 0.887], [55, 0.816], [60, 0.745], [65, 0.675],
+    [70, 0.608], [75, 0.547], [80, 0.49], [85, 0.44], [90, 0.39]],
+  // Share of lifters each level is stronger than.
+  percentiles: { beginner: 5, novice: 20, intermediate: 50, advanced: 80, elite: 95 },
+  // Women's std ÷ men's std when an exercise has no measured female value, by its first main muscle.
+  // Measured: pressing ~0.62, pulling and arms ~0.68, legs ~0.72, glutes and hips ~0.85.
+  femaleRatio: {
+    upperChest: 0.62, chest: 0.62, shoulders: 0.62, triceps: 0.62, sideDelts: 0.7,
+    rearDelts: 0.68, traps: 0.68, upperBack: 0.68, lats: 0.68, biceps: 0.68, forearms: 0.68,
+    lowerBack: 0.72, abs: 0.72, obliques: 0.72, quads: 0.72, hamstrings: 0.72, calves: 0.75, tibialis: 0.72, neck: 0.65,
+    hipFlexors: 0.75, glutes: 0.85, adductors: 0.82, abductors: 0.85,
+  },
+  femaleRatioDefault: 0.68,
+  // Bodyweight moves (pull-ups, dips…): an intermediate woman still does a few reps, so the target never drops below this × the body part moved.
+  bodyweightFloor: 1.1,
+};
+
+// Measured women's intermediate 1RM ÷ bodyweight at 65 kg (dumbbell lifts: ONE dumbbell).
+export const FEMALE_STD = {
+  bench: 0.77, 'incline-bench': 0.64, 'db-bench': 0.31, squat: 1.18, 'front-squat': 0.97, deadlift: 1.4, rdl: 1.08,
+  'hip-thrust': 1.62, 'leg-press': 2.29, 'leg-ext': 0.96, 'seated-leg-curl': 0.76, 'leg-curl': 0.76, 'calf-raise': 1.38,
+  'hip-adduction': 1.04, ohp: 0.5, 'db-press': 0.24, lateral: 0.14, 'bb-curl': 0.38, 'db-curl': 0.19, pushdown: 0.46,
+  row: 0.69, 'lat-pulldown': 0.74, 'cable-row': 0.74,
 };
 
 // Starter programme: [exercise id, sets, reps, note]. Weights start at 0 so you set your own.
@@ -264,6 +303,10 @@ export const PAIRED = new Set(['db-bench', 'incline-db', 'decline-db', 'db-press
   'hammer', 'incline-curl', 'zottman', 'db-fly', 'front-raise', 'kickback', 'lunge', 'split-squat', 'walking-lunge',
   'reverse-lunge', 'step-up', 'db-rdl', 'db-shrug', 'farmers-walk']);
 
-export const LIBRARY = RAW.map((e) => (PAIRED.has(e.id)
-  ? { ...e, pair: true, std: Math.round(e.std * 2 * 100) / 100 }
-  : { ...e, pair: false }));
+const twice = (x) => Math.round(x * 2 * 100) / 100;
+export const LIBRARY = RAW.map((e) => {
+  const stdF = FEMALE_STD[e.id] || 0;
+  return PAIRED.has(e.id)
+    ? { ...e, pair: true, std: twice(e.std), stdF: twice(stdF) }
+    : { ...e, pair: false, stdF };
+});

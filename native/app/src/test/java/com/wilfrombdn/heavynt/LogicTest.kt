@@ -33,17 +33,51 @@ class LogicTest {
         assertEquals("a", scheduledPlan(s, "2026-10-23")?.id)
     }
 
-    @Test fun targetsMatchTheWebVersion() {
-        val bench = LIBRARY.first { it.id == "bench" }
-        val base = Settings(unit = "lb", bodyweight = 180.0, heightCm = 180.0)
-        val t = targetFor(bench, base)
-        assertEquals(1.25 * 82 * 2.20462, t, 15.0)
-        assertTrue(targetFor(bench, base.copy(sex = "female")) < t)
-        assertTrue(targetFor(bench, base.copy(age = 55)) < t)
-        assertTrue(targetFor(bench, base.copy(level = "advanced")) > t)
-        val heavyShort = targetFor(bench, base.copy(bodyweight = 260.0, heightCm = 170.0))
-        val heavyTall = targetFor(bench, base.copy(bodyweight = 260.0, heightCm = 195.0))
+    private fun lib(id: String) = LIBRARY.first { it.id == id }
+    private fun near(expected: Double, actual: Double, pct: Double = 5.0) =
+        assertTrue("expected ~$expected, got $actual", kotlin.math.abs(actual - expected) / expected * 100 <= pct)
+
+    @Test fun targetsMatchPublishedStandards() {
+        // strengthlevel.com intermediate 1RM tables (lb), no height so the BMI rule stays out of it
+        val man = Settings(unit = "lb", bodyweight = 180.0, age = 30)
+        val woman = man.copy(sex = "female", bodyweight = 140.0)
+        near(220.0, targetFor(lib("bench"), man))
+        near(183.0, targetFor(lib("bench"), man.copy(bodyweight = 150.0)))
+        near(295.0, targetFor(lib("bench"), man.copy(bodyweight = 250.0)))
+        near(298.0, targetFor(lib("squat"), man))
+        near(348.0, targetFor(lib("deadlift"), man))
+        near(140.0, targetFor(lib("ohp"), man))
+        near(108.0, targetFor(lib("bench"), woman))
+        near(131.0, targetFor(lib("bench"), woman.copy(bodyweight = 180.0)))
+        near(174.0, targetFor(lib("squat"), woman.copy(bodyweight = 150.0)), 6.0)
+        near(205.0, targetFor(lib("deadlift"), woman.copy(bodyweight = 150.0)), 6.0)
+        near(89.0 * 2, targetFor(lib("db-bench"), man))  // dumbbells are entered as both added together
+        // age curve: flat to 40, then down
+        assertEquals(targetFor(lib("squat"), man), targetFor(lib("squat"), man.copy(age = 40)), 0.01)
+        near(0.887, targetFor(lib("squat"), man.copy(age = 50)) / targetFor(lib("squat"), man), 1.0)
+        // levels and BMI rule still behave
+        assertTrue(targetFor(lib("bench"), man.copy(level = "advanced")) > targetFor(lib("bench"), man))
+        val heavyShort = targetFor(lib("bench"), man.copy(bodyweight = 260.0, heightCm = 170.0))
+        val heavyTall = targetFor(lib("bench"), man.copy(bodyweight = 260.0, heightCm = 195.0))
         assertTrue(heavyShort < heavyTall)
+    }
+
+    @Test fun womensBodyweightTargetsNeedAtLeastOneRep() {
+        val woman = Settings(unit = "lb", bodyweight = 140.0, sex = "female")
+        for (id in listOf("pullup", "chinup", "dip", "pushup")) {
+            val ex = lib(id)
+            assertTrue(id, targetFor(ex, woman) >= ex.bw * 140.0 * 1.1 - 0.01)
+        }
+    }
+
+    @Test fun comparisonToOtherLifters() {
+        val man = Settings(unit = "lb", bodyweight = 180.0)
+        val bench = lib("bench")
+        assertEquals(50, percentileFor(bench, man, targetFor(bench, man, "intermediate")))
+        assertEquals(80, percentileFor(bench, man, targetFor(bench, man, "advanced")))
+        assertTrue(percentileFor(bench, man, 60.0) < 5)
+        assertEquals("Intermediate", levelReached(bench, man, targetFor(bench, man, "intermediate") + 1))
+        assertEquals("Untrained", levelReached(bench, man, 20.0))
     }
 
     @Test fun strongChestIsBlueWeakQuadsAreRed() {
@@ -72,7 +106,8 @@ class LogicTest {
     @Test fun pairedDumbbellLiftsUseCombinedWeight() {
         val db = LIBRARY.first { it.id == "db-bench" }
         assertTrue(db.pair)
-        assertEquals(1.0, db.std, 0.0001) // 0.5 per dumbbell -> 1.0 combined
+        assertEquals(0.98, db.std, 0.0001) // 0.49 per dumbbell -> 0.98 combined
+        assertEquals(0.62, db.stdF, 0.0001)
     }
 
     @Test fun supersetsGroupConsecutiveLinkedItems() {

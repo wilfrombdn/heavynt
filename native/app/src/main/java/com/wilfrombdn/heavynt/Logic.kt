@@ -18,8 +18,8 @@ val REGIONS: LinkedHashMap<String, String> = linkedMapOf(
     "biceps" to "Biceps", "triceps" to "Triceps", "forearms" to "Forearms", "abs" to "Abs", "obliques" to "Obliques",
     "glutes" to "Glutes", "quads" to "Quads", "hamstrings" to "Hamstrings", "calves" to "Calves",
 )
-val CATEGORIES = listOf("Chest", "Back", "Shoulders", "Arms", "Core", "Legs", "Olympic")
-val DEFAULT_STD = mapOf("Chest" to 1.0, "Back" to 0.9, "Shoulders" to 0.5, "Arms" to 0.5, "Core" to 0.5, "Legs" to 1.4, "Olympic" to 0.9)
+val CATEGORIES = listOf("Chest", "Back", "Shoulders", "Arms", "Core", "Legs", "Olympic", "Neck")
+val DEFAULT_STD = mapOf("Chest" to 1.0, "Back" to 0.9, "Shoulders" to 0.5, "Arms" to 0.5, "Core" to 0.5, "Legs" to 1.4, "Olympic" to 0.9, "Neck" to 0.2)
 val WEEKDAYS = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
 
 // ---------- dates ----------
@@ -78,11 +78,38 @@ fun nextWorkout(st: AppState): Pair<String, Plan>? {
 fun est1RM(weight: Double, reps: Int): Double = if (reps <= 1) weight else weight * (1 + reps / 30.0)
 
 const val LB_PER_KG = 2.20462
-private const val REF_KG = 82.0
-val LEVELS = mapOf("novice" to 0.7, "intermediate" to 1.0, "advanced" to 1.35)
+val LEVELS = listOf("beginner", "novice", "intermediate", "advanced", "elite")
 
-/** Strength scales with bodyweight^0.67, excess weight (BMI > 27) counts half, then sex / age / target level. */
-fun targetFor(ex: Exercise, st: Settings): Double {
+class SexStandard(val refKg: Double, val exponent: Double, val levels: Map<String, Double>)
+class Standards(
+    val male: SexStandard, val female: SexStandard, val age: List<Pair<Double, Double>>, val percentiles: Map<String, Double>,
+    val femaleRatio: Map<String, Double>, val femaleRatioDefault: Double, val bodyweightFloor: Double,
+)
+
+/** Share of peak (25-40) strength at this age, read off the standards' age curve. */
+fun ageFactor(age: Int): Double {
+    val t = STANDARDS.age
+    if (age <= t.first().first) return t.first().second
+    if (age >= t.last().first) return t.last().second
+    val i = t.indexOfFirst { it.first >= age }
+    val (a0, f0) = t[i - 1]; val (a1, f1) = t[i]
+    return f0 + (f1 - f0) * (age - a0) / (a1 - a0)
+}
+
+/** Intermediate 1RM ÷ bodyweight for this sex at its reference bodyweight. */
+fun stdFor(ex: Exercise, female: Boolean): Double {
+    if (!female) return ex.std
+    val measured = if (ex.stdF > 0) ex.stdF
+        else ex.std * (ex.primary.firstOrNull()?.let { STANDARDS.femaleRatio[it] } ?: STANDARDS.femaleRatioDefault)
+    // pull-ups, dips…: an average woman still gets a few reps, so never ask for less than one bodyweight rep
+    return if (ex.bw > 0) max(measured, ex.bw * STANDARDS.bodyweightFloor) else measured
+}
+
+/**
+ * What a lifter with this profile lifts for one rep at a given level (default: the user's own target level).
+ * Scales with bodyweight^exponent per sex, counts weight above BMI 27 half, then applies the age curve.
+ */
+fun targetFor(ex: Exercise, st: Settings, level: String = st.level): Double {
     val kg = if (st.unit == "lb") st.bodyweight / LB_PER_KG else st.bodyweight
     var eff = kg
     if (st.heightCm > 0) {
@@ -90,15 +117,30 @@ fun targetFor(ex: Exercise, st: Settings): Double {
         val cap = 27 * m * m
         if (kg > cap) eff = cap + 0.5 * (kg - cap)
     }
-    val sexF = if (st.sex == "female") 0.7 else 1.0
-    val ageF = when {
-        st.age < 18 -> 0.85
-        st.age <= 35 -> 1.0
-        else -> max(0.6, 1 - 0.01 * (st.age - 35))
-    }
-    val baseKg = REF_KG * (eff / REF_KG).pow(0.67) * sexF * ageF * (LEVELS[st.level] ?: 1.0)
-    return ex.std * baseKg * (if (st.unit == "lb") LB_PER_KG else 1.0)
+    val female = st.sex == "female"
+    val sx = if (female) STANDARDS.female else STANDARDS.male
+    val baseKg = sx.refKg * (eff / sx.refKg).pow(sx.exponent) * ageFactor(st.age) * (sx.levels[level] ?: 1.0)
+    return stdFor(ex, female) * baseKg * (if (st.unit == "lb") LB_PER_KG else 1.0)
 }
+
+/** Roughly what share of lifters with the same sex, age and bodyweight this one-rep max beats. */
+fun percentileFor(ex: Exercise, st: Settings, e1rm: Double): Int {
+    val pts = LEVELS.map { targetFor(ex, st, it) to (STANDARDS.percentiles[it] ?: 50.0) }
+    val p = when {
+        e1rm <= pts.first().first -> pts.first().second * e1rm / pts.first().first
+        e1rm >= pts.last().first -> min(99.0, pts.last().second + 20 * (e1rm / pts.last().first - 1))
+        else -> {
+            val i = pts.indexOfFirst { it.first >= e1rm }
+            val (w0, p0) = pts[i - 1]; val (w1, p1) = pts[i]
+            p0 + (p1 - p0) * (e1rm - w0) / (w1 - w0)
+        }
+    }
+    return p.roundToInt().coerceIn(1, 99)
+}
+
+/** The level band this one-rep max reaches, e.g. "Novice". */
+fun levelReached(ex: Exercise, st: Settings, e1rm: Double): String =
+    (LEVELS.lastOrNull { e1rm >= targetFor(ex, st, it) } ?: "untrained").replaceFirstChar { it.uppercase() }
 
 data class LiftScore(val score: Double, val e1rm: Double, val target: Double)
 
