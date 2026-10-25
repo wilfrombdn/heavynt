@@ -98,7 +98,7 @@ private fun arm(d: String) = Shape(d, true, ARM_IN, ARM_SLIM)
 
 private val FEMALE = Figure(
     front = linkedMapOf(
-        "upperChest" to listOf(Shape("M98 69C92 67 87 67 83 70C82 73 82 76 83 79C88 78 93 78 98 80Z", true)),
+        "upperChest" to listOf(Shape("M98 69C92 67 86 67 81 70C80 73 80 76 81 79C87 78 93 78 98 80Z", true)),
         "chest" to listOf(Shape("M98 84C91 81 83 82 79 88C75 95 77 104 84 108C90 111 95 108 98 103Z", true)),
         "shoulders" to listOf(Shape(F_DELT_IN, true)),
         "sideDelts" to listOf(Shape(F_DELT_OUT, true)),
@@ -118,7 +118,7 @@ private val FEMALE = Figure(
         "triceps" to listOf(arm(UPPER_ARM)),
         "forearms" to listOf(arm(FOREARM)),
         "lowerBack" to listOf(Shape("M88 134C92 136 96 136 99 134L99 156C93 158 87 157 84 154C85 147 86 140 88 134Z", true)),
-        "glutes" to listOf(Shape("M77 159C61 163 59 192 71 207C82 217 95 213 99 201L99 162C93 159 84 158 77 159Z", true)),
+        "glutes" to listOf(Shape("M78 160C65 164 63 191 73 206C83 215 95 212 99 201L99 163C93 160 85 159 78 160Z", true)),
         "hamstrings" to listOf(Shape("M75 213C68 229 71 246 79 259C86 263 93 262 97 258C100 243 100 225 98 213C90 216 82 216 75 213Z", true)),
         "calves" to listOf(Shape("M78 265C72 285 76 317 84 343C87 345 91 345 93 343C99 320 99 288 95 265C89 268 83 268 78 265Z", true)),
     ),
