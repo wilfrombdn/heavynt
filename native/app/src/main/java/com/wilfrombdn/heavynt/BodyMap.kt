@@ -86,47 +86,45 @@ private val MALE = Figure(
     ),
 )
 
-// Hourglass: narrow shoulders and slimmer arms, a small waist, wide hips and full thighs and glutes.
-private const val ARM_IN = 6f
-private const val ARM_SLIM = 0.85f
-private const val F_DELT_IN = "M78 69C73 66 68 65 64 67C63 76 64 85 66 90C70 85 74 81 78 78C80 75 80 72 78 69Z"
-private const val F_DELT_OUT = "M61 68C56 70 53 75 52 80C51 90 54 97 60 98C62 95 63 92 64 90C62 83 61 76 61 68Z"
+// Hourglass: narrow shoulders, slim arms, a small waist, wide hips and full thighs and glutes, drawn with soft curves.
+private const val ARM_IN = 7f
+private const val ARM_SLIM = 0.8f
+private const val F_DELT_IN = "M80 70C75 67 70 66 66 68C65 76 66 84 68 89C72 84 76 80 80 77C82 75 82 72 80 70Z"
+private const val F_DELT_OUT = "M63 69C58 71 55 76 55 81C54 90 57 96 62 97C64 94 65 91 66 89C64 82 63 76 63 69Z"
 private fun arm(d: String) = Shape(d, true, ARM_IN, ARM_SLIM)
 
 private val FEMALE = Figure(
     front = linkedMapOf(
-        "upperChest" to listOf(Shape("M98 68C91 66 85 67 81 71C80 74 80 77 81 80C86 79 92 79 98 81Z", true)),
-        "chest" to listOf(Shape("M98 83C92 82 86 82 81 83C75 90 75 102 82 107C89 111 95 108 98 103Z", true)),
+        "upperChest" to listOf(Shape("M98 69C92 67 87 67 83 70C82 73 82 76 83 79C88 78 93 78 98 80Z", true)),
+        "chest" to listOf(Shape("M98 84C92 82 85 83 81 87C78 94 79 102 85 106C90 109 95 107 98 102Z", true)),
         "shoulders" to listOf(Shape(F_DELT_IN, true)),
         "sideDelts" to listOf(Shape(F_DELT_OUT, true)),
         "biceps" to listOf(arm(UPPER_ARM)),
         "forearms" to listOf(arm(FOREARM)),
-        "abs" to listOf(Shape(rr(87, 112, 11, 12, 4) + rr(87, 127, 11, 12, 4) + rr(87, 142, 11, 12, 4), true)),
-        "obliques" to listOf(Shape("M81 110C80 118 81 125 83 131C80 140 76 150 73 160L84 160C85 143 85 126 85 112C83 112 82 111 81 110Z", true)),
-        "quads" to listOf(Shape("M72 164C59 187 61 228 75 257C83 262 93 260 97 255C101 232 101 196 98 168C90 164 81 163 72 164Z", true)),
-        "calves" to listOf(Shape("M77 264C72 286 75 320 82 346C86 348 91 348 94 346C99 320 100 286 96 264C90 267 83 267 77 264Z", true)),
+        "abs" to listOf(Shape("M98 113C94 113 91 114 90 117C89 128 89 142 91 151C93 155 96 156 98 155Z", true)),
+        "obliques" to listOf(Shape("M82 110C81 118 83 126 85 132C84 142 80 151 76 159C80 160 84 160 88 158C87 145 87 128 88 114C86 113 84 112 82 110Z", true)),
+        "quads" to listOf(Shape("M74 164C65 182 68 226 79 256C86 261 93 260 97 255C100 232 100 198 98 168C91 164 82 162 74 164Z", true)),
+        "calves" to listOf(Shape("M78 265C73 286 77 318 84 345C87 347 91 347 93 345C98 320 99 288 95 265C89 268 83 268 78 265Z", true)),
     ),
     back = linkedMapOf(
-        "traps" to listOf(Shape("M100 56C94 58 89 61 84 66C87 71 90 75 93 78C96 80 98 81 100 82C102 81 104 80 107 78C110 75 113 71 116 66C111 61 106 58 100 56Z", false)),
-        "upperBack" to listOf(Shape("M85 71C87 75 90 78 94 81L99 84L99 103C93 98 88 93 84 86C84 81 84 76 85 71Z", true)),
-        "lats" to listOf(Shape("M82 90C80 104 81 119 85 131C90 134 96 134 98 132L98 107C91 101 86 96 82 90Z", true)),
+        "traps" to listOf(Shape("M100 58C95 60 90 62 86 66C89 71 93 76 100 80C107 76 111 71 114 66C110 62 105 60 100 58Z", false)),
+        "upperBack" to listOf(Shape("M87 71C89 75 93 79 99 82L99 100C94 96 90 91 87 85C86 80 86 75 87 71Z", true)),
+        "lats" to listOf(Shape("M84 89C82 102 83 116 87 128C91 131 96 131 98 130L98 104C92 99 87 95 84 89Z", true)),
         "rearDelts" to listOf(Shape(F_DELT_IN, true)),
         "sideDelts" to listOf(Shape(F_DELT_OUT, true)),
         "triceps" to listOf(arm(UPPER_ARM)),
         "forearms" to listOf(arm(FOREARM)),
-        "lowerBack" to listOf(Shape("M86 136C90 138 96 138 99 136L99 157C92 159 86 158 83 155C83 149 84 142 86 136Z", true)),
-        "glutes" to listOf(Shape("M76 160C60 167 60 195 72 209C85 217 96 211 99 199L99 163C92 160 84 159 76 160Z", true)),
-        "hamstrings" to listOf(Shape("M73 213C65 231 68 247 76 259C84 263 93 262 97 258C101 243 100 225 98 213C90 215 81 215 73 213Z", true)),
-        "calves" to listOf(Shape("M77 264C71 284 74 318 82 344C86 346 91 346 94 344C100 320 100 286 96 264C90 267 83 267 77 264Z", true)),
+        "lowerBack" to listOf(Shape("M88 134C92 136 96 136 99 134L99 156C93 158 87 157 84 154C85 147 86 140 88 134Z", true)),
+        "glutes" to listOf(Shape("M78 160C63 164 61 192 72 207C82 217 95 213 99 201L99 163C93 160 85 159 78 160Z", true)),
+        "hamstrings" to listOf(Shape("M75 213C68 229 71 246 79 259C86 263 93 262 97 258C100 243 100 225 98 213C90 216 82 216 75 213Z", true)),
+        "calves" to listOf(Shape("M78 265C72 285 76 317 84 343C87 345 91 345 93 343C99 320 99 288 95 265C89 268 83 268 78 265Z", true)),
     ),
     outline = listOf(
-        Shape("M100 15C107 15 113 22 113 30C113 39 107 45 100 45C93 45 87 39 87 30C87 22 93 15 100 15Z", false),
-        // hair falling to the shoulders
-        Shape("M100 9C88 9 82 18 83 31C83 42 81 52 77 58C83 60 88 57 90 52M100 9C112 9 118 18 117 31C117 42 119 52 123 58C117 60 112 57 110 52", false),
+        Shape("M100 16C107 16 112 23 112 31C112 40 107 46 100 46C93 46 88 40 88 31C88 23 93 16 100 16Z", false),
         Shape("M95 45C95 50 94 54 92 57M105 45C105 50 106 54 108 57", false),
-        Shape("M92 57C86 60 78 63 70 67", true),
-        Shape("M42 201C38 207 39 215 45 217C50 215 52 208 50 201", true, ARM_IN),
-        Shape("M77 350C73 362 76 372 84 373C90 373 94 369 94 360L94 350", true),
+        Shape("M92 57C87 60 80 63 72 67", true),
+        Shape("M37 201C32 207 34 217 41 219C47 217 49 208 47 201", true, ARM_IN, ARM_SLIM),
+        Shape("M79 350C75 361 78 371 85 372C90 372 93 368 93 360L93 350", true),
     ),
 )
 
