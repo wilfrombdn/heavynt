@@ -270,4 +270,15 @@ class LogicTest {
         assertTrue(s.plans.flatMap { it.items }.all { it.weight == 50.0 })
         assertTrue(STARTER_DAYS.flatMap { it.items }.none { it.ss })
     }
+
+    @Test fun commonGymMovesAreInTheLibraryOnce() {
+        val ids = LIBRARY.map { it.id }
+        assertEquals(ids.size, ids.toSet().size)
+        assertEquals(LIBRARY.size, LIBRARY.map { it.name.lowercase() }.toSet().size)
+        for (id in listOf("plank", "assisted-pullup", "hip-thrust-machine", "machine-curl", "reverse-pulldown", "pendulum-squat")) assertTrue(id, id in ids)
+        // assisted weight is help, not load, so it never scores
+        val st = Settings(bodyweight = 180.0)
+        assertEquals(null, entryScore(LIBRARY.first { it.id == "assisted-pullup" }, Entry("assisted-pullup", 3, 8, 60.0), st))
+        assertTrue(entryScore(LIBRARY.first { it.id == "machine-curl" }, Entry("machine-curl", 3, 8, 60.0), st) != null)
+    }
 }

@@ -199,6 +199,40 @@ const RAW = [
   E('tibialis-raise', 'Tibialis Raise', 'Legs', ['tibialis'], [], 0.25),
   E('neck-curl', 'Neck Curl', 'Neck', ['neck'], [], 0.2),
   E('neck-ext', 'Neck Extension', 'Neck', ['neck'], ['traps'], 0.25),
+
+  // Common gym moves added 3.16.0 (machines, cables, core) so the list covers what most people actually do.
+  E('incline-machine', 'Incline Machine Press', 'Chest', ['upperChest'], ['shoulders', 'triceps'], 1.0),
+  E('reverse-pulldown', 'Reverse-Grip Lat Pulldown', 'Back', ['lats'], ['biceps', 'upperBack'], 1.0),
+  E('single-arm-pulldown', 'Single-Arm Lat Pulldown', 'Back', ['lats'], ['biceps'], 0.45),
+  E('high-row', 'Machine High Row', 'Back', ['lats', 'upperBack'], ['biceps', 'rearDelts'], 1.1),
+  E('incline-db-row', 'Chest-Supported Dumbbell Row', 'Back', ['upperBack', 'lats'], ['rearDelts', 'biceps'], 0.3),
+  E('assisted-pullup', 'Assisted Pull-Up', 'Back', ['lats'], ['upperBack', 'biceps'], 1.0),
+  E('smith-ohp', 'Smith Machine Shoulder Press', 'Shoulders', ['shoulders'], ['sideDelts', 'triceps'], 0.7),
+  E('cable-y-raise', 'Cable Y-Raise', 'Shoulders', ['sideDelts'], ['traps', 'rearDelts'], 0.12),
+  E('band-pull-apart', 'Band Pull-Apart', 'Shoulders', ['rearDelts'], ['upperBack'], 0.1),
+  E('machine-curl', 'Machine Preacher Curl', 'Arms', ['biceps'], [], 0.5),
+  E('rope-hammer', 'Cable Rope Hammer Curl', 'Arms', ['biceps', 'forearms'], [], 0.6),
+  E('machine-tri-ext', 'Machine Triceps Extension', 'Arms', ['triceps'], [], 0.7),
+  E('dip-machine', 'Seated Dip Machine', 'Arms', ['triceps'], ['chest', 'shoulders'], 1.3),
+  E('assisted-dip', 'Assisted Dip', 'Arms', ['triceps', 'chest'], ['shoulders'], 1.0),
+  E('cable-kickback', 'Cable Triceps Kickback', 'Arms', ['triceps'], [], 0.2),
+  E('db-skull', 'Dumbbell Skull Crusher', 'Arms', ['triceps'], [], 0.2),
+  E('plank', 'Plank', 'Core', ['abs'], ['obliques', 'shoulders'], 0.3),
+  E('dead-bug', 'Dead Bug', 'Core', ['abs'], ['hipFlexors'], 0.3),
+  E('lying-leg-raise', 'Lying Leg Raise', 'Core', ['abs', 'hipFlexors'], [], 0.5, 0.3),
+  E('bicycle-crunch', 'Bicycle Crunch', 'Core', ['obliques', 'abs'], [], 0.5, 0.3),
+  E('situp', 'Sit-Up', 'Core', ['abs', 'hipFlexors'], [], 0.5, 0.3),
+  E('mountain-climber', 'Mountain Climber', 'Core', ['abs'], ['hipFlexors', 'shoulders'], 0.3),
+  E('hollow-hold', 'Hollow Hold', 'Core', ['abs'], ['hipFlexors'], 0.3),
+  E('pendulum-squat', 'Pendulum Squat', 'Legs', ['quads'], ['glutes'], 2.0),
+  E('hip-thrust-machine', 'Hip Thrust Machine', 'Legs', ['glutes'], ['hamstrings'], 1.7),
+  E('glute-kickback', 'Cable Glute Kickback', 'Legs', ['glutes'], ['hamstrings'], 0.35),
+  E('ghr', 'Glute-Ham Raise', 'Legs', ['hamstrings'], ['glutes', 'calves'], 1.0, 0.7),
+  E('sumo-squat', 'Dumbbell Sumo Squat', 'Legs', ['quads', 'adductors'], ['glutes'], 0.6),
+  E('curtsy-lunge', 'Curtsy Lunge', 'Legs', ['glutes', 'quads'], ['abductors', 'adductors'], 0.25),
+  E('box-jump', 'Box Jump', 'Legs', ['quads', 'calves'], ['glutes'], 0.3),
+  E('sled-push', 'Sled Push', 'Legs', ['quads', 'glutes'], ['calves', 'hamstrings'], 2.0),
+  E('thruster', 'Thruster', 'Legs', ['quads', 'shoulders'], ['glutes', 'triceps'], 0.75),
 ];
 
 // Fallback benchmark for custom exercises when the user leaves it blank.
@@ -301,7 +335,10 @@ export const STARTER_WEEKS = 2;
 // Their `std` is therefore the combined-weight benchmark.
 export const PAIRED = new Set(['db-bench', 'incline-db', 'decline-db', 'db-press', 'arnold', 'lateral', 'rear-delt', 'db-curl',
   'hammer', 'incline-curl', 'incline-db-fly', 'zottman', 'db-fly', 'front-raise', 'kickback', 'lunge', 'split-squat', 'walking-lunge',
-  'reverse-lunge', 'step-up', 'db-rdl', 'db-shrug', 'farmers-walk']);
+  'reverse-lunge', 'step-up', 'db-rdl', 'db-shrug', 'farmers-walk', 'incline-db-row', 'db-skull', 'curtsy-lunge']);
+
+// Logged but never scored on the body map: the weight is help (assisted) or not a real load.
+export const NO_SCORE = new Set(['assisted-pullup', 'assisted-dip', 'band-pull-apart', 'sled-push']);
 
 const twice = (x) => Math.round(x * 2 * 100) / 100;
 export const LIBRARY = RAW.map((e) => {
@@ -309,4 +346,4 @@ export const LIBRARY = RAW.map((e) => {
   return PAIRED.has(e.id)
     ? { ...e, pair: true, std: twice(e.std), stdF: twice(stdF) }
     : { ...e, pair: false, stdF };
-});
+}).map((e) => (NO_SCORE.has(e.id) ? { ...e, noScore: true } : e));

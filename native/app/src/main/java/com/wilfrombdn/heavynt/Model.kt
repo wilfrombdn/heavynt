@@ -34,6 +34,8 @@ data class Exercise(
     val custom: Boolean = false,
     /** Women's benchmark (same units as std); 0 = work it out from std and the muscle it trains. */
     val stdF: Double = 0.0,
+    /** Logged but never scored (assisted machines, band work, sleds): the weight isn't a load you lift. */
+    val noScore: Boolean = false,
 )
 
 @Serializable

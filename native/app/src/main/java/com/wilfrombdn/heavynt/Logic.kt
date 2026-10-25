@@ -198,7 +198,7 @@ data class LiftScore(val score: Double, val e1rm: Double, val target: Double)
 
 fun entryScore(ex: Exercise, e: Entry, st: Settings): LiftScore? {
     val bw = st.bodyweight
-    if (bw <= 0) return null
+    if (bw <= 0 || ex.noScore) return null
     if (ex.bw <= 0 && e.weight <= 0) return null
     val load = ex.bw * bw + e.weight
     if (load <= 0) return null

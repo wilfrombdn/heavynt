@@ -7,7 +7,7 @@ const d = (x) => (Number.isInteger(x) ? x + ".0" : String(x));
 const q = (s) => JSON.stringify(s).replace(/\$/g, '\$');
 const list = (a) => `listOf(${a.map(q).join(', ')})`;
 const lines = LIBRARY.map((e) =>
-  `    Exercise(${q(e.id)}, ${q(e.name)}, ${q(e.cat)}, ${list(e.primary)}, ${list(e.secondary)}, ${d(e.std)}, ${d(e.bw)}, ${e.pair}, stdF = ${d(e.stdF)})`);
+  `    Exercise(${q(e.id)}, ${q(e.name)}, ${q(e.cat)}, ${list(e.primary)}, ${list(e.secondary)}, ${d(e.std)}, ${d(e.bw)}, ${e.pair}, stdF = ${d(e.stdF)}${e.noScore ? ', noScore = true' : ''})`);
 const S = STANDARDS;
 const nums = (o) => `mapOf(${Object.entries(o).map(([k, v]) => `${q(k)} to ${d(v)}`).join(', ')})`;
 const sex = (x) => `SexStandard(${d(x.refKg)}, ${d(x.exponent)}, ${nums(x.levels)})`;
