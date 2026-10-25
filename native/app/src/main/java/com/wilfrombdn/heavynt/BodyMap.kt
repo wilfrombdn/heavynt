@@ -31,7 +31,10 @@ import androidx.compose.ui.input.pointer.pointerInput
 
 // Front/back anatomy figure drawn with real Canvas paths. Region shapes are SVG path data in a 200x400 box per view.
 
-private class Shape(val d: String, val mirror: Boolean, val dx: Float = 0f)
+/** dx shifts the shape sideways; sx < 1 slims it around the arm's centre line. */
+private class Shape(val d: String, val mirror: Boolean, val dx: Float = 0f, val sx: Float = 1f)
+
+private const val ARM_CX = 50f
 
 private class Figure(val front: Map<String, List<Shape>>, val back: Map<String, List<Shape>>, val outline: List<Shape>)
 
@@ -83,52 +86,58 @@ private val MALE = Figure(
     ),
 )
 
-// Narrower shoulders (arms sit 3 units further in), a narrower waist and wider hips.
-private const val ARM_IN = 3f
+// Hourglass: narrow shoulders and slimmer arms, a small waist, wide hips and full thighs and glutes.
+private const val ARM_IN = 6f
+private const val ARM_SLIM = 0.85f
+private const val F_DELT_IN = "M78 69C73 66 68 65 64 67C63 76 64 85 66 90C70 85 74 81 78 78C80 75 80 72 78 69Z"
+private const val F_DELT_OUT = "M61 68C56 70 53 75 52 80C51 90 54 97 60 98C62 95 63 92 64 90C62 83 61 76 61 68Z"
+private fun arm(d: String) = Shape(d, true, ARM_IN, ARM_SLIM)
 
 private val FEMALE = Figure(
     front = linkedMapOf(
-        "upperChest" to listOf(Shape("M98 67C90 65 84 66 79 70C78 74 78 77 79 80C85 79 91 79 98 81Z", true)),
-        "chest" to listOf(Shape("M98 83C91 82 85 82 79 83C74 90 74 101 80 106C87 110 94 108 98 103Z", true)),
-        "shoulders" to listOf(Shape(DELT_IN, true, ARM_IN)),
-        "sideDelts" to listOf(Shape(DELT_OUT, true, ARM_IN)),
-        "biceps" to listOf(Shape(UPPER_ARM, true, ARM_IN)),
-        "forearms" to listOf(Shape(FOREARM, true, ARM_IN)),
-        "abs" to listOf(Shape(rr(85, 110, 13, 13, 4) + rr(85, 126, 13, 13, 4) + rr(85, 142, 13, 13, 4), true)),
-        "obliques" to listOf(Shape("M77 109C75 119 76 128 78 136C76 145 76 153 78 160L82 160C83 143 83 126 82 112C80 112 78 111 77 109Z", true)),
-        "quads" to listOf(Shape("M78 166C66 188 66 228 77 256C84 260 93 259 97 255C101 232 101 196 98 168C91 165 84 164 78 166Z", true)),
-        "calves" to listOf(Shape(CALF_F, true)),
+        "upperChest" to listOf(Shape("M98 68C91 66 85 67 81 71C80 74 80 77 81 80C86 79 92 79 98 81Z", true)),
+        "chest" to listOf(Shape("M98 83C92 82 86 82 81 83C75 90 75 102 82 107C89 111 95 108 98 103Z", true)),
+        "shoulders" to listOf(Shape(F_DELT_IN, true)),
+        "sideDelts" to listOf(Shape(F_DELT_OUT, true)),
+        "biceps" to listOf(arm(UPPER_ARM)),
+        "forearms" to listOf(arm(FOREARM)),
+        "abs" to listOf(Shape(rr(87, 112, 11, 12, 4) + rr(87, 127, 11, 12, 4) + rr(87, 142, 11, 12, 4), true)),
+        "obliques" to listOf(Shape("M81 110C80 118 81 125 83 131C80 140 76 150 73 160L84 160C85 143 85 126 85 112C83 112 82 111 81 110Z", true)),
+        "quads" to listOf(Shape("M72 164C59 187 61 228 75 257C83 262 93 260 97 255C101 232 101 196 98 168C90 164 81 163 72 164Z", true)),
+        "calves" to listOf(Shape("M77 264C72 286 75 320 82 346C86 348 91 348 94 346C99 320 100 286 96 264C90 267 83 267 77 264Z", true)),
     ),
     back = linkedMapOf(
-        "traps" to listOf(Shape("M100 54C93 57 86 61 80 66C84 71 88 75 92 79C95 81 97 82 100 83C103 82 105 81 108 79C112 75 116 71 120 66C114 61 107 57 100 54Z", false)),
-        "upperBack" to listOf(Shape("M82 70C85 75 89 79 93 82L99 85L99 104C92 99 86 93 81 85C81 80 81 75 82 70Z", true)),
-        "lats" to listOf(Shape("M80 89C77 104 78 122 84 134C90 137 96 136 98 134L98 108C90 102 84 96 80 89Z", true)),
-        "rearDelts" to listOf(Shape(DELT_IN, true, ARM_IN)),
-        "sideDelts" to listOf(Shape(DELT_OUT, true, ARM_IN)),
-        "triceps" to listOf(Shape(UPPER_ARM, true, ARM_IN)),
-        "forearms" to listOf(Shape(FOREARM, true, ARM_IN)),
-        "lowerBack" to listOf(Shape("M85 138C90 140 96 140 99 138L99 160C92 162 87 161 84 158C83 151 83 144 85 138Z", true)),
-        "glutes" to listOf(Shape("M80 163C67 170 66 193 76 206C87 213 96 208 99 198L99 166C93 163 86 162 80 163Z", true)),
-        "hamstrings" to listOf(Shape("M77 210C70 228 72 245 78 258C85 261 93 260 97 257C101 242 100 224 98 210C91 212 84 212 77 210Z", true)),
-        "calves" to listOf(Shape(CALF_B, true)),
+        "traps" to listOf(Shape("M100 56C94 58 89 61 84 66C87 71 90 75 93 78C96 80 98 81 100 82C102 81 104 80 107 78C110 75 113 71 116 66C111 61 106 58 100 56Z", false)),
+        "upperBack" to listOf(Shape("M85 71C87 75 90 78 94 81L99 84L99 103C93 98 88 93 84 86C84 81 84 76 85 71Z", true)),
+        "lats" to listOf(Shape("M82 90C80 104 81 119 85 131C90 134 96 134 98 132L98 107C91 101 86 96 82 90Z", true)),
+        "rearDelts" to listOf(Shape(F_DELT_IN, true)),
+        "sideDelts" to listOf(Shape(F_DELT_OUT, true)),
+        "triceps" to listOf(arm(UPPER_ARM)),
+        "forearms" to listOf(arm(FOREARM)),
+        "lowerBack" to listOf(Shape("M86 136C90 138 96 138 99 136L99 157C92 159 86 158 83 155C83 149 84 142 86 136Z", true)),
+        "glutes" to listOf(Shape("M76 160C60 167 60 195 72 209C85 217 96 211 99 199L99 163C92 160 84 159 76 160Z", true)),
+        "hamstrings" to listOf(Shape("M73 213C65 231 68 247 76 259C84 263 93 262 97 258C101 243 100 225 98 213C90 215 81 215 73 213Z", true)),
+        "calves" to listOf(Shape("M77 264C71 284 74 318 82 344C86 346 91 346 94 344C100 320 100 286 96 264C90 267 83 267 77 264Z", true)),
     ),
     outline = listOf(
-        Shape("M100 14C108 14 114 21 114 30C114 40 108 46 100 46C92 46 86 40 86 30C86 21 92 14 100 14Z", false),
+        Shape("M100 15C107 15 113 22 113 30C113 39 107 45 100 45C93 45 87 39 87 30C87 22 93 15 100 15Z", false),
         // hair falling to the shoulders
-        Shape("M100 9C88 9 81 18 82 31C82 42 80 52 76 58C82 60 87 57 89 52M100 9C112 9 119 18 118 31C118 42 120 52 124 58C118 60 113 57 111 52", false),
-        Shape("M94 46C94 51 93 54 91 57M106 46C106 51 107 54 109 57", false),
-        Shape("M91 57C84 60 74 62 65 67", true),
-        Shape("M37 201C32 207 34 217 41 219C47 217 49 208 47 201", true, ARM_IN),
+        Shape("M100 9C88 9 82 18 83 31C83 42 81 52 77 58C83 60 88 57 90 52M100 9C112 9 118 18 117 31C117 42 119 52 123 58C117 60 112 57 110 52", false),
+        Shape("M95 45C95 50 94 54 92 57M105 45C105 50 106 54 108 57", false),
+        Shape("M92 57C86 60 78 63 70 67", true),
+        Shape("M42 201C38 207 39 215 45 217C50 215 52 208 50 201", true, ARM_IN),
         Shape("M77 350C73 362 76 372 84 373C90 373 94 369 94 360L94 350", true),
     ),
 )
 
 private val MIRROR = Matrix().apply { translate(200f, 0f); scale(-1f, 1f) }
 
-private fun build(sh: Shape): List<Path> = build(sh.d, sh.mirror, sh.dx)
-
-private fun build(d: String, mirror: Boolean, dx: Float): List<Path> {
-    val base = PathParser().parsePathString(d).toPath().apply { if (dx != 0f) transform(offsetMatrix(dx)) }
+private fun build(sh: Shape): List<Path> {
+    val (d, mirror, dx) = Triple(sh.d, sh.mirror, sh.dx)
+    val base = PathParser().parsePathString(d).toPath().apply {
+        if (sh.sx != 1f) transform(Matrix().apply { translate(ARM_CX * (1 - sh.sx), 0f); scale(sh.sx, 1f) })
+        if (dx != 0f) transform(offsetMatrix(dx))
+    }
     return if (mirror) listOf(base, Path().apply { addPath(base); transform(MIRROR) }) else listOf(base)
 }
 
