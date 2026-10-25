@@ -57,6 +57,9 @@ private val ABS = rr(84, 105, 14, 14, 4) + rr(84, 122, 14, 14, 4) + rr(84, 139, 
 
 private val MALE = Figure(
     front = linkedMapOf(
+        "neck" to listOf(Shape("M93 47C93 51 92 54 90 57C93 59 96 60 99 60L99 48C97 48 95 48 93 47Z", true)),
+        "hipFlexors" to listOf(Shape("M86 157C90 158 95 158 99 157L99 167C94 166 89 165 85 165C85 162 85 159 86 157Z", true)),
+        "abductors" to listOf(Shape("M80 160C76 163 73 168 71 175C70 179 70 183 71 186C73 180 75 175 78 170C80 167 81 164 80 160Z", true)),
         "upperChest" to listOf(Shape("M98 66C88 64 78 65 73 69C71 73 71 77 72 81C80 79 90 79 98 81Z", true)),
         "chest" to listOf(Shape("M98 83C90 81 80 81 72.5 83C73 88 74 92 77 96C85 102 94 102 98 100Z", true)),
         "shoulders" to listOf(Shape(DELT_IN, true)),
@@ -65,10 +68,14 @@ private val MALE = Figure(
         "forearms" to listOf(Shape(FOREARM, true)),
         "abs" to listOf(Shape(ABS, true)),
         "obliques" to listOf(Shape("M72 103C69 121 72 141 80 159L82 159C83 141 83 123 82 107C78 107 75 106 72 103Z", true)),
-        "quads" to listOf(Shape("M81 166C70 188 68 228 77 256C84 260 93 259 97 255C101 232 101 196 98 168C92 166 86 165 81 166Z", true)),
-        "calves" to listOf(Shape(CALF_F, true)),
+        "quads" to listOf(Shape("M82 168C72 188 69 228 77 256C84 260 92 259 96 255C97 246 96 236 93 228C90 212 89 192 91 172C88 169 85 168 82 168Z", true)),
+        "adductors" to listOf(Shape("M93 169C96 169 98 169 99 170L99 238C98 236 97 232 96 229C93 214 92 194 93 176C93 173 93 171 93 169Z", true)),
+        "calves" to listOf(Shape("M89 266C92 266 94 265 96 264C100 286 99 320 94 346C92 347 90 347 89 347C88 320 88 290 89 266Z", true)),
+        "tibialis" to listOf(Shape("M78 264C74 286 76 320 82 346C84 347 86 347 87 347C86 320 86 290 87 266C84 266 81 265 78 264Z", true)),
     ),
     back = linkedMapOf(
+        "neck" to listOf(Shape("M93 46C93 50 94 53 95 55C97 54 98 53 100 52C102 53 103 54 105 55C106 53 107 50 107 46C104 47 96 47 93 46Z", false)),
+        "abductors" to listOf(Shape("M80 152C82 156 83 160 83 165C80 166 77 166 75 165C75 160 77 155 80 152Z", true)),
         "traps" to listOf(Shape("M100 52C92 56 84 60 76 66C80 71 85 76 90 80C94 82 97 83 100 84C103 83 106 82 110 80C115 76 120 71 124 66C116 60 108 56 100 52Z", false)),
         "upperBack" to listOf(Shape("M79 70C83 76 88 81 93 84L99 87L99 106C91 101 84 94 78 85C78 80 78 75 79 70Z", true)),
         "lats" to listOf(Shape("M76 89C72 106 74 125 82 137C90 139 96 137 98 135L98 110C89 104 81 97 76 89Z", true)),
@@ -78,7 +85,8 @@ private val MALE = Figure(
         "forearms" to listOf(Shape(FOREARM, true)),
         "lowerBack" to listOf(Shape(LOWER_BACK, true)),
         "glutes" to listOf(Shape("M82 166C72 172 70 190 78 203C88 209 96 205 99 197L99 168C94 166 88 165 82 166Z", true)),
-        "hamstrings" to listOf(Shape("M79 208C72 226 73 244 78 258C85 261 93 260 97 257C101 242 100 224 98 208C92 210 85 210 79 208Z", true)),
+        "hamstrings" to listOf(Shape("M79 208C72 226 73 244 78 258C85 261 92 260 95 257C94 243 93 225 93 210C88 211 83 210 79 208Z", true)),
+        "adductors" to listOf(Shape("M95 209C97 209 98 208 99 208L99 250C98 252 97 254 96 255C95 240 95 224 95 209Z", true)),
         "calves" to listOf(Shape(CALF_B, true)),
     ),
     outline = listOf(
@@ -99,6 +107,9 @@ private fun arm(d: String) = Shape(d, true, ARM_IN, ARM_SLIM)
 
 private val FEMALE = Figure(
     front = linkedMapOf(
+        "neck" to listOf(Shape("M95 48C95 52 94 55 92 57C94 59 97 60 99 60L99 49C98 49 96 49 95 48Z", true)),
+        "hipFlexors" to listOf(Shape("M88 158C92 159 96 159 99 158L99 167C94 166 90 165 86 165C86 162 87 160 88 158Z", true)),
+        "abductors" to listOf(Shape("M75 161C70 165 66 172 65 180C64 184 65 188 66 191C67 184 70 177 74 171C76 167 76 164 75 161Z", true)),
         "upperChest" to listOf(Shape("M98 69C92 67 86 67 81 70C80 73 80 76 81 79C87 78 93 78 98 80Z", true)),
         "chest" to listOf(Shape("M98 83C90 80 82 81 78 87C73 95 75 105 83 109C90 112 95 109 98 104Z", true)),
         "shoulders" to listOf(Shape(F_DELT_IN, true)),
@@ -107,10 +118,14 @@ private val FEMALE = Figure(
         "forearms" to listOf(arm(FOREARM)),
         "abs" to listOf(Shape("M98 113C94 113 91 114 90 117C89 128 89 142 91 151C93 155 96 156 98 155Z", true)),
         "obliques" to listOf(Shape("M83 111C82 119 84 126 86 132C85 142 80 151 74 159C79 160 84 160 88 158C87 145 87 128 88 115C86 114 84 113 83 111Z", true)),
-        "quads" to listOf(Shape("M72 164C63 183 67 226 79 256C86 261 93 260 97 255C100 232 100 198 98 168C91 164 81 162 72 164Z", true)),
-        "calves" to listOf(Shape("M78 265C73 286 77 318 84 345C87 347 91 347 93 345C98 320 99 288 95 265C89 268 83 268 78 265Z", true)),
+        "quads" to listOf(Shape("M77 168C67 186 67 226 79 256C86 261 92 260 96 255C97 246 96 236 93 228C90 212 89 192 91 172C86 169 82 168 77 168Z", true)),
+        "adductors" to listOf(Shape("M93 169C96 169 98 169 99 170L99 238C98 236 97 232 96 229C93 214 92 194 93 176C93 173 93 171 93 169Z", true)),
+        "calves" to listOf(Shape("M89 267C91 267 93 266 95 265C99 288 98 320 93 345C92 346 90 346 89 346C88 320 88 292 89 267Z", true)),
+        "tibialis" to listOf(Shape("M78 265C73 286 77 318 84 345C85 346 86 346 87 346C86 320 86 292 87 267C84 267 81 266 78 265Z", true)),
     ),
     back = linkedMapOf(
+        "neck" to listOf(Shape("M95 48C95 51 96 54 97 56C98 55 99 55 100 55C101 55 102 55 103 56C104 54 105 51 105 48C102 49 98 49 95 48Z", false)),
+        "abductors" to listOf(Shape("M81 147C83 151 84 155 84 159C80 160 76 160 73 160C74 155 77 150 81 147Z", true)),
         "traps" to listOf(Shape("M100 57C94 59 88 62 83 66C86 72 92 77 100 81C108 77 114 72 117 66C112 62 106 59 100 57Z", false)),
         "upperBack" to listOf(Shape("M84 70C86 75 91 79 99 83L99 101C92 97 87 92 84 85C83 80 83 75 84 70Z", true)),
         "lats" to listOf(Shape("M80 86C75 100 79 117 86 129C91 132 96 132 98 131L98 105C90 100 84 94 80 86Z", true)),
@@ -120,7 +135,8 @@ private val FEMALE = Figure(
         "forearms" to listOf(arm(FOREARM)),
         "lowerBack" to listOf(Shape("M87 133C91 135 96 135 99 133L99 157C93 159 86 158 83 155C84 147 85 140 87 133Z", true)),
         "glutes" to listOf(Shape("M78 160C65 164 63 191 73 206C83 215 95 212 99 201L99 163C93 160 85 159 78 160Z", true)),
-        "hamstrings" to listOf(Shape("M75 213C68 229 71 246 79 259C86 263 93 262 97 258C100 243 100 225 98 213C90 216 82 216 75 213Z", true)),
+        "hamstrings" to listOf(Shape("M75 213C68 229 71 246 79 259C85 262 91 262 94 259C93 244 93 228 93 215C87 216 81 216 75 213Z", true)),
+        "adductors" to listOf(Shape("M95 214C97 214 98 213 99 213L99 252C98 254 97 256 96 257C95 242 95 228 95 214Z", true)),
         "calves" to listOf(Shape("M78 265C72 285 76 317 84 343C87 345 91 345 93 343C99 320 99 288 95 265C89 268 83 268 78 265Z", true)),
     ),
     outline = listOf(
@@ -171,6 +187,9 @@ private class BuiltFigure(f: Figure) {
     val outline = f.outline.flatMap(::build).onEach { it.transform(squash) }
     val regions = buildView(f.front, 0f, squash) + buildView(f.back, 220f, squash)
 }
+
+/** Region keys drawn on a figure (front + back), for tests. */
+internal fun drawnRegions(female: Boolean): Set<String> = (if (female) FEMALE else MALE).let { it.front.keys + it.back.keys }
 
 private val MALE_BUILT by lazy { BuiltFigure(MALE) }
 private val FEMALE_BUILT by lazy { BuiltFigure(FEMALE) }

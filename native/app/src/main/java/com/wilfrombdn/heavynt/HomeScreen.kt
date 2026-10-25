@@ -135,6 +135,7 @@ private fun RegionCard(st: AppState, key: String, sc: RegionScore?) {
                 Column(Modifier.weight(1f)) {
                     Text(l.name + if (l.primary) "" else " (assist)", style = T.body)
                     Text("est. max ${l.e1rm.roundToInt()} $u · target ${l.target.roundToInt()} $u", style = T.small)
+                    l.ex?.let { e -> Text("average for you ${targetFor(e, st.settings, "intermediate").roundToInt()} $u · beats ~${percentileFor(e, st.settings, l.e1rm)}% of lifters", style = T.small) }
                 }
                 Text("${(l.score * 100).roundToInt()}%", style = TextStyle(fontSize = 15.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, color = if (l.score >= 1) C.good else C.bad))
             }
@@ -147,7 +148,8 @@ private fun Summary(scores: Map<String, RegionScore>) {
     val sorted = scores.entries.sortedBy { it.value.score }
     val behind = sorted.filter { it.value.score < 1 }.take(4).joinToString(", ") { REGIONS[it.key] ?: it.key }
     val ok = sorted.filter { it.value.score >= 1 }.reversed().take(4).joinToString(", ") { REGIONS[it.key] ?: it.key }
-    val untrained = REGIONS.filterKeys { it !in scores }.values.joinToString(", ")
+    val missing = REGIONS.filterKeys { it !in scores }.values.toList()
+    val untrained = if (missing.size <= 5) missing.joinToString(", ") else missing.take(4).joinToString(", ") + " + ${missing.size - 4} more"
     HCard {
         if (behind.isNotEmpty()) SummaryLine("Behind target", behind, C.bad)
         if (ok.isNotEmpty()) SummaryLine("On target or better", ok, C.good)

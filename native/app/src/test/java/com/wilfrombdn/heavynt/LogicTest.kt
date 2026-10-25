@@ -160,4 +160,11 @@ class LogicTest {
         assertEquals(listOf("shoulders"), s.ex("c-1")!!.primary)
         assertTrue(LIBRARY.all { e -> (e.primary + e.secondary).all { it in REGIONS } })
     }
+
+    @Test fun everyMuscleIsDrawnAndTrained() {
+        for (female in listOf(false, true)) assertEquals("female=$female", REGIONS.keys, drawnRegions(female))
+        val trained = LIBRARY.flatMap { it.primary }.toSet()
+        assertEquals(emptySet<String>(), REGIONS.keys - trained)
+        assertEquals(REGIONS.keys, REGION_GROUPS.flatMap { it.second }.toSet())
+    }
 }

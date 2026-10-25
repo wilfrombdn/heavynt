@@ -16,7 +16,19 @@ val REGIONS: LinkedHashMap<String, String> = linkedMapOf(
     "upperChest" to "Upper chest", "chest" to "Chest", "shoulders" to "Front delts", "sideDelts" to "Side delts", "rearDelts" to "Rear delts",
     "traps" to "Traps", "upperBack" to "Mid back", "lats" to "Lats", "lowerBack" to "Lower back",
     "biceps" to "Biceps", "triceps" to "Triceps", "forearms" to "Forearms", "abs" to "Abs", "obliques" to "Obliques",
-    "glutes" to "Glutes", "quads" to "Quads", "hamstrings" to "Hamstrings", "calves" to "Calves",
+    "hipFlexors" to "Hip flexors", "glutes" to "Glutes", "abductors" to "Outer hips", "adductors" to "Inner thighs",
+    "quads" to "Quads", "hamstrings" to "Hamstrings", "calves" to "Calves", "tibialis" to "Shins", "neck" to "Neck",
+)
+
+/** Muscles grouped by body area, for pickers. */
+val REGION_GROUPS: List<Pair<String, List<String>>> = listOf(
+    "Chest" to listOf("upperChest", "chest"),
+    "Shoulders" to listOf("shoulders", "sideDelts", "rearDelts"),
+    "Back" to listOf("traps", "upperBack", "lats", "lowerBack"),
+    "Arms" to listOf("biceps", "triceps", "forearms"),
+    "Core" to listOf("abs", "obliques"),
+    "Hips & legs" to listOf("hipFlexors", "glutes", "abductors", "adductors", "quads", "hamstrings", "calves", "tibialis"),
+    "Neck" to listOf("neck"),
 )
 val CATEGORIES = listOf("Chest", "Back", "Shoulders", "Arms", "Core", "Legs", "Olympic", "Neck")
 val DEFAULT_STD = mapOf("Chest" to 1.0, "Back" to 0.9, "Shoulders" to 0.5, "Arms" to 0.5, "Core" to 0.5, "Legs" to 1.4, "Olympic" to 0.9, "Neck" to 0.2)
@@ -155,7 +167,7 @@ fun entryScore(ex: Exercise, e: Entry, st: Settings): LiftScore? {
     return LiftScore(est / t, est, t)
 }
 
-data class RegionLift(val name: String, val score: Double, val e1rm: Double, val target: Double, val primary: Boolean)
+data class RegionLift(val name: String, val score: Double, val e1rm: Double, val target: Double, val primary: Boolean, val ex: Exercise? = null)
 data class RegionScore(val score: Double, val lifts: List<RegionLift>)
 
 private const val SECONDARY_WEIGHT = 0.35
@@ -180,7 +192,7 @@ fun regionScores(st: AppState): Map<String, RegionScore> {
             if (reg !in REGIONS) return
             val a = acc.getOrPut(reg) { Acc() }
             a.sum += r.score * w; a.w += w
-            a.lifts += RegionLift(ex.name, r.score, r.e1rm, r.target, w == 1.0)
+            a.lifts += RegionLift(ex.name, r.score, r.e1rm, r.target, w == 1.0, ex)
         }
         ex.primary.forEach { add(it, 1.0) }
         ex.secondary.forEach { add(it, SECONDARY_WEIGHT) }

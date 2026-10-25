@@ -297,13 +297,18 @@ fun CheckRow(checked: Boolean, onChange: (Boolean) -> Unit, text: String) {
 
 @Composable
 fun Chips(selected: Set<String>, onToggle: (String) -> Unit) {
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        REGIONS.forEach { (k, label) ->
-            val on = k in selected
-            Box(Modifier.clip(RoundedCornerShape(99.dp)).background(if (on) Color.White else Color.Transparent)
-                .border(1.dp, if (on) Color.White else Color(0xFF3A3A3A), RoundedCornerShape(99.dp)).clickable { onToggle(k) }
-                .padding(horizontal = 12.dp, vertical = 6.dp)) {
-                Text(label, style = TextStyle(fontSize = 13.sp, color = if (on) Color.Black else Color(0xFFBBBBBB)))
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        REGION_GROUPS.forEach { (area, keys) ->
+            Text(area.uppercase(), style = T.eyebrow)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                keys.forEach { k ->
+                    val on = k in selected
+                    Box(Modifier.clip(RoundedCornerShape(99.dp)).background(if (on) Color.White else Color.Transparent)
+                        .border(1.dp, if (on) Color.White else Color(0xFF3A3A3A), RoundedCornerShape(99.dp)).clickable { onToggle(k) }
+                        .padding(horizontal = 12.dp, vertical = 6.dp)) {
+                        Text(REGIONS[k] ?: k, style = TextStyle(fontSize = 13.sp, color = if (on) Color.Black else Color(0xFFBBBBBB)))
+                    }
+                }
             }
         }
     }

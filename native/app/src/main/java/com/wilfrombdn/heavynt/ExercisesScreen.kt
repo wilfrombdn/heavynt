@@ -139,9 +139,11 @@ private fun ExerciseDetail(st: AppState, vm: AppViewModel, ex: Exercise, onEdit:
     val dialogs = LocalDialogs.current
     val hist = exerciseHistory(st, ex.id)
     Sheet(ex.name, onDismiss) {
-        Muted("${ex.cat} · ${ex.primary.joinToString(", ") { REGIONS[it] ?: it }}")
+        Muted("${ex.cat} · ${ex.primary.joinToString(", ") { REGIONS[it] ?: it }}" +
+            if (ex.secondary.isNotEmpty()) " · helps: ${ex.secondary.joinToString(", ") { REGIONS[it] ?: it }}" else "")
         if (hist.isNotEmpty()) {
             WeightChart(hist, st.settings.unit)
+            Compare(st, ex, hist)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Muted("Best weight"); Text("${fmtNum(hist.maxOf { it.weight })} ${st.settings.unit}", style = T.body) }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Muted("Sessions"); Text("${hist.size}", style = T.body) }
             SectionTitle("History")
@@ -160,6 +162,20 @@ private fun ExerciseDetail(st: AppState, vm: AppViewModel, ex: Exercise, onEdit:
     }
 }
 
+/** Best recent one-rep max against what other lifters with the same profile lift. */
+@Composable
+private fun Compare(st: AppState, ex: Exercise, hist: List<HistEntry>) {
+    val s = st.settings
+    if (s.bodyweight <= 0) return
+    val best = hist.mapNotNull { h -> entryScore(ex, Entry(ex.id, h.sets, h.reps, h.weight), s)?.e1rm }.maxOrNull() ?: return
+    val u = s.unit
+    SectionTitle("How you compare")
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Muted("Your est. max"); Text("${fmtNum(Math.round(best).toDouble())} $u", style = T.body) }
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Muted("Average for you"); Text("${fmtNum(Math.round(targetFor(ex, s, "intermediate")).toDouble())} $u", style = T.body) }
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Muted("Level"); Text(levelReached(ex, s, best), style = T.body) }
+    Text("Stronger than about ${percentileFor(ex, s, best)}% of lifters your sex, age and weight.", style = T.small)
+}
+
 @Composable
 private fun ExerciseEditor(vm: AppViewModel, ex: Exercise?, onDismiss: () -> Unit) {
     val ctx = LocalContext.current
@@ -173,11 +189,17 @@ private fun ExerciseEditor(vm: AppViewModel, ex: Exercise?, onDismiss: () -> Uni
     Sheet(if (ex == null) "New exercise" else "Edit exercise", onDismiss) {
         Labeled("Name") { HTextField(name, { name = it }, placeholder = "e.g. Incline Cable Fly") }
         Labeled("Category") { PickerField(CATEGORIES.map { Opt(it, it) }, cat, { cat = it }) }
-        Labeled("Main muscles worked") { Chips(prim) { k -> prim = if (k in prim) prim - k else prim + k } }
-        Labeled("Helper muscles") { Chips(sec) { k -> sec = if (k in sec) sec - k else sec + k } }
-        Labeled("Intermediate lift (× bodyweight, optional)") {
+        Labeled("Main muscles worked (required)") {
+            Text("These light up on the body map when you log this exercise.", style = T.small)
+            Chips(prim) { k -> prim = if (k in prim) prim - k else prim + k; sec = sec - k }
+        }
+        Labeled("Helper muscles (optional)") {
+            Text("Muscles that assist. They count for about a third.", style = T.small)
+            Chips(sec - prim) { k -> sec = if (k in sec) sec - k else sec + k }
+        }
+        Labeled("Average lift (× bodyweight, optional)") {
             HTextField(std, { std = it }, keyboard = KeyboardType.Decimal, placeholder = "Auto (${DEFAULT_STD[cat]}× bodyweight)")
-            Text("How heavy a solid intermediate lifts this for one rep. Used to colour the body map.", style = T.small)
+            Text("What an average man of about 180 lb lifts for one rep, as a multiple of bodyweight. Women's and other bodyweights and ages are worked out from it.", style = T.small)
         }
         CheckRow(pair, { pair = it }, "Done with a pair of dumbbells (enter both added together)")
         CheckRow(bw, { bw = it }, "Bodyweight movement (pull-ups, dips…): weight is extra added load")
