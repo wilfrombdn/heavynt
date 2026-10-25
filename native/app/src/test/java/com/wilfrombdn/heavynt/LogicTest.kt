@@ -262,4 +262,12 @@ class LogicTest {
         assertEquals(listOf(STARTER_NAME), busy.saved.map { it.name })
         assertEquals(busy, normalize(busy))
     }
+
+    @Test fun starterFromThreeNineZeroLosesSupersetsButKeepsWeights() {
+        val old = STARTER_DAYS.map { p -> p.copy(items = p.items.map { it.copy(ss = true, note = "A2", weight = 50.0) }) }
+        val s = normalize(AppState(v = 8, exercises = LIBRARY, plans = old, planName = STARTER_NAME, schedule = starterSchedule()))
+        assertTrue(s.plans.flatMap { it.items }.none { it.ss || it.note == "A2" })
+        assertTrue(s.plans.flatMap { it.items }.all { it.weight == 50.0 })
+        assertTrue(STARTER_DAYS.flatMap { it.items }.none { it.ss })
+    }
 }

@@ -22,7 +22,7 @@ fun uid(): String = UUID.randomUUID().toString().take(8)
 /** First-run state: just the exercise library. No plans or schedule; the user builds their own. */
 fun seedState(): AppState {
     return AppState(
-        v = 8,
+        v = 9,
         exercises = LIBRARY,
         plans = STARTER_DAYS,
         schedule = starterSchedule(),
@@ -42,10 +42,11 @@ fun normalize(s: AppState): AppState {
     val cutoff = dateKey(today().minusDays(60))
     val overrides = s.overrides.filterKeys { it >= cutoff }
     val intake = s.intake.filterKeys { it >= cutoff }
-    val plans = if (s.v < 5) s.plans.map(::inferSupersets) else s.plans
+    val plans = when { s.v < 5 -> s.plans.map(::inferSupersets); s.v < 9 -> fixStarterDays(s.plans); else -> s.plans }
+    val saved = if (s.v < 9) s.saved.map { it.copy(plans = fixStarterDays(it.plans)) } else s.saved
     // Weights saved before the monthly weigh-in existed count as current, so nobody is asked straight after updating.
     val settings = if (s.settings.bodyweight > 0 && s.settings.bodyweightSetAt.isEmpty()) s.settings.copy(bodyweightSetAt = dateKey()) else s.settings
-    val out = withStarter(s.copy(exercises = merged, plans = plans, overrides = overrides, settings = settings, intake = intake)).copy(v = 8)
+    val out = withStarter(s.copy(exercises = merged, plans = plans, saved = saved, overrides = overrides, settings = settings, intake = intake)).copy(v = 9)
     // a demo left on from an older version: show the current demo (the real data stays set aside)
     return if (out.demoBackup != null && out.demoVersion < DEMO_VERSION) demoState(out).copy(demoBackup = out.demoBackup) else out
 }
