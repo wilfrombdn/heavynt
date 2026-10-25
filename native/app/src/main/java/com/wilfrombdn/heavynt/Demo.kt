@@ -4,23 +4,23 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
 
-// Developer demo: a made-up lifter whose upper body and core are well above average and whose legs, hips
-// and lower back are well below, so every region of the body map lights up deep blue/pink or deep red.
+// Developer demo: a made-up lifter whose upper body and core are above average and whose legs, hips and lower
+// back are below, spread out so the body map shows the whole red → pink/blue scale, from deepest to lightest.
 // The exercises are picked so no "strong" lift helps a "weak" muscle (and the other way round).
 
-/** Upper body, core and neck, logged at this × the average lift. */
+/** Upper body, core and neck: strongest first. */
 private val DEMO_STRONG = listOf(
     "bench", "incline-bench", "ohp", "lateral", "reverse-pec-deck", "shrug", "cable-row", "lat-pulldown",
     "bb-curl", "pushdown", "wrist-curl", "cable-crunch", "woodchop", "leg-raise", "neck-curl",
 )
 
-/** Legs, hips and lower back, logged at this × the average lift. */
+/** Legs, hips and lower back: least weak first. */
 private val DEMO_WEAK = listOf(
-    "squat", "seated-leg-curl", "hip-thrust", "hip-adduction", "hip-abduction", "calf-raise", "tibialis-raise", "good-morning",
+    "squat", "hip-thrust", "seated-leg-curl", "good-morning", "hip-adduction", "hip-abduction", "calf-raise", "tibialis-raise",
 )
 
-private const val STRONG = 1.8
-private const val WEAK = 0.4
+/** Strong lifts run from 1.8 down to 1.05 × the average lift; weak ones from 0.9 down to 0.4. */
+private fun spread(n: Int, from: Double, to: Double) = List(n) { i -> from + (to - from) * i / maxOf(1, n - 1) }
 private const val REPS = 5
 private const val WEEKS = 8
 
@@ -41,7 +41,10 @@ fun demoState(real: AppState): AppState {
         val load = factor * targetFor(ex, settings, "intermediate") / (1 + REPS / 30.0)
         return load - ex.bw * settings.bodyweight
     }
-    val finals = DEMO_STRONG.associateWith { finalWeight(it, STRONG) } + DEMO_WEAK.associateWith { finalWeight(it, WEAK) }
+    val strong = spread(DEMO_STRONG.size, 1.8, 1.05)
+    val weak = spread(DEMO_WEAK.size, 0.9, 0.4)
+    val finals = DEMO_STRONG.mapIndexed { i, id -> id to finalWeight(id, strong[i]) }.toMap() +
+        DEMO_WEAK.mapIndexed { i, id -> id to finalWeight(id, weak[i]) }.toMap()
 
     val days = listOf(
         Plan("demo-upper", "Upper (demo)", DEMO_STRONG.filter { exs.getValue(it).cat !in setOf("Core", "Neck") }.map { PlanItem(it, 3, REPS) }),

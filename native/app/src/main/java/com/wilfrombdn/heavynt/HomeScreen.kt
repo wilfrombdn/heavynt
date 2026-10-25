@@ -93,12 +93,12 @@ fun HomeScreen(st: AppState, vm: AppViewModel, go: (Int) -> Unit, openSettings: 
         HCard(Modifier, bg = Color(0xFF0B0B0D)) {
             BodyMap(scores, selected, { selected = if (selected == it) null else it }, female = st.settings.sex == "female")
             Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Under target", style = T.small)
+                Text("Below avg", style = T.small)
                 val f = st.settings.sex == "female"
+                val hi = if (f) PINK_RGB else BLUE_RGB
                 Box(Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)).background(Brush.horizontalGradient(
-                    0f to Color(240, 64, 70), 0.48f to Color(150, 62, 66),
-                    0.52f to (if (f) Color(214, 72, 160) else Color(58, 118, 230)), 1f to (if (f) Color(255, 140, 205) else Color(110, 175, 255)))))
-                Text("On / above", style = T.small)
+                    0f to Color(RED_RGB.first, RED_RGB.second, RED_RGB.third), 1f to Color(hi.first, hi.second, hi.third))))
+                Text("Strong", style = T.small)
             }
         }
 

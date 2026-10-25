@@ -168,7 +168,7 @@ class LogicTest {
         assertEquals(REGIONS.keys, REGION_GROUPS.flatMap { it.second }.toSet())
     }
 
-    @Test fun demoLightsEveryMuscleDeepBlueOrDeepRed() {
+    @Test fun demoLightsEveryMuscleAcrossTheWholeScale() {
         val upper = setOf("upperChest", "chest", "shoulders", "sideDelts", "rearDelts", "traps", "upperBack", "lats",
             "biceps", "triceps", "forearms", "abs", "obliques", "hipFlexors", "neck")
         for (sex in listOf("male", "female")) {
@@ -176,10 +176,21 @@ class LogicTest {
             val scores = regionScores(demo)
             assertEquals(sex, REGIONS.keys, scores.keys)
             for ((k, sc) in scores) {
-                if (k in upper) assertTrue("$sex $k ${sc.score}", sc.score >= 1.5)
-                else assertTrue("$sex $k ${sc.score}", sc.score <= 0.55)
+                if (k in upper) assertTrue("$sex $k ${sc.score}", sc.score >= 1.0)
+                else assertTrue("$sex $k ${sc.score}", sc.score < 1.0)
             }
+            // both ends of the colour scale are reached
+            assertTrue(scores.values.maxOf { it.score } >= 1.6)
+            assertTrue(scores.values.minOf { it.score } <= 0.5)
             assertTrue(demo.logs.size >= 20)
         }
+    }
+
+    @Test fun colourScaleRunsRedToPink() {
+        assertEquals(RED_RGB, scoreRGB(0.3, female = true))
+        assertEquals(PINK_RGB, scoreRGB(2.0, female = true))
+        assertEquals(BLUE_RGB, scoreRGB(2.0))
+        val mid = scoreRGB(1.0, female = true)
+        assertTrue(mid.third in (RED_RGB.third + 1) until PINK_RGB.third)  // in between, not a jump
     }
 }

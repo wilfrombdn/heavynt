@@ -250,14 +250,22 @@ fun weightStep(st: Settings): Double = if (st.unit == "kg") 2.5 else 5.0
 fun weeksOf(s: Schedule): Int = max(1, ceil(s.days.size / 7.0).toInt())
 
 /** RGB triple used both for the map and for legend/text colours. */
-/** Red under target; at or above target blue for the male body, pink for the female one. */
+/** Weakest colour (score ≤ 0.5): red. Strongest (score ≥ 1.4): pink on the female body, blue on the male. */
+val RED_RGB = Triple(235, 60, 66)
+val PINK_RGB = Triple(255, 112, 200)
+val BLUE_RGB = Triple(72, 142, 255)
+private const val SCALE_LOW = 0.5
+private const val SCALE_HIGH = 1.4
+
+/** Where a score sits on the red → pink/blue scale, 0..1 (the average lift, 1.0, is just past halfway). */
+fun scoreT(score: Double): Double = ((score - SCALE_LOW) / (SCALE_HIGH - SCALE_LOW)).coerceIn(0.0, 1.0)
+
+/** One smooth scale: the further below average the redder, the stronger the more pink (female) or blue (male). */
 fun scoreRGB(score: Double, female: Boolean = false): Triple<Int, Int, Int> {
-    fun mix(a: IntArray, b: IntArray, t: Double) = Triple(
-        (a[0] + (b[0] - a[0]) * t).toInt(), (a[1] + (b[1] - a[1]) * t).toInt(), (a[2] + (b[2] - a[2]) * t).toInt(),
-    )
-    return if (score < 1) mix(intArrayOf(150, 62, 66), intArrayOf(240, 64, 70), minOf(1.0, (1 - score) / 0.5))
-    else if (female) mix(intArrayOf(214, 72, 160), intArrayOf(255, 140, 205), minOf(1.0, (score - 1) / 0.4))
-    else mix(intArrayOf(58, 118, 230), intArrayOf(110, 175, 255), minOf(1.0, (score - 1) / 0.4))
+    val hi = if (female) PINK_RGB else BLUE_RGB
+    val t = scoreT(score)
+    fun mix(a: Int, b: Int) = (a + (b - a) * t).toInt()
+    return Triple(mix(RED_RGB.first, hi.first), mix(RED_RGB.second, hi.second), mix(RED_RGB.third, hi.third))
 }
 
 // ---------- supersets ----------

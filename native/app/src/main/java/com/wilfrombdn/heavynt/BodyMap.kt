@@ -264,13 +264,13 @@ fun BodyMap(scores: Map<String, RegionScore>, selected: String?, onPick: (String
                 val c = colorOf(b)
                 val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                     style = Paint.Style.FILL
-                    color = if (c != null) argb(c, 0.62f + 0.3f * scoreStrength(sc!!.score)) else android.graphics.Color.argb(9, 255, 255, 255)
+                    color = if (c != null) argb(c, 0.5f) else android.graphics.Color.argb(9, 255, 255, 255)  // semi-transparent fill
                 }
                 val edge = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                     style = Paint.Style.STROKE; strokeWidth = if (isSel) 2.4f else 1f; strokeJoin = Paint.Join.ROUND
                     color = when {
                         isSel -> android.graphics.Color.WHITE
-                        c != null -> argb(c, 1f)
+                        c != null -> argb(c, 0.9f)
                         else -> android.graphics.Color.argb(72, 255, 255, 255)
                     }
                 }
