@@ -21,6 +21,8 @@ private val DEMO_WEAK = listOf(
 
 /** Strong lifts run from 1.8 down to 1.05 × the average lift; weak ones from 0.9 down to 0.4. */
 private fun spread(n: Int, from: Double, to: Double) = List(n) { i -> from + (to - from) * i / maxOf(1, n - 1) }
+/** Bump when the demo changes; a demo that is showing during an update is rebuilt. */
+const val DEMO_VERSION = 2
 private const val REPS = 5
 private const val WEEKS = 8
 
@@ -71,6 +73,6 @@ fun demoState(real: AppState): AppState {
     val sched = MutableList<String?>(7) { null }.also { it[0] = plans[0].id; it[2] = plans[1].id; it[4] = plans[2].id }
     return AppState(
         settings = settings, exercises = LIBRARY, plans = plans, schedule = Schedule(mondayOf(dateKey()), sched), logs = logs,
-        planName = "Demo plan",
+        planName = "Demo plan", demoVersion = DEMO_VERSION,
     )
 }

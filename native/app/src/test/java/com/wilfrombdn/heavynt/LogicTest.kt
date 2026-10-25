@@ -193,4 +193,12 @@ class LogicTest {
         val mid = scoreRGB(1.0, female = true)
         assertTrue(mid.third in (RED_RGB.third + 1) until PINK_RGB.third)  // in between, not a jump
     }
+
+    @Test fun oldDemoIsRebuiltOnUpdate() {
+        val old = demoState(AppState()).copy(demoBackup = "{}", demoVersion = 1, logs = emptyList())
+        val s = normalize(old)
+        assertEquals(DEMO_VERSION, s.demoVersion)
+        assertEquals("{}", s.demoBackup)
+        assertTrue(s.logs.isNotEmpty())
+    }
 }

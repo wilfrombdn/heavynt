@@ -119,6 +119,8 @@ data class AppState(
     val saved: List<SavedPlan> = emptyList(),
     /** While the developer demo is showing: the user's real data, as backup JSON, to put back on exit. */
     val demoBackup: String? = null,
+    /** Which demo layout is showing, so a demo left on during an update gets the newest one. */
+    val demoVersion: Int = 0,
 )
 
 class StarterPlan(val name: String, val weekday: Int, val items: List<PlanItem>)
