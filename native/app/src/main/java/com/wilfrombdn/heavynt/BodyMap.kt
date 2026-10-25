@@ -147,6 +147,10 @@ private val FEMALE = Figure(
     height = 0.88f,
 )
 
+/** Grey-white line colour shared by the figure outline and untrained muscles, and its faint glow. */
+private const val OUTLINE = 0xFF6A6A6A.toInt()
+private const val OUTLINE_GLOW = 0x16FFFFFF  // white at about 9%
+
 private val MIRROR = Matrix().apply { translate(200f, 0f); scale(-1f, 1f) }
 
 private fun build(sh: Shape): List<Path> {
@@ -255,13 +259,18 @@ fun BodyMap(scores: Map<String, RegionScore>, selected: String?, onPick: (String
         drawIntoCanvas { canvas ->
             val nc = canvas.nativeCanvas
             nc.save(); nc.scale(s, s)
-            // outline-only parts for both views
+            // Every grey-white line (head, hands, feet and untrained muscles) is one brightness, with a faint glow just outside it.
+            val line = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.STROKE; strokeWidth = 1f; color = OUTLINE; strokeJoin = Paint.Join.ROUND; strokeCap = Paint.Cap.ROUND
+            }
+            val lineGlow = Paint(line).apply { strokeWidth = 3f; color = OUTLINE_GLOW }
+            val plain = (0 until 2).flatMap { v -> fig.outline.map { p -> Path().apply { addPath(p); transform(offsetMatrix(v * 220f)) } } } +
+                all.filter { scores[it.key] == null }.flatMap { it.paths }
+            for (p in plain) nc.drawPath(p.asAndroidPath(), lineGlow)
             for (x in listOf(0f, 220f)) {
                 for (p in fig.outline) {
                     val q = Path().apply { addPath(p); transform(offsetMatrix(x)) }
-                    nc.drawPath(q.asAndroidPath(), Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                        style = Paint.Style.STROKE; strokeWidth = 1f; color = 0xFF6A6A6A.toInt(); strokeJoin = Paint.Join.ROUND; strokeCap = Paint.Cap.ROUND
-                    })
+                    nc.drawPath(q.asAndroidPath(), line)
                 }
             }
             fun colorOf(b: Built): Triple<Int, Int, Int>? = scores[b.key]?.let { scoreRGB(it.score, female) }
@@ -298,7 +307,7 @@ fun BodyMap(scores: Map<String, RegionScore>, selected: String?, onPick: (String
                     color = when {
                         isSel -> android.graphics.Color.WHITE
                         c != null -> argb(c, 0.9f)
-                        else -> android.graphics.Color.argb(72, 255, 255, 255)
+                        else -> OUTLINE
                     }
                 }
                 for (p in b.paths) { nc.drawPath(p.asAndroidPath(), fill); nc.drawPath(p.asAndroidPath(), edge) }

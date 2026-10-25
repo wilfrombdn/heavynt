@@ -37,7 +37,7 @@ fun HistoryScreen(st: AppState, vm: AppViewModel) {
             val isOpen = log.id in open
             HItem(onClick = { open = if (isOpen) open - log.id else open + log.id }) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) { Text(log.planName, style = T.big); Muted(fmtDate(log.start)) }
+                    Column(Modifier.weight(1f)) { Text(log.planName, style = T.name); Text(fmtDate(log.start), style = T.small) }
                     Column(horizontalAlignment = Alignment.End) {
                         Text("${log.entries.size} exercises", style = T.small)
                         if (log.end != null) Text(fmtDuration(log.start, log.end), style = T.small)
