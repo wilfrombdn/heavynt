@@ -188,14 +188,16 @@ fun WorkoutScreen(st: AppState, vm: AppViewModel, goHome: () -> Unit) {
             val skipped = o?.skipped?.let { st.plan(it) }
             PageHead("Workout", fmtToday())
             if (plan != null) {
-                HCard {
+                // Tap the day to swap it for another day from the plan.
+                HCard(onClick = { showSwitch = true }) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Eyebrow(if (o != null) "Today · switched" else "Today")
                             Text(plan.name, style = T.big)
                             if (skipped != null) Text("Skipped ${skipped.name}", style = T.small)
+                            Text("Tap to switch", style = T.small)
                         }
-                        if (doneToday) Tag("Done ✓")
+                        if (doneToday) Tag("Done ✓") else Text("›", style = TextStyle(fontSize = 22.sp, color = C.muted))
                     }
                 }
                 ItemList(st, plan.items.map { ActiveItem(it.ex, it.sets, it.reps, it.weight, it.note, ss = it.ss) }, false)
@@ -203,7 +205,7 @@ fun WorkoutScreen(st: AppState, vm: AppViewModel, goHome: () -> Unit) {
                 HButton("Switch today's workout", { showSwitch = true })
             } else {
                 val n = nextWorkout(st)
-                HCard {
+                HCard(onClick = { showSwitch = true }) {
                     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("Rest day", style = T.big)
                         Muted(if (n != null) "Next: ${n.second.name} on ${fmtLongDay(n.first)}" else "No workouts scheduled")
