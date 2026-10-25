@@ -1,5 +1,10 @@
 package com.wilfrombdn.heavynt
 
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
@@ -85,15 +90,22 @@ fun PlansScreen(st: AppState, vm: AppViewModel) {
             }
         }
         SectionTitle("Workout days")
-        st.plans.forEach { p ->
-            HCard(onClick = { editPlan = p.id }) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(p.name, style = T.big)
-                        Muted(p.items.mapNotNull { st.ex(it.ex)?.name }.take(4).joinToString(" · ").ifEmpty { "Empty" })
+        // listed like the workout screen: flat rows, a short bar, the count on the right
+        Column {
+            Box(Modifier.fillMaxWidth().height(Look.line).background(C.line))
+            st.plans.forEach { p ->
+                Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min).clickable { editPlan = p.id }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.width(3.dp).fillMaxHeight().clip(Look.shape(2.dp)).background(Color(0xFF4A4A4A)))
+                    Column(Modifier.weight(1f).padding(start = 12.dp, end = 8.dp), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                        Text(p.name, style = T.name.copy(fontSize = 15.sp))
+                        Text(p.items.mapNotNull { st.ex(it.ex)?.name }.take(3).joinToString(" · ").ifEmpty { "Empty" }, style = T.small, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
-                    Text("›", style = TextStyle(fontSize = 22.sp, color = C.muted))
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text("${p.items.size}", style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White))
+                        Text("exercises", style = T.small)
+                    }
                 }
+                Box(Modifier.fillMaxWidth().height(Look.line).background(C.line))
             }
         }
         if (st.plans.isEmpty()) Muted("No workout days yet. Add one, then pick which weekdays it falls on under Schedule › Edit.")

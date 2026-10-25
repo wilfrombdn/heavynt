@@ -2,6 +2,7 @@
 
 package com.wilfrombdn.heavynt
 
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.FlowRow
 
 import android.Manifest
@@ -57,6 +58,7 @@ fun HomeScreen(st: AppState, vm: AppViewModel, go: (Int) -> Unit, openSettings: 
 
     Screen {
         PageHead("Strength", fmtToday()) { IconBtnVec(Icons.gear, openSettings) }
+        Spacer(Modifier.height(8.dp))
         if (st.demoBackup != null) HCard(borderColor = Color(0xFFFFB020)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
@@ -93,6 +95,7 @@ fun HomeScreen(st: AppState, vm: AppViewModel, go: (Int) -> Unit, openSettings: 
         }
 
         // Body map
+        Spacer(Modifier.height(8.dp))
         Column(Modifier.fillMaxWidth()) {
             BodyMap(scores, selected, { selected = if (selected == it) null else it }, female = st.settings.sex == "female")
             Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {

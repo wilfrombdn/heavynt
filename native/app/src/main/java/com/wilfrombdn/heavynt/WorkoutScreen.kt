@@ -61,14 +61,8 @@ fun PageHead(title: String, subtitle: String? = null, trailing: @Composable (() 
     }
 }
 
-/** Stripe colour per muscle group, so a day reads at a glance. */
-private val CAT_COLOR = mapOf(
-    "Chest" to Color(0xFF4F9DFF), "Back" to Color(0xFFFF9F43), "Shoulders" to Color(0xFFB57BFF), "Arms" to Color(0xFFFFD43B),
-    "Legs" to Color(0xFF2ED3B7), "Core" to Color(0xFFFF6B9A), "Olympic" to Color(0xFFFF5A5A), "Neck" to Color(0xFF9AA0A6),
-)
-
 @Composable
-fun ItemCard(st: AppState, it: ActiveItem, interactive: Boolean, badge: String? = null, onTap: () -> Unit = {}, onLong: () -> Unit = {}) {
+fun ItemCard(st: AppState, it: ActiveItem, interactive: Boolean, next: Boolean = false, badge: String? = null, onTap: () -> Unit = {}, onLong: () -> Unit = {}) {
     val ex = st.ex(it.ex) ?: return
     val last = remember(st.logs, it.ex) { exerciseHistory(st, it.ex).lastOrNull() }
     val plateau = interactive && plateauInfo(st, it.ex, it.weight) != null
@@ -86,16 +80,16 @@ fun ItemCard(st: AppState, it: ActiveItem, interactive: Boolean, badge: String? 
         ex.bw > 0 -> "BW" to ""
         else -> "—" to ""
     }
-    // flat row: a short muscle-colour bar, the lift, and the weight; rows are split by hairlines in ItemList
-    Row(m.height(IntrinsicSize.Min).padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.width(3.dp).fillMaxHeight().clip(Look.shape(2.dp)).background(if (it.done) C.green else CAT_COLOR[ex.cat] ?: C.muted))
-        Column(Modifier.weight(1f).padding(start = 12.dp, end = 8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+    // flat row: a short bar (white = up next, grey = still to come, green = done), the lift, and the weight
+    Row(m.height(IntrinsicSize.Min).padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.width(3.dp).fillMaxHeight().clip(Look.shape(2.dp)).background(if (it.done) C.green else if (next) Color.White else Color(0xFF4A4A4A)))
+        Column(Modifier.weight(1f).padding(start = 12.dp, end = 8.dp), verticalArrangement = Arrangement.spacedBy(1.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (it.done) Text("✓", style = TextStyle(fontSize = 17.sp, fontWeight = FontWeight.Bold, color = C.green))
                 if (badge != null) Box(Modifier.clip(Look.shape(6.dp)).background(Color.White).padding(horizontal = 6.dp, vertical = 1.dp)) {
                     Text(badge, style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.Black))
                 }
-                Text(ex.name, style = T.name, modifier = Modifier.weight(1f, fill = false))
+                Text(ex.name, style = T.name.copy(fontSize = 15.sp), modifier = Modifier.weight(1f, fill = false))
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("${it.sets} × ${it.reps}", style = T.sub.copy(fontWeight = FontWeight.SemiBold))
@@ -110,7 +104,7 @@ fun ItemCard(st: AppState, it: ActiveItem, interactive: Boolean, badge: String? 
             if (plateau) Box(Modifier.padding(top = 4.dp)) { Tag("Plateau") }
         }
         Column(horizontalAlignment = Alignment.End) {
-            Text(big, style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold, color = if (big == "—") C.muted else Color.White))
+            Text(big, style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold, color = if (big == "—") C.muted else Color.White))
             if (bigUnit.isNotEmpty()) Text(bigUnit, style = T.small)
         }
     }
@@ -130,6 +124,7 @@ private fun Elapsed(startIso: String) {
 @Composable
 fun ItemList(st: AppState, items: List<ActiveItem>, interactive: Boolean, onTap: (Int) -> Unit = {}, onLong: (Int) -> Unit = {}) {
     val groups = supersetGroups(items.map { it.ss })
+    val next = items.indexOfFirst { !it.done }
     Column(Modifier.fillMaxWidth()) {
         Hairline()
         var i = 0
@@ -137,7 +132,7 @@ fun ItemList(st: AppState, items: List<ActiveItem>, interactive: Boolean, onTap:
             val g = groups.firstOrNull { it.start == i }
             if (g == null) {
                 val idx = i
-                ItemCard(st, items[idx], interactive, onTap = { onTap(idx) }, onLong = { onLong(idx) })
+                ItemCard(st, items[idx], interactive, next = idx == next, onTap = { onTap(idx) }, onLong = { onLong(idx) })
                 Hairline()
                 i++
             } else {
@@ -147,7 +142,7 @@ fun ItemList(st: AppState, items: List<ActiveItem>, interactive: Boolean, onTap:
                 }
                 for (k in 0 until g.size) {
                     val idx = g.start + k
-                    ItemCard(st, items[idx], interactive, badge = "${g.letter}${k + 1}", onTap = { onTap(idx) }, onLong = { onLong(idx) })
+                    ItemCard(st, items[idx], interactive, next = idx == next, badge = "${g.letter}${k + 1}", onTap = { onTap(idx) }, onLong = { onLong(idx) })
                     Hairline()
                 }
                 i += g.size
