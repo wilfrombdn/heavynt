@@ -47,8 +47,7 @@ fun PlansScreen(st: AppState, vm: AppViewModel) {
     val weeks = st.schedule.days.size / 7
     val on = st.schedule.days.count { it != null }
 
-    Screen {
-        PageHead("Plans")
+    Screen(head = { PageHead("Plans") }) {
         HCard(onClick = { manage = true }) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {

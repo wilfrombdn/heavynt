@@ -36,9 +36,10 @@ fun HistoryScreen(st: AppState, vm: AppViewModel, onBack: () -> Unit) {
         return
     }
 
-    Screen {
+    Screen(head = {
         Row(Modifier.clickable(onClick = onBack).padding(vertical = 4.dp)) { Text("‹  Workout", style = T.muted) }
         PageHead("History")
+    }) {
         if (st.logs.isEmpty() && st.runs.isEmpty()) Muted("No workouts yet. Finish one and it shows up here with the date and time.")
         // workouts and runs together, newest first
         val items: List<Pair<Long, Any>> = st.logs.map { isoMillis(it.start) to it } + st.runs.map { isoMillis(it.start) to it }

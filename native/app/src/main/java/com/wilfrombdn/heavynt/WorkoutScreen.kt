@@ -2,6 +2,7 @@
 
 package com.wilfrombdn.heavynt
 
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.activity.compose.BackHandler
@@ -46,14 +47,22 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.IntrinsicSize
 
 @Composable
-fun Screen(content: @Composable () -> Unit) {
-    // Short pages sit in the middle of the screen; long ones scroll from the top as usual.
+fun Screen(head: (@Composable () -> Unit)? = null, content: @Composable () -> Unit) {
+    // The title (head) stays at the top; on short pages the rest sits in the middle of the space left, long pages scroll as usual.
     androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize()) {
         val h = maxHeight
-        Column(
-            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).heightIn(min = h).padding(horizontal = 24.dp, vertical = 14.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
-        ) { content() }
+        val density = androidx.compose.ui.platform.LocalDensity.current
+        var headH by remember { mutableStateOf(0.dp) }
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 14.dp)) {
+            if (head != null) Column(
+                Modifier.fillMaxWidth().onSizeChanged { headH = with(density) { it.height.toDp() } + 12.dp }.padding(bottom = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) { head() }
+            Column(
+                Modifier.fillMaxWidth().heightIn(min = (h - 28.dp - headH).coerceAtLeast(0.dp)),
+                verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
+            ) { content() }
+        }
     }
 }
 
@@ -202,11 +211,18 @@ fun WorkoutScreen(st: AppState, vm: AppViewModel, goHome: () -> Unit) {
         }
     }
 
-    Screen {
-        val a = st.active
+    val a = st.active
+    Screen(head = {
+        if (a != null) PageHead(a.planName, "Started ${fmtDate(a.start)}") { Elapsed(a.start) }
+        else PageHead("Workout", fmtToday()) {
+            Row(Modifier.clickable { history = true }.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.history, "History", tint = Color.White, modifier = Modifier.size(20.dp))
+                Text("  History", style = T.body)
+            }
+        }
+    }) {
         if (a != null) {
             val done = a.items.count { it.done }
-            PageHead(a.planName, "Started ${fmtDate(a.start)}") { Elapsed(a.start) }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Box(Modifier.weight(1f).height(8.dp).clip(Look.shape(2.dp)).background(C.line)) {
                     Box(Modifier.fillMaxHeight().fillMaxWidth(if (a.items.isEmpty()) 0f else done / a.items.size.toFloat()).background(C.green))
@@ -231,12 +247,6 @@ fun WorkoutScreen(st: AppState, vm: AppViewModel, goHome: () -> Unit) {
             val doneToday = plan != null && todaysLog(st, plan.id) != null
             val o = st.overrides[dateKey()]
             val skipped = o?.skipped?.let { st.plan(it) }
-            PageHead("Workout", fmtToday()) {
-                Row(Modifier.clickable { history = true }.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.history, "History", tint = Color.White, modifier = Modifier.size(20.dp))
-                    Text("  History", style = T.body)
-                }
-            }
             if (plan != null) {
                 // Tap the day to swap it for another day from the plan.
                 Row(Modifier.fillMaxWidth().clickable { showSwitch = true }.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {

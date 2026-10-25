@@ -80,8 +80,7 @@ private fun LiveRunView(r: LiveRun, vm: AppViewModel, onSaved: (String) -> Unit)
         else { RunFiles.partial(ctx).delete(); toast(ctx, "Run discarded") }
     }
 
-    Screen {
-        PageHead("Run", "Started ${fmtDate(r.start)}")
+    Screen(head = { PageHead("Run", "Started ${fmtDate(r.start)}") }) {
         Text(if (r.paused) "Paused" else if (!r.gpsOk) "Waiting for GPS…" else "Recording", style = T.small.copy(color = if (r.paused || !r.gpsOk) C.muted else C.green))
         BigStat(fmtClock(sec), "Time", size = 64)
         Box(Modifier.fillMaxWidth().height(Look.line).background(C.line))
@@ -146,8 +145,7 @@ private fun RunHome(st: AppState, vm: AppViewModel, open: (String) -> Unit) {
     val week = st.runs.filter { !isoToLocalDate(it.start).isBefore(weekStart) }
     val month = st.runs.filter { isoToLocalDate(it.start).let { d -> d.year == today.year && d.month == today.month } }
 
-    Screen {
-        PageHead("Run")
+    Screen(head = { PageHead("Run") }) {
         Row(Modifier.fillMaxWidth()) {
             BigStat(fmtKm(week.sumOf { it.distanceM }), "km this week", Modifier.weight(1f), size = 28)
             BigStat(fmtKm(month.sumOf { it.distanceM }), "km this month", Modifier.weight(1f), size = 28)
@@ -196,9 +194,10 @@ fun RunDetail(st: AppState, vm: AppViewModel, id: String, onBack: () -> Unit) {
     val dialogs = LocalDialogs.current
     val run = st.runs.firstOrNull { it.id == id } ?: run { onBack(); return }
     val pts = remember(id) { RunFiles.load(ctx, id) }
-    Screen {
+    Screen(head = {
         Row(Modifier.clickable(onClick = onBack).padding(vertical = 4.dp)) { Text("‹  Back", style = T.muted) }
         PageHead("Run", fmtDate(run.start))
+    }) {
         when {
             pts != null && pts.size >= 2 -> RouteMap(pts)
             pts != null -> Muted("No route to show: you didn't move far enough for GPS to draw one.")

@@ -56,8 +56,7 @@ fun HomeScreen(st: AppState, vm: AppViewModel, go: (Int) -> Unit, openSettings: 
     val idx = cycleIndex(st.schedule)
     val len = st.schedule.days.size
 
-    Screen {
-        PageHead("Strength", fmtToday()) { IconBtnVec(Icons.gear, openSettings) }
+    Screen(head = { PageHead("Strength", fmtToday()) { IconBtnVec(Icons.gear, openSettings) } }) {
         Spacer(Modifier.height(8.dp))
         if (st.demoBackup != null) HCard(borderColor = Color(0xFFFFB020)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
