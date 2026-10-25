@@ -5,6 +5,8 @@ import androidx.compose.ui.test.captureToImage
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -63,7 +65,21 @@ class ScreenshotTest {
                 rule.onNodeWithText("+ Build a new plan").performClick(); settle()
                 rule.onNodeWithText("e.g. Upper / Lower").performTextInput("Upper / Lower"); rule.onNodeWithText("Create plan").performClick(); settle(); shot("plans-new")
             }
-            if (name == "exercises") { rule.onNodeWithText("Olympic").performScrollTo().performClick(); settle(); shot("exercises-open") }
+            if (name == "exercises") {
+                // sheets don't show in screenshots, so check their text exists instead
+                rule.onNodeWithText("Barbell Bench Press").performClick(); settle()
+                rule.onNodeWithText("How you compare", ignoreCase = true).assertExists()
+                rule.onNodeWithText("Stronger than about", substring = true).assertExists()
+                rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }; settle()
+                if (rule.onAllNodesWithText("+ Add exercise").fetchSemanticsNodes().isEmpty()) { rule.onNodeWithText("Exercises").performClick(); settle() }
+                rule.onNodeWithText("+ Add exercise").performClick(); settle()
+                // main and helper muscle pickers, both grouped by body area
+                rule.onAllNodesWithText("Hips & legs", ignoreCase = true).assertCountEquals(2)
+                rule.onAllNodesWithText("Inner thighs").assertCountEquals(2)
+                rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }; settle()
+                if (rule.onAllNodesWithText("Olympic").fetchSemanticsNodes().isEmpty()) { rule.onNodeWithText("Exercises").performClick(); settle() }
+                rule.onNodeWithText("Olympic").performScrollTo().performClick(); settle(); shot("exercises-open")
+            }
         }
         vm.update { it.withSettings { x -> x.copy(sex = "female") } }
         rule.onNodeWithText("Home").performClick(); settle(); shot("home-female")

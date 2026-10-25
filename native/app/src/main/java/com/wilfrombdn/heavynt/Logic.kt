@@ -152,7 +152,7 @@ fun percentileFor(ex: Exercise, st: Settings, e1rm: Double): Int {
 
 /** The level band this one-rep max reaches, e.g. "Novice". */
 fun levelReached(ex: Exercise, st: Settings, e1rm: Double): String =
-    (LEVELS.lastOrNull { e1rm >= targetFor(ex, st, it) } ?: "untrained").replaceFirstChar { it.uppercase() }
+    (LEVELS.lastOrNull { e1rm >= targetFor(ex, st, it) } ?: "below beginner").replaceFirstChar { it.uppercase() }
 
 data class LiftScore(val score: Double, val e1rm: Double, val target: Double)
 

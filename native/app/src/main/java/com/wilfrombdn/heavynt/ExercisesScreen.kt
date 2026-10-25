@@ -208,9 +208,12 @@ private fun ExerciseEditor(vm: AppViewModel, ex: Exercise?, onDismiss: () -> Uni
                 name.isBlank() -> toast(ctx, "Give it a name")
                 prim.isEmpty() -> toast(ctx, "Pick at least one main muscle")
                 else -> {
+                    val newStd = std.toDoubleOrNull()?.takeIf { it > 0 } ?: DEFAULT_STD[cat] ?: 1.0
                     val built = (ex ?: Exercise("c-" + uid(), "", cat, custom = true)).copy(
                         name = name.trim(), cat = cat, primary = prim.toList(), secondary = (sec - prim).toList(),
-                        std = std.toDoubleOrNull()?.takeIf { it > 0 } ?: DEFAULT_STD[cat] ?: 1.0,
+                        std = newStd,
+                        // a changed benchmark no longer matches the measured women's one, so work it out again
+                        stdF = if (ex != null && ex.std == newStd) ex.stdF else 0.0,
                         bw = if (bw) (ex?.bw?.takeIf { it > 0 } ?: 1.0) else 0.0, pair = pair,
                     )
                     vm.update { it.upsertExercise(built) }

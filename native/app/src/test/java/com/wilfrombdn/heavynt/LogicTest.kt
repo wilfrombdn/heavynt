@@ -77,7 +77,7 @@ class LogicTest {
         assertEquals(80, percentileFor(bench, man, targetFor(bench, man, "advanced")))
         assertTrue(percentileFor(bench, man, 60.0) < 5)
         assertEquals("Intermediate", levelReached(bench, man, targetFor(bench, man, "intermediate") + 1))
-        assertEquals("Untrained", levelReached(bench, man, 20.0))
+        assertEquals("Below beginner", levelReached(bench, man, 20.0))
     }
 
     @Test fun strongChestIsBlueWeakQuadsAreRed() {
