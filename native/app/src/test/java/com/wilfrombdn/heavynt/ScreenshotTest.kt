@@ -65,5 +65,7 @@ class ScreenshotTest {
             }
             if (name == "exercises") { rule.onNodeWithText("Olympic").performScrollTo().performClick(); settle(); shot("exercises-open") }
         }
+        vm.update { it.withSettings { x -> x.copy(sex = "female") } }
+        rule.onNodeWithText("Home").performClick(); settle(); shot("home-female")
     }
 }

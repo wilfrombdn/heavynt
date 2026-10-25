@@ -13,8 +13,9 @@ import kotlin.math.roundToInt
 
 // ---------- body regions ----------
 val REGIONS: LinkedHashMap<String, String> = linkedMapOf(
-    "chest" to "Chest", "shoulders" to "Shoulders", "upperBack" to "Upper back", "lowerBack" to "Lower back",
-    "biceps" to "Biceps", "triceps" to "Triceps", "forearms" to "Forearms", "abs" to "Core",
+    "upperChest" to "Upper chest", "chest" to "Chest", "shoulders" to "Front delts", "sideDelts" to "Side delts", "rearDelts" to "Rear delts",
+    "traps" to "Traps", "upperBack" to "Mid back", "lats" to "Lats", "lowerBack" to "Lower back",
+    "biceps" to "Biceps", "triceps" to "Triceps", "forearms" to "Forearms", "abs" to "Abs", "obliques" to "Obliques",
     "glutes" to "Glutes", "quads" to "Quads", "hamstrings" to "Hamstrings", "calves" to "Calves",
 )
 val CATEGORIES = listOf("Chest", "Back", "Shoulders", "Arms", "Core", "Legs", "Olympic")

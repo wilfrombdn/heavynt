@@ -103,7 +103,7 @@ data class SavedPlan(val id: String, val name: String, val plans: List<Plan>, va
 
 @Serializable
 data class AppState(
-    val v: Int = 5,
+    val v: Int = 6,
     val settings: Settings = Settings(),
     val exercises: List<Exercise> = emptyList(),
     val plans: List<Plan> = emptyList(),

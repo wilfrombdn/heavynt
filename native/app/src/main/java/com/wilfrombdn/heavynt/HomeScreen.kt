@@ -82,7 +82,7 @@ fun HomeScreen(st: AppState, vm: AppViewModel, go: (Int) -> Unit, openSettings: 
 
         // Body map
         HCard(Modifier, bg = Color(0xFF0B0B0D)) {
-            BodyMap(scores, selected, { selected = if (selected == it) null else it })
+            BodyMap(scores, selected, { selected = if (selected == it) null else it }, female = st.settings.sex == "female")
             Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("Under target", style = T.small)
                 Box(Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)).background(Brush.horizontalGradient(

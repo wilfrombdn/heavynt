@@ -116,4 +116,13 @@ class LogicTest {
         assertEquals(copy.plans[0].id, copy.schedule.days[0])
         assertEquals(copy.plans[1].id, copy.schedule.days[2])
     }
+
+    @Test fun updatingRetagsBuiltInExercisesButNotCustomOnes() {
+        val oldBench = LIBRARY.first { it.id == "bench" }.copy(secondary = listOf("shoulders", "triceps", "upperBack"))
+        val mine = Exercise("c-1", "My Raise", "Shoulders", listOf("shoulders"), custom = true)
+        val s = normalize(AppState(v = 5, exercises = listOf(oldBench, mine)))
+        assertEquals(LIBRARY.first { it.id == "bench" }.secondary, s.ex("bench")!!.secondary)
+        assertEquals(listOf("shoulders"), s.ex("c-1")!!.primary)
+        assertTrue(LIBRARY.all { e -> (e.primary + e.secondary).all { it in REGIONS } })
+    }
 }
