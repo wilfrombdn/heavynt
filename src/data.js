@@ -93,6 +93,7 @@ const RAW = [
   E('floor-press', 'Floor Press', 'Chest', ['chest'], ['triceps'], 1.1),
   E('pec-deck', 'Pec Deck Fly', 'Chest', ['chest'], [], 0.6),
   E('db-fly', 'Dumbbell Fly', 'Chest', ['chest'], ['shoulders'], 0.2),
+  E('incline-db-fly', 'Incline Dumbbell Fly', 'Chest', ['upperChest'], ['shoulders'], 0.18),
   E('cable-crossover', 'Cable Crossover', 'Chest', ['chest'], ['shoulders'], 0.3),
   E('low-cable-fly', 'Low-to-High Cable Fly', 'Chest', ['upperChest'], ['shoulders'], 0.2),
   E('db-pullover', 'Dumbbell Pullover', 'Chest', ['chest', 'lats'], ['triceps'], 0.4),
@@ -159,6 +160,7 @@ const RAW = [
   E('machine-crunch', 'Machine Crunch', 'Core', ['abs'], [], 0.8),
   E('woodchop', 'Cable Woodchop', 'Core', ['obliques'], ['abs'], 0.3),
   E('pallof', 'Pallof Press', 'Core', ['obliques', 'abs'], [], 0.2),
+  E('side-plank', 'Side Plank', 'Core', ['obliques'], ['abs'], 0.2),
   E('side-bend', 'Dumbbell Side Bend', 'Core', ['obliques'], [], 0.4),
   // Legs
   E('hack-squat', 'Hack Squat', 'Legs', ['quads'], ['glutes', 'adductors'], 2.0),
@@ -298,7 +300,7 @@ export const STARTER_WEEKS = 2;
 // Dumbbell lifts done with a pair: the app takes the COMBINED weight (both dumbbells added up).
 // Their `std` is therefore the combined-weight benchmark.
 export const PAIRED = new Set(['db-bench', 'incline-db', 'decline-db', 'db-press', 'arnold', 'lateral', 'rear-delt', 'db-curl',
-  'hammer', 'incline-curl', 'zottman', 'db-fly', 'front-raise', 'kickback', 'lunge', 'split-squat', 'walking-lunge',
+  'hammer', 'incline-curl', 'incline-db-fly', 'zottman', 'db-fly', 'front-raise', 'kickback', 'lunge', 'split-squat', 'walking-lunge',
   'reverse-lunge', 'step-up', 'db-rdl', 'db-shrug', 'farmers-walk']);
 
 const twice = (x) => Math.round(x * 2 * 100) / 100;

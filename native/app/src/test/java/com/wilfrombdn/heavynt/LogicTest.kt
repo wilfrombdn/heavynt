@@ -237,12 +237,29 @@ class LogicTest {
         assertEquals(24 * 3_600_000L - 60_000L, millisToNextRollover(d.atTime(0, 2)))
     }
 
-    @Test fun freshInstallStartsEmpty() {
+    @Test fun freshInstallGetsTheStarterPlan() {
         val s = seedState()
-        assertTrue(s.plans.isEmpty())
-        assertTrue(s.schedule.days.all { it == null })
+        assertEquals(STARTER_NAME, s.planName)
+        assertEquals(5, s.plans.size)
+        assertEquals(14, s.schedule.days.size)
+        // week 1: rest Mon-Tue, Day 1-5 Wed-Sun; week 2 all rest
+        assertEquals(listOf(null, null) + s.plans.map { it.id } + List(7) { null }, s.schedule.days)
+        val ids = s.exercises.map { it.id }.toSet()
+        assertTrue(s.plans.all { p -> p.items.all { it.ex in ids } })
         assertTrue(s.logs.isEmpty())
-        assertEquals(LIBRARY.size, s.exercises.size)  // the exercise list is still there to pick from
         assertEquals(0.0, s.settings.bodyweight, 0.0)
+        assertEquals(s, normalize(s))  // loading it again adds nothing
+    }
+
+    @Test fun updatingAddsTheStarterPlanOnce() {
+        val empty = normalize(AppState(v = 7, exercises = LIBRARY, planName = "My plan"))
+        assertEquals(STARTER_NAME, empty.planName)
+        assertEquals(STARTER_DAYS, empty.plans)
+
+        val mine = Plan("a", "Mine", listOf(PlanItem("bench")))
+        val busy = normalize(AppState(v = 7, exercises = LIBRARY, plans = listOf(mine)))
+        assertEquals(listOf(mine), busy.plans)  // own plan untouched
+        assertEquals(listOf(STARTER_NAME), busy.saved.map { it.name })
+        assertEquals(busy, normalize(busy))
     }
 }

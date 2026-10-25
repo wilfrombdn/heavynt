@@ -22,9 +22,11 @@ fun uid(): String = UUID.randomUUID().toString().take(8)
 /** First-run state: just the exercise library. No plans or schedule; the user builds their own. */
 fun seedState(): AppState {
     return AppState(
-        v = 4,
+        v = 8,
         exercises = LIBRARY,
-        schedule = Schedule(mondayOf(dateKey()), List(7) { null }),
+        plans = STARTER_DAYS,
+        schedule = starterSchedule(),
+        planName = STARTER_NAME,
     )
 }
 
@@ -43,9 +45,16 @@ fun normalize(s: AppState): AppState {
     val plans = if (s.v < 5) s.plans.map(::inferSupersets) else s.plans
     // Weights saved before the monthly weigh-in existed count as current, so nobody is asked straight after updating.
     val settings = if (s.settings.bodyweight > 0 && s.settings.bodyweightSetAt.isEmpty()) s.settings.copy(bodyweightSetAt = dateKey()) else s.settings
-    val out = s.copy(v = 7, exercises = merged, plans = plans, overrides = overrides, settings = settings, intake = intake)
+    val out = withStarter(s.copy(exercises = merged, plans = plans, overrides = overrides, settings = settings, intake = intake)).copy(v = 8)
     // a demo left on from an older version: show the current demo (the real data stays set aside)
     return if (out.demoBackup != null && out.demoVersion < DEMO_VERSION) demoState(out).copy(demoBackup = out.demoBackup) else out
+}
+
+/** v8: installs from before the starter plan get it once: as the current plan if they have no workout days, else in the saved plans. */
+private fun withStarter(s: AppState): AppState = when {
+    s.v >= 8 || s.planName == STARTER_NAME || s.saved.any { it.name == STARTER_NAME } -> s
+    s.plans.isEmpty() -> s.copy(plans = STARTER_DAYS, schedule = starterSchedule(), planName = STARTER_NAME)
+    else -> s.copy(saved = s.saved + SavedPlan(uid(), STARTER_NAME, STARTER_DAYS, starterSchedule(), nowIso()))
 }
 
 class Storage(private val file: File) {
