@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -62,11 +61,11 @@ fun ItemCard(st: AppState, it: ActiveItem, interactive: Boolean, badge: String? 
     val ex = st.ex(it.ex) ?: return
     val last = remember(st.logs, it.ex) { exerciseHistory(st, it.ex).lastOrNull() }
     val plateau = interactive && plateauInfo(st, it.ex, it.weight) != null
-    val shape = RoundedCornerShape(16.dp)
+    val shape = Look.shape(16.dp)
     val haptic = LocalHapticFeedback.current
     val base = Modifier.fillMaxWidth().clip(shape)
         .background(if (it.done) Color(0x1F22C55E) else C.panel)
-        .border(1.dp, if (it.done) C.green else C.line, shape)
+        .border(Look.line, if (it.done) C.green else C.line, shape)
     val m = if (interactive) base.combinedClickable(
         onClick = { haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove); onTap() },
         onLongClick = { haptic.performHapticFeedback(HapticFeedbackType.LongPress); onLong() },
@@ -74,12 +73,12 @@ fun ItemCard(st: AppState, it: ActiveItem, interactive: Boolean, badge: String? 
     Row(m.padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
         Box(
             Modifier.size(28.dp).clip(CircleShape).background(if (it.done) C.green else Color.Transparent)
-                .border(1.5.dp, if (it.done) C.green else Color(0xFF555555), CircleShape),
+                .border(Look.lineBold, if (it.done) C.green else Color(0xFF555555), CircleShape),
             contentAlignment = Alignment.Center,
         ) { if (it.done) Text("✓", style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)) }
         Column(Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (badge != null) Box(Modifier.clip(RoundedCornerShape(6.dp)).background(Color.White).padding(horizontal = 6.dp, vertical = 1.dp)) {
+                if (badge != null) Box(Modifier.clip(Look.shape(6.dp)).background(Color.White).padding(horizontal = 6.dp, vertical = 1.dp)) {
                     Text(badge, style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.Black))
                 }
                 Text(ex.name, style = T.name, modifier = Modifier.weight(1f, fill = false))
@@ -108,9 +107,9 @@ fun ItemList(st: AppState, items: List<ActiveItem>, interactive: Boolean, onTap:
             ItemCard(st, items[idx], interactive, onTap = { onTap(idx) }, onLong = { onLong(idx) })
             i++
         } else {
-            val shape = RoundedCornerShape(20.dp)
+            val shape = Look.shape(20.dp)
             Column(
-                Modifier.fillMaxWidth().border(1.5.dp, Color(0xFF8A8A8A), shape).padding(8.dp),
+                Modifier.fillMaxWidth().border(Look.lineBold, Color(0xFF8A8A8A), shape).padding(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Row(Modifier.padding(horizontal = 6.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -166,7 +165,7 @@ fun WorkoutScreen(st: AppState, vm: AppViewModel, goHome: () -> Unit) {
         if (a != null) {
             val done = a.items.count { it.done }
             PageHead(a.planName, "Started ${fmtDate(a.start)}")
-            Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(C.line)) {
+            Box(Modifier.fillMaxWidth().height(4.dp).clip(Look.shape(2.dp)).background(C.line)) {
                 Box(Modifier.fillMaxHeight().fillMaxWidth(if (a.items.isEmpty()) 0f else done / a.items.size.toFloat()).background(C.green))
             }
             Text("$done/${a.items.size} done · tap to complete · hold to change weight, sets & reps", style = T.small)
@@ -306,7 +305,7 @@ private fun EditItemSheet(st: AppState, vm: AppViewModel, idx: Int, item: Active
 
 @Composable
 fun NoteBox(text: String) {
-    Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).border(1.dp, Color(0xFF333333), RoundedCornerShape(10.dp)).padding(10.dp)) {
+    Box(Modifier.fillMaxWidth().clip(Look.shape(10.dp)).border(Look.line, Color(0xFF333333), Look.shape(10.dp)).padding(10.dp)) {
         Text(text, style = T.small.copy(color = Color(0xFFCFCFCF), fontSize = 13.sp))
     }
 }

@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -97,7 +96,7 @@ private fun EditLogSheet(st: AppState, vm: AppViewModel, log: Log, onDismiss: ()
         SectionTitle("Exercises")
         rows.forEachIndexed { i, r ->
             val ex = st.ex(r.ex)
-            Column(Modifier.fillMaxWidth().border(1.dp, C.line, RoundedCornerShape(14.dp)).padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.fillMaxWidth().border(Look.line, C.line, Look.shape(14.dp)).padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 ExercisePicker(vm, st.exercises, r.ex, { v -> r.ex = v })
                 if (ex?.pair == true) NoteBox("Weight is both dumbbells combined. $PAIR_NOTE")
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

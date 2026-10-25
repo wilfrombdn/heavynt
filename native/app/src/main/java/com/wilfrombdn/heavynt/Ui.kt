@@ -66,8 +66,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
+/** Shape switch: SQUARE = small corners and hairline outlines; false = the original rounded look (12-22 dp corners, 1 dp outlines). */
+object Look {
+    const val SQUARE = true
+    fun shape(r: Dp): Shape = RoundedCornerShape(if (SQUARE) minOf(r, 3.dp) else r)
+    fun top(r: Dp): Shape = if (SQUARE) RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp) else RoundedCornerShape(topStart = r, topEnd = r)
+    val line: Dp get() = if (SQUARE) 0.5.dp else 1.dp
+    val lineBold: Dp get() = if (SQUARE) 1.dp else 1.5.dp
+}
 
 object C {
     val bg = Color.Black
@@ -126,9 +137,9 @@ fun HCard(
     bg: Color = C.panel,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val shape = RoundedCornerShape(16.dp)
+    val shape = Look.shape(16.dp)
     Column(
-        modifier.fillMaxWidth().clip(shape).background(bg).border(1.dp, borderColor, shape)
+        modifier.fillMaxWidth().clip(shape).background(bg).border(Look.line, borderColor, shape)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier).padding(14.dp),
         content = content,
     )
@@ -136,7 +147,7 @@ fun HCard(
 
 @Composable
 fun Tag(text: String) {
-    Box(Modifier.border(1.dp, Color(0xFF555555), RoundedCornerShape(99.dp)).padding(horizontal = 10.dp, vertical = 2.dp)) {
+    Box(Modifier.border(Look.line, Color(0xFF555555), Look.shape(99.dp)).padding(horizontal = 10.dp, vertical = 2.dp)) {
         Text(text, style = T.small.copy(color = Color.White))
     }
 }
@@ -145,14 +156,14 @@ enum class BtnStyle { Primary, Outline, Danger }
 
 @Composable
 fun HButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, style: BtnStyle = BtnStyle.Outline, enabled: Boolean = true) {
-    val shape = RoundedCornerShape(14.dp)
+    val shape = Look.shape(14.dp)
     val (bgc, fg, bd) = when (style) {
         BtnStyle.Primary -> Triple(Color.White, Color.Black, Color.White)
         BtnStyle.Outline -> Triple(Color.Transparent, Color.White, Color(0xFF3A3A3A))
         BtnStyle.Danger -> Triple(Color.Transparent, C.bad, Color(0xFF3A2222))
     }
     Box(
-        modifier.fillMaxWidth().height(50.dp).clip(shape).background(bgc).border(1.dp, bd, shape)
+        modifier.fillMaxWidth().height(50.dp).clip(shape).background(bgc).border(Look.line, bd, shape)
             .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) { Text(text, style = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = fg.copy(alpha = if (enabled) 1f else 0.4f))) }
@@ -161,7 +172,7 @@ fun HButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, st
 @Composable
 fun IconBtn(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Box(
-        modifier.size(38.dp).clip(RoundedCornerShape(12.dp)).border(1.dp, C.line, RoundedCornerShape(12.dp)).clickable(onClick = onClick),
+        modifier.size(38.dp).clip(Look.shape(12.dp)).border(Look.line, C.line, Look.shape(12.dp)).clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) { Text(text, style = TextStyle(fontSize = 16.sp, color = Color.White)) }
 }
@@ -178,7 +189,7 @@ fun Sheet(title: String?, onDismiss: () -> Unit, content: @Composable ColumnScop
         sheetState = state,
         containerColor = C.sheet,
         contentColor = Color.White,
-        shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp),
+        shape = Look.top(22.dp),
         dragHandle = { BottomSheetDefaults.DragHandle(color = Color(0xFF333333)) },
     ) {
         Column(
@@ -222,7 +233,7 @@ fun HTextField(
     value: String, onChange: (String) -> Unit, modifier: Modifier = Modifier, placeholder: String = "",
     keyboard: KeyboardType = KeyboardType.Text, singleLine: Boolean = true, minLines: Int = 1, center: Boolean = false, big: Boolean = false,
 ) {
-    val shape = RoundedCornerShape(12.dp)
+    val shape = Look.shape(12.dp)
     var field by remember { mutableStateOf(TextFieldValue(value, TextRange(value.length))) }
     if (field.text != value) field = TextFieldValue(value, TextRange(value.length))
     // Tapping in selects everything, so typing replaces the old value; the tap's own cursor move lands just after focus, so keep the selection for a moment.
@@ -247,7 +258,7 @@ fun HTextField(
             }
         },
         decorationBox = { inner ->
-            Box(Modifier.fillMaxWidth().clip(shape).background(C.field).border(1.dp, C.fieldLine, shape).padding(horizontal = 12.dp, vertical = 12.dp),
+            Box(Modifier.fillMaxWidth().clip(shape).background(C.field).border(Look.line, C.fieldLine, shape).padding(horizontal = 12.dp, vertical = 12.dp),
                 contentAlignment = if (center) Alignment.Center else Alignment.CenterStart) {
                 if (value.isEmpty() && placeholder.isNotEmpty()) Text(placeholder, style = T.muted.copy(fontSize = 15.sp))
                 inner()
@@ -281,7 +292,7 @@ fun Stepper(value: Double, onChange: (Double) -> Unit, modifier: Modifier = Modi
 
 @Composable
 private fun StepBtn(text: String, onClick: () -> Unit) {
-    Box(Modifier.size(46.dp).clip(RoundedCornerShape(12.dp)).background(C.field).border(1.dp, C.fieldLine, RoundedCornerShape(12.dp)).clickable(onClick = onClick),
+    Box(Modifier.size(46.dp).clip(Look.shape(12.dp)).background(C.field).border(Look.line, C.fieldLine, Look.shape(12.dp)).clickable(onClick = onClick),
         contentAlignment = Alignment.Center) { Text(text, style = TextStyle(fontSize = 22.sp, color = Color.White)) }
 }
 
@@ -296,8 +307,8 @@ fun MiniNumber(label: String, value: Double, onChange: (Double) -> Unit, modifie
 
 @Composable
 fun Segmented(options: List<Pair<String, String>>, selected: String, onSelect: (String) -> Unit, modifier: Modifier = Modifier) {
-    val shape = RoundedCornerShape(12.dp)
-    Row(modifier.clip(shape).border(1.dp, C.fieldLine, shape)) {
+    val shape = Look.shape(12.dp)
+    Row(modifier.clip(shape).border(Look.line, C.fieldLine, shape)) {
         options.forEach { (v, label) ->
             val on = v == selected
             Box(Modifier.weight(1f).background(if (on) Color.White else Color.Transparent).clickable { onSelect(v) }.padding(vertical = 10.dp),
@@ -324,8 +335,8 @@ fun Chips(selected: Set<String>, onToggle: (String) -> Unit) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 keys.forEach { k ->
                     val on = k in selected
-                    Box(Modifier.clip(RoundedCornerShape(99.dp)).background(if (on) Color.White else Color.Transparent)
-                        .border(1.dp, if (on) Color.White else Color(0xFF3A3A3A), RoundedCornerShape(99.dp)).clickable { onToggle(k) }
+                    Box(Modifier.clip(Look.shape(99.dp)).background(if (on) Color.White else Color.Transparent)
+                        .border(Look.line, if (on) Color.White else Color(0xFF3A3A3A), Look.shape(99.dp)).clickable { onToggle(k) }
                         .padding(horizontal = 12.dp, vertical = 6.dp)) {
                         Text(REGIONS[k] ?: k, style = TextStyle(fontSize = 13.sp, color = if (on) Color.Black else Color(0xFFBBBBBB)))
                     }
@@ -342,10 +353,10 @@ class Opt(val value: String, val label: String, val group: String? = null)
 fun PickerField(options: List<Opt>, value: String, onChange: (String) -> Unit, modifier: Modifier = Modifier, placeholder: String = "Choose…",
                 onAddNew: ((String) -> Unit)? = null) {
     var open by remember { mutableStateOf(false) }
-    val shape = RoundedCornerShape(12.dp)
+    val shape = Look.shape(12.dp)
     val current = options.firstOrNull { it.value == value }
     Row(
-        modifier.fillMaxWidth().clip(shape).background(C.field).border(1.dp, C.fieldLine, shape).clickable { open = true }.padding(horizontal = 12.dp, vertical = 13.dp),
+        modifier.fillMaxWidth().clip(shape).background(C.field).border(Look.line, C.fieldLine, shape).clickable { open = true }.padding(horizontal = 12.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(current?.label ?: placeholder, style = TextStyle(fontSize = 15.sp, color = if (current == null) C.muted else Color.White), modifier = Modifier.weight(1f))
@@ -423,4 +434,4 @@ object Icons {
 
 
 fun Modifier.clickableNoRipple(onClick: () -> Unit): Modifier = this.clickable(onClick = onClick)
-fun Modifier.androidxBorder(): Modifier = this.border(1.dp, C.line, RoundedCornerShape(12.dp))
+fun Modifier.androidxBorder(): Modifier = this.border(Look.line, C.line, Look.shape(12.dp))

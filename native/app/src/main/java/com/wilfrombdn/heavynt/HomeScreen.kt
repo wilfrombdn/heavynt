@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
@@ -100,7 +99,7 @@ fun HomeScreen(st: AppState, vm: AppViewModel, go: (Int) -> Unit, openSettings: 
                 Text("Below avg", style = T.small)
                 val f = st.settings.sex == "female"
                 fun c(t: Triple<Int, Int, Int>) = Color(t.first, t.second, t.third)
-                Box(Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)).background(
+                Box(Modifier.weight(1f).height(6.dp).clip(Look.shape(3.dp)).background(
                     if (f) Brush.horizontalGradient(0f to c(RED_RGB), 1f to c(PINK_RGB))
                     else Brush.horizontalGradient(0f to c(RED_RGB), scoreT(1.0).toFloat() to c(MID_RGB), 1f to c(BLUE_RGB))))
                 Text("Strong", style = T.small)
@@ -147,9 +146,9 @@ private fun IntakeCard(st: AppState, vm: AppViewModel) {
         }
         Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             val frac = if (proteinGoal > 0) (t.protein.toFloat() / proteinGoal).coerceIn(0f, 1f) else 0f
-            Box(Modifier.weight(1f).height(28.dp).clip(RoundedCornerShape(14.dp)).background(Color(0xFF1A1A1A))
+            Box(Modifier.weight(1f).height(28.dp).clip(Look.shape(14.dp)).background(Color(0xFF1A1A1A))
                 .clickableNoRipple { vm.update { it.addProtein(step) } }) {
-                Box(Modifier.fillMaxWidth(frac).height(28.dp).clip(RoundedCornerShape(14.dp)).background(goodColor(st)))
+                Box(Modifier.fillMaxWidth(frac).height(28.dp).clip(Look.shape(14.dp)).background(goodColor(st)))
                 Text("+$step g", style = TextStyle(fontSize = 13.sp, color = Color.White, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold),
                     modifier = Modifier.align(Alignment.Center))
             }
@@ -178,7 +177,7 @@ private fun Glass(full: Boolean, onClick: () -> Unit) {
 
 @Composable
 fun IconBtnVec(icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
-    Box(Modifier.size(38.dp).clip(RoundedCornerShape(12.dp)).background(Color.Transparent)
+    Box(Modifier.size(38.dp).clip(Look.shape(12.dp)).background(Color.Transparent)
         .then(Modifier.androidxBorder()).clickableNoRipple(onClick), contentAlignment = Alignment.Center) {
         Icon(icon, null, tint = Color.White, modifier = Modifier.size(20.dp))
     }
@@ -186,7 +185,7 @@ fun IconBtnVec(icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: (
 
 @Composable
 fun SlimButton(text: String, onClick: () -> Unit) {
-    Box(Modifier.clip(RoundedCornerShape(14.dp)).background(Color.White).clickableNoRipple(onClick).padding(horizontal = 18.dp, vertical = 10.dp)) {
+    Box(Modifier.clip(Look.shape(14.dp)).background(Color.White).clickableNoRipple(onClick).padding(horizontal = 18.dp, vertical = 10.dp)) {
         Text(text, style = TextStyle(fontSize = 15.sp, color = Color.Black, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold))
     }
 }

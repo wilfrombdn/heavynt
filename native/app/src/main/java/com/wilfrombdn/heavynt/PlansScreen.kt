@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -63,7 +62,7 @@ fun PlansScreen(st: AppState, vm: AppViewModel) {
                     Muted("Repeats ${if (weeks == 1) "every week" else "every $weeks weeks"} · $on workout${if (on == 1) "" else "s"} per cycle" +
                         if (idx >= 0 && weeks > 1) " · this is week ${idx / 7 + 1}" else "")
                 }
-                Box(Modifier.clip(RoundedCornerShape(14.dp)).border(1.dp, Color(0xFF3A3A3A), RoundedCornerShape(14.dp)).clickableNoRipple { schedule = true }.padding(horizontal = 18.dp, vertical = 9.dp)) {
+                Box(Modifier.clip(Look.shape(14.dp)).border(Look.line, Color(0xFF3A3A3A), Look.shape(14.dp)).clickableNoRipple { schedule = true }.padding(horizontal = 18.dp, vertical = 9.dp)) {
                     Text("Edit", style = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color.White))
                 }
             }
@@ -73,8 +72,8 @@ fun PlansScreen(st: AppState, vm: AppViewModel) {
                     val p = planNameFor(st, st.schedule.days.getOrNull(cycleIndex(st.schedule, k)))
                     val isToday = i == 0
                     Column(
-                        Modifier.width(44.dp).clip(RoundedCornerShape(12.dp)).background(if (isToday) Color.White else Color.Transparent)
-                            .border(1.dp, if (isToday) Color.White else if (p != null) Color(0xFF555555) else C.line, RoundedCornerShape(12.dp)).padding(vertical = 6.dp),
+                        Modifier.width(44.dp).clip(Look.shape(12.dp)).background(if (isToday) Color.White else Color.Transparent)
+                            .border(Look.line, if (isToday) Color.White else if (p != null) Color(0xFF555555) else C.line, Look.shape(12.dp)).padding(vertical = 6.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         val fg = if (isToday) Color.Black else if (p != null) Color.White else C.muted
@@ -177,7 +176,7 @@ private fun PlanEditor(st: AppState, vm: AppViewModel, planId: String, onDismiss
         Labeled("Name") { HTextField(plan.name, { v -> edit { it.copy(name = v) } }, placeholder = "e.g. Push day") }
         plan.items.forEachIndexed { i, it ->
             val ex = st.ex(it.ex)
-            Column(Modifier.fillMaxWidth().border(1.dp, C.line, RoundedCornerShape(14.dp)).padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.fillMaxWidth().border(Look.line, C.line, Look.shape(14.dp)).padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 ExercisePicker(vm, st.exercises, it.ex, { v -> editItem(i) { x -> x.copy(ex = v) } })
                 if (ex?.pair == true) NoteBox("Weight is both dumbbells combined. $PAIR_NOTE")
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
