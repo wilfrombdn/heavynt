@@ -114,8 +114,6 @@ fun HomeScreen(st: AppState, vm: AppViewModel, go: (Int) -> Unit, openSettings: 
                 Text("Set up your profile", style = T.name)
                 Muted("Add your age, height and weight so the map knows what you should be lifting. Tap to start.")
             }
-        } else if (!hasData) {
-            HCard { Muted("Finish a workout with weights and the map colours in: red = under your target, blue = on target or better.") }
         }
 
         val sel = selected
