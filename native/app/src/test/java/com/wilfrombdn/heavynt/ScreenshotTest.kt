@@ -7,6 +7,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Rule
@@ -56,6 +57,7 @@ class ScreenshotTest {
         shot("launch")
         for ((tab, name) in listOf("Home" to "home", "Workout" to "workout", "Plans" to "plans", "Exercises" to "exercises", "History" to "history")) {
             rule.onNodeWithText(tab).performClick(); settle(); shot(name)
+            if (name == "exercises") { rule.onNodeWithText("Olympic").performScrollTo().performClick(); settle(); shot("exercises-open") }
         }
     }
 }

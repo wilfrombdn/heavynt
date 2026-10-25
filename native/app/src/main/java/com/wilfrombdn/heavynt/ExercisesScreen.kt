@@ -35,28 +35,46 @@ fun ExercisesScreen(st: AppState, vm: AppViewModel) {
     var detail by remember { mutableStateOf<String?>(null) }
     var editing by remember { mutableStateOf<Exercise?>(null) }
     var creating by remember { mutableStateOf(false) }
+    var open by rememberSaveable { mutableStateOf<String?>(null) }
 
     Screen {
         PageHead("Exercises")
         HTextField(query, { query = it }, placeholder = "Search exercises")
         HButton("+ Add exercise", { creating = true }, style = BtnStyle.Primary)
         val q = query.trim()
-        for (cat in st.exercises.map { it.cat }.distinct()) {
-            val exs = st.exercises.filter { it.cat == cat && it.name.contains(q, ignoreCase = true) }.sortedBy { it.name }
-            if (exs.isEmpty()) continue
-            SectionTitle(cat)
-            exs.forEach { ex ->
-                val hist = exerciseHistory(st, ex.id)
-                val last = hist.lastOrNull()
-                HCard(onClick = { detail = ex.id }) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f)) {
-                            Text(ex.name, style = T.name)
-                            Text(if (last != null) "${fmtNum(last.weight)} ${st.settings.unit}${if (ex.pair) " total" else ""} · ${fmtShort(last.at)}" else "Not logged yet", style = T.small)
+        val hists = st.exercises.associate { it.id to exerciseHistory(st, it.id) }
+        val row: @Composable (Exercise) -> Unit = { ex -> ExerciseRow(st, ex, hists[ex.id].orEmpty()) { detail = ex.id } }
+        if (q.isNotEmpty()) {
+            // Searching: show every match, grouped, so nothing hides inside a closed folder.
+            for (cat in st.exercises.map { it.cat }.distinct()) {
+                val exs = st.exercises.filter { it.cat == cat && it.name.contains(q, ignoreCase = true) }.sortedBy { it.name }
+                if (exs.isEmpty()) continue
+                SectionTitle(cat)
+                exs.forEach { row(it) }
+            }
+        } else {
+            val mine = st.exercises.filter { hists[it.id].orEmpty().isNotEmpty() }.sortedByDescending { hists[it.id]!!.last().at }
+            if (mine.isNotEmpty()) {
+                SectionTitle("Your lifts")
+                mine.forEach { row(it) }
+            }
+            SectionTitle("Browse all ${st.exercises.size}")
+            st.exercises.map { it.cat }.distinct().chunked(2).forEach { pair ->
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    pair.forEach { cat ->
+                        val exs = st.exercises.filter { it.cat == cat }
+                        val logged = exs.count { hists[it.id].orEmpty().isNotEmpty() }
+                        HCard(Modifier.weight(1f), onClick = { open = if (open == cat) null else cat }, borderColor = if (open == cat) Color.White else C.line) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(cat, style = T.name, modifier = Modifier.weight(1f))
+                                Text("${exs.size}", style = T.muted)
+                            }
+                            Text(if (logged > 0) "$logged logged" else "Tap to open", style = T.small)
                         }
-                        if (hist.size > 1) Spark(hist.map { it.weight })
                     }
+                    if (pair.size == 1) Box(Modifier.weight(1f))
                 }
+                pair.firstOrNull { it == open }?.let { cat -> st.exercises.filter { it.cat == cat }.sortedBy { it.name }.forEach { row(it) } }
             }
         }
     }
@@ -64,6 +82,20 @@ fun ExercisesScreen(st: AppState, vm: AppViewModel) {
     detail?.let { id -> st.ex(id)?.let { ExerciseDetail(st, vm, it, onEdit = { editing = it; detail = null }, onDismiss = { detail = null }) } }
     editing?.let { ExerciseEditor(vm, it) { editing = null } }
     if (creating) ExerciseEditor(vm, null) { creating = false }
+}
+
+@Composable
+private fun ExerciseRow(st: AppState, ex: Exercise, hist: List<HistEntry>, onClick: () -> Unit) {
+    val last = hist.lastOrNull()
+    HCard(onClick = onClick) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(ex.name, style = T.name)
+                Text(if (last != null) "${fmtNum(last.weight)} ${st.settings.unit}${if (ex.pair) " total" else ""} · ${fmtShort(last.at)}" else "Not logged yet", style = T.small)
+            }
+            if (hist.size > 1) Spark(hist.map { it.weight })
+        }
+    }
 }
 
 @Composable
