@@ -245,10 +245,11 @@ fun BodyMap(scores: Map<String, RegionScore>, selected: String?, onPick: (String
                 val sc = scores[b.key] ?: continue
                 val c = colorOf(b)!!
                 val k = scoreStrength(sc.score)
-                val layers = 8
+                // subtle: a few thin layers reaching only a couple of units past the edge
+                val layers = 4
                 for (i in layers - 1 downTo 0) {
-                    val width = (2.2f + i * 2.4f) * (1f + 0.45f * k)
-                    val alpha = 0.2f * (1f - i / layers.toFloat()) * (0.8f + 0.6f * k) * pulse.value
+                    val width = (1.6f + i * 1.3f) * (1f + 0.2f * k)
+                    val alpha = 0.16f * (1f - i / layers.toFloat()) * (0.8f + 0.4f * k) * pulse.value
                     val halo = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                         style = Paint.Style.STROKE; strokeWidth = width; color = argb(c, alpha)
                         strokeJoin = Paint.Join.ROUND; strokeCap = Paint.Cap.ROUND
@@ -263,7 +264,7 @@ fun BodyMap(scores: Map<String, RegionScore>, selected: String?, onPick: (String
                 val c = colorOf(b)
                 val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                     style = Paint.Style.FILL
-                    color = if (c != null) argb(c, 0.3f + 0.28f * scoreStrength(sc!!.score)) else android.graphics.Color.argb(9, 255, 255, 255)
+                    color = if (c != null) argb(c, 0.62f + 0.3f * scoreStrength(sc!!.score)) else android.graphics.Color.argb(9, 255, 255, 255)
                 }
                 val edge = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                     style = Paint.Style.STROKE; strokeWidth = if (isSel) 2.4f else 1f; strokeJoin = Paint.Join.ROUND
