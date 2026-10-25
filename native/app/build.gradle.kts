@@ -18,8 +18,8 @@ android {
         applicationId = "com.wilfrombdn.heavynt2" // new signing key (old one lost), so a new ID installs beside the old app
         minSdk = 26
         targetSdk = 36
-        versionCode = 130
-        versionName = "3.16.0"
+        versionCode = 131
+        versionName = "3.17.0"
     }
 
     signingConfigs {
@@ -61,6 +61,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.1")
     implementation("androidx.core:core-ktx:1.16.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
+    implementation("org.osmdroid:osmdroid-android:6.1.20")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.14.1")

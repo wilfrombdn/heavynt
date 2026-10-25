@@ -25,15 +25,26 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 
 @Composable
-fun HistoryScreen(st: AppState, vm: AppViewModel) {
+fun HistoryScreen(st: AppState, vm: AppViewModel, onBack: () -> Unit) {
     var open by remember { mutableStateOf(setOf<String>()) }
     var editing by remember { mutableStateOf<String?>(null) }
+    var runId by remember { mutableStateOf<String?>(null) }
     val dialogs = LocalDialogs.current
+    runId?.let { id ->
+        androidx.activity.compose.BackHandler { runId = null }
+        androidx.compose.runtime.key(id) { RunDetail(st, vm, id, onBack = { runId = null }) }
+        return
+    }
 
     Screen {
+        Row(Modifier.clickable(onClick = onBack).padding(vertical = 4.dp)) { Text("‹  Workout", style = T.muted) }
         PageHead("History")
-        if (st.logs.isEmpty()) Muted("No workouts yet. Finish one and it shows up here with the date and time.")
-        Column { st.logs.sortedByDescending { isoMillis(it.start) }.forEach { log ->
+        if (st.logs.isEmpty() && st.runs.isEmpty()) Muted("No workouts yet. Finish one and it shows up here with the date and time.")
+        // workouts and runs together, newest first
+        val items: List<Pair<Long, Any>> = st.logs.map { isoMillis(it.start) to it } + st.runs.map { isoMillis(it.start) to it }
+        Column { items.sortedByDescending { it.first }.forEach { (_, item) ->
+            if (item is RunSummary) { RunRow(item) { runId = item.id }; return@forEach }
+            val log = item as Log
             val isOpen = log.id in open
             HItem(onClick = { open = if (isOpen) open - log.id else open + log.id }) {
                 Row(verticalAlignment = Alignment.CenterVertically) {

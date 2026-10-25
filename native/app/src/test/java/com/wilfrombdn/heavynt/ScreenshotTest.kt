@@ -54,13 +54,29 @@ class ScreenshotTest {
                     Entry("db-curl", 3, 8, 30.0, now)))),
             )
         }
+        // one saved run with a route, to show the Run tab and a run's page
+        val mPerDeg = 2 * Math.PI * 6_371_000.0 / 360
+        val pts = (0..160).map { i -> RunPoint(49.28 + i * 15 / mPerDeg, -123.12 + (if (i > 80) (i - 80) * 6 / mPerDeg else 0.0), 20.0 + i % 7, i * 5000L + if (i > 80) 120_000 else 0, if (i > 80) 1 else 0) }
+        val run = RunSummary("r1", nowIso(), nowIso(), trackDistanceM(pts), 800, elevationGainM(pts))
+        RunFiles.save(app, run.id, pts)
+        vm.update { it.copy(runs = listOf(run)) }
         android.provider.Settings.Global.putFloat(app.contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 0f)
         rule.setContent { HeavyntTheme { App(vm) } }
         fun settle() { rule.waitForIdle() }
         settle()
         shot("launch")
-        for ((tab, name) in listOf("Home" to "home", "Workout" to "workout", "Plans" to "plans", "Exercises" to "exercises", "History" to "history")) {
+        for ((tab, name) in listOf("Home" to "home", "Workout" to "workout", "Run" to "run", "Plans" to "plans", "Exercises" to "exercises")) {
             rule.onNodeWithText(tab).performClick(); settle(); shot(name)
+            if (name == "workout") {
+                rule.onNodeWithText("History", substring = true).performClick(); settle(); shot("history")
+                rule.onNodeWithText("‹  Workout").performClick(); settle()
+            }
+            if (name == "run") {
+                rule.onAllNodesWithText("km", substring = false)[0].performClick(); settle(); shot("run-detail")
+                rule.onNodeWithText("Splits", ignoreCase = true).assertExists()
+                rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }; settle()
+                rule.onNodeWithText("Start run").assertExists()
+            }
             if (name == "plans") {
                 // schedule: each week of the 2-week starter shows its own dates
                 rule.onNodeWithText("Edit").performClick(); settle()
@@ -98,6 +114,12 @@ class ScreenshotTest {
         vm.exitDemo(); vm.update { it.withSettings { x -> x.copy(sex = "male") } }; vm.enterDemo(); settle(); shot("demo-male")
         vm.exitDemo(); settle()
         assertEquals("Upper / Lower", vm.state.value.planName)  // real data came back
+        // a run being recorded
+        val clock = android.os.SystemClock.elapsedRealtime()
+        RunTracker.live.value = LiveRun(nowIso(), clock - 754_000, pts.take(60), activeMs = 0, resumedAt = clock - 754_000, distanceM = trackDistanceM(pts.take(60)), gpsOk = true)
+        rule.onNodeWithText("Run").performClick(); settle(); shot("run-live")
+        rule.onNodeWithText("Pause").assertExists()
+        RunTracker.clear(); settle()
         // a workout in progress: first lift done, weights set, one beating last time
         val w = listOf(145.0, 120.0, 225.0, 140.0, 40.0, 60.0, 30.0)
         val day = STARTER_DAYS[0].let { d -> d.copy(items = d.items.mapIndexed { i, x -> x.copy(weight = w[i]) }) }

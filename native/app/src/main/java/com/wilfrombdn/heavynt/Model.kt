@@ -125,6 +125,8 @@ data class AppState(
     val demoVersion: Int = 0,
     /** Water glasses and protein grams per day, keyed by date (yyyy-MM-dd). */
     val intake: Map<String, Intake> = emptyMap(),
+    /** Finished runs (summary only; each route is stored in files/runs/<id>.json). */
+    val runs: List<RunSummary> = emptyList(),
 )
 
 @Serializable

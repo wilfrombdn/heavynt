@@ -2,6 +2,7 @@
 
 package com.wilfrombdn.heavynt
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -163,6 +164,12 @@ fun WorkoutScreen(st: AppState, vm: AppViewModel, goHome: () -> Unit) {
     var showAdd by remember { mutableStateOf(false) }
     var showSwitch by remember { mutableStateOf(false) }
     var plateaus by remember { mutableStateOf<List<String>>(emptyList()) }
+    var history by remember { mutableStateOf(false) }
+    if (history) {
+        BackHandler { history = false }
+        HistoryScreen(st, vm, onBack = { history = false })
+        return
+    }
 
     fun start(planId: String?) {
         vm.update { it.startWorkout(planId) }
@@ -216,7 +223,12 @@ fun WorkoutScreen(st: AppState, vm: AppViewModel, goHome: () -> Unit) {
             val doneToday = plan != null && todaysLog(st, plan.id) != null
             val o = st.overrides[dateKey()]
             val skipped = o?.skipped?.let { st.plan(it) }
-            PageHead("Workout", fmtToday())
+            PageHead("Workout", fmtToday()) {
+                Row(Modifier.clickable { history = true }.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.history, "History", tint = Color.White, modifier = Modifier.size(20.dp))
+                    Text("  History", style = T.body)
+                }
+            }
             if (plan != null) {
                 // Tap the day to swap it for another day from the plan.
                 Row(Modifier.fillMaxWidth().clickable { showSwitch = true }.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {

@@ -44,18 +44,34 @@ class MainActivity : ComponentActivity() {
             statusBarStyle = SystemBarStyle.dark(AColor.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.dark(AColor.TRANSPARENT),
         )
+        openFrom(intent)
         setContent { HeavyntTheme { App(vm) } }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        openFrom(intent)
+    }
+
+    /** The run notification opens straight to the Run tab. */
+    private fun openFrom(intent: android.content.Intent?) {
+        if (intent?.getStringExtra(RunService.EXTRA_OPEN) == "run") OpenTab.value = TAB_RUN
     }
 }
 
+const val TAB_RUN = 2
+/** A tab something outside the screens (like the run notification) asked to show. */
+val OpenTab = kotlinx.coroutines.flow.MutableStateFlow<Int?>(null)
+
 private class TabDef(val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector)
 private val TABS = listOf(
-    TabDef("Home", Icons.home), TabDef("Workout", Icons.workout), TabDef("Plans", Icons.plans),
-    TabDef("Exercises", Icons.exercises), TabDef("History", Icons.history),
+    TabDef("Home", Icons.home), TabDef("Workout", Icons.workout), TabDef("Run", Icons.run), TabDef("Plans", Icons.plans),
+    TabDef("Exercises", Icons.exercises),
 )
 
 /** Launch on the workout tab when one is running or due today. */
 private fun initialTab(st: AppState): Int {
+    if (RunTracker.live.value != null) return TAB_RUN
     if (st.active != null) return 1
     val plan = planForDate(st)
     return if (plan != null && todaysLog(st, plan.id) == null && st.settings.openOnLaunch) 1 else 0
@@ -71,6 +87,9 @@ fun App(vm: AppViewModel) {
     var profile by remember { mutableStateOf(false) }
 
     BackHandler(enabled = tab != 0) { tab = 0 }
+    val asked by OpenTab.collectAsStateWithLifecycle()
+    val liveRun by RunTracker.live.collectAsStateWithLifecycle()
+    LaunchedEffect(asked) { asked?.let { tab = it; OpenTab.value = null } }
 
     // New day on the phone's clock (12:01 am, or coming back to the app on a later day): redraw everything so
     // today's plan and the water/protein card move on to the new date even if the app stayed open.
@@ -128,7 +147,7 @@ fun App(vm: AppViewModel) {
                             selected = tab == i,
                             onClick = { tab = i },
                             icon = {
-                                if (i == 1 && st.active != null) BadgedBox(badge = { Badge(containerColor = Color.White) }) { Icon(t.icon, t.label) }
+                                if ((i == 1 && st.active != null) || (i == TAB_RUN && liveRun != null)) BadgedBox(badge = { Badge(containerColor = Color.White) }) { Icon(t.icon, t.label) }
                                 else Icon(t.icon, t.label)
                             },
                             label = { Text(t.label, style = TextStyle(fontSize = 11.sp)) },
@@ -146,9 +165,9 @@ fun App(vm: AppViewModel) {
                 when (tab) {
                     0 -> HomeScreen(st, vm, go = { tab = it }, openSettings = { settings = true }, openProfile = { profile = true })
                     1 -> WorkoutScreen(st, vm, goHome = { tab = 0 })
-                    2 -> PlansScreen(st, vm)
-                    3 -> ExercisesScreen(st, vm)
-                    else -> HistoryScreen(st, vm)
+                    TAB_RUN -> RunScreen(st, vm)
+                    3 -> PlansScreen(st, vm)
+                    else -> ExercisesScreen(st, vm)
                 }
             } }
         }

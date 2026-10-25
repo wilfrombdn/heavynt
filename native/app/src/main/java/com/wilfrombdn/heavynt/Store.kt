@@ -93,7 +93,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun exportBackup(): String = AppJson.encodeToString(_state.value)
 
-    fun eraseAll() { update { seedState() } }
+    fun eraseAll() { RunFiles.deleteAll(getApplication()); update { seedState() } }
 
     /** Developer demo: set the real data aside and show a filled-in example. */
     fun enterDemo() { update { s -> if (s.demoBackup != null) s else demoState(s).copy(demoBackup = AppJson.encodeToString(s)) } }
