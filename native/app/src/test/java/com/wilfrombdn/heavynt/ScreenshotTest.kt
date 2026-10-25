@@ -88,5 +88,11 @@ class ScreenshotTest {
         vm.exitDemo(); vm.update { it.withSettings { x -> x.copy(sex = "male") } }; vm.enterDemo(); settle(); shot("demo-male")
         vm.exitDemo(); settle()
         assertEquals("Upper / Lower", vm.state.value.planName)  // real data came back
+        // a workout in progress: first lift done, weights set, one beating last time
+        val w = listOf(145.0, 120.0, 225.0, 140.0, 40.0, 60.0, 30.0)
+        val day = STARTER_DAYS[0].let { d -> d.copy(items = d.items.mapIndexed { i, x -> x.copy(weight = w[i]) }) }
+        vm.update { it.copy(plans = it.plans + day).startWorkout(day.id) }
+        vm.update { it.toggleDone(0) }
+        rule.onNodeWithText("Workout").performClick(); settle(); shot("workout-active")
     }
 }

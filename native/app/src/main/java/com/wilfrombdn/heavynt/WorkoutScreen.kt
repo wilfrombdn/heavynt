@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -36,6 +35,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
+import androidx.compose.ui.draw.alpha
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.IntrinsicSize
 
 @Composable
 fun Screen(content: @Composable () -> Unit) {
@@ -56,6 +60,12 @@ fun PageHead(title: String, subtitle: String? = null, trailing: @Composable (() 
     }
 }
 
+/** Stripe colour per muscle group, so a day reads at a glance. */
+private val CAT_COLOR = mapOf(
+    "Chest" to Color(0xFF4F9DFF), "Back" to Color(0xFFFF9F43), "Shoulders" to Color(0xFFB57BFF), "Arms" to Color(0xFFFFD43B),
+    "Legs" to Color(0xFF2ED3B7), "Core" to Color(0xFFFF6B9A), "Olympic" to Color(0xFFFF5A5A), "Neck" to Color(0xFF9AA0A6),
+)
+
 @Composable
 fun ItemCard(st: AppState, it: ActiveItem, interactive: Boolean, badge: String? = null, onTap: () -> Unit = {}, onLong: () -> Unit = {}) {
     val ex = st.ex(it.ex) ?: return
@@ -63,36 +73,57 @@ fun ItemCard(st: AppState, it: ActiveItem, interactive: Boolean, badge: String? 
     val plateau = interactive && plateauInfo(st, it.ex, it.weight) != null
     val shape = Look.shape(16.dp)
     val haptic = LocalHapticFeedback.current
-    val base = Modifier.fillMaxWidth().clip(shape)
-        .background(if (it.done) Color(0x1F22C55E) else C.panel)
+    val unit = st.settings.unit
+    val base = Modifier.fillMaxWidth().alpha(if (it.done) 0.45f else 1f).clip(shape).background(C.panel)
         .border(Look.line, if (it.done) C.green else C.line, shape)
     val m = if (interactive) base.combinedClickable(
         onClick = { haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove); onTap() },
         onLongClick = { haptic.performHapticFeedback(HapticFeedbackType.LongPress); onLong() },
     ) else base
-    Row(m.padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-        Box(
-            Modifier.size(28.dp).clip(CircleShape).background(if (it.done) C.green else Color.Transparent)
-                .border(Look.lineBold, if (it.done) C.green else Color(0xFF555555), CircleShape),
-            contentAlignment = Alignment.Center,
-        ) { if (it.done) Text("✓", style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)) }
-        Column(Modifier.weight(1f)) {
+    // big number on the right: the weight, extra load on a bodyweight move, or BW
+    val (big, bigUnit) = when {
+        it.weight > 0 && ex.bw > 0 -> "+${fmtNum(it.weight)}" to "$unit + BW"
+        it.weight > 0 -> fmtNum(it.weight) to (if (ex.pair) "$unit total" else unit)
+        ex.bw > 0 -> "BW" to ""
+        else -> "—" to unit
+    }
+    Row(m.height(IntrinsicSize.Min), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.width(5.dp).fillMaxHeight().background(if (it.done) C.green else CAT_COLOR[ex.cat] ?: C.muted))
+        Column(Modifier.weight(1f).padding(start = 14.dp, top = 14.dp, bottom = 14.dp, end = 8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (it.done) Text("✓", style = TextStyle(fontSize = 17.sp, fontWeight = FontWeight.Bold, color = C.green))
                 if (badge != null) Box(Modifier.clip(Look.shape(6.dp)).background(Color.White).padding(horizontal = 6.dp, vertical = 1.dp)) {
                     Text(badge, style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.Black))
                 }
                 Text(ex.name, style = T.name, modifier = Modifier.weight(1f, fill = false))
             }
-            val hint = if (interactive && ex.bw <= 0 && it.weight <= 0) " · hold to set weight" else ""
-            Text(describe(st, it.ex, it.sets, it.reps, it.weight) + hint, style = T.sub.copy(color = if (it.done) C.greenSoft else C.sub))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("${it.sets} × ${it.reps}", style = T.sub.copy(fontWeight = FontWeight.SemiBold))
+                if (last != null && it.weight > 0) {
+                    val d = it.weight - last.weight
+                    if (d > 0) Text("▲ +${fmtNum(d)}", style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Bold, color = C.green))
+                    else Text("Last ${fmtNum(last.weight)}", style = T.small)
+                }
+            }
             if (it.note.isNotBlank()) Text(it.note, style = T.small.copy(color = Color(0xFFB9B9B9)))
-            if (last != null && interactive) Text(
-                "Last: ${last.sets} × ${last.reps} @ ${fmtNum(last.weight)} ${st.settings.unit}${if (ex.pair) " total" else ""}",
-                style = T.small,
-            )
+            if (interactive && ex.bw <= 0 && it.weight <= 0) Text("Hold to set weight", style = T.small)
+            if (plateau) Box(Modifier.padding(top = 4.dp)) { Tag("Plateau") }
         }
-        if (plateau) Tag("Plateau")
+        Column(Modifier.padding(end = 16.dp), horizontalAlignment = Alignment.End) {
+            Text(big, style = TextStyle(fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White))
+            if (bigUnit.isNotEmpty()) Text(bigUnit, style = T.small)
+        }
     }
+}
+
+/** Minutes (and hours) since the workout started, ticking every second. */
+@Composable
+private fun Elapsed(startIso: String) {
+    var now by remember { mutableStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(startIso) { while (true) { delay(1000); now = System.currentTimeMillis() } }
+    val sec = ((now - isoMillis(startIso)) / 1000).coerceAtLeast(0)
+    val text = if (sec >= 3600) "%d:%02d:%02d".format(sec / 3600, sec / 60 % 60, sec % 60) else "%d:%02d".format(sec / 60, sec % 60)
+    Text("⏱ $text", style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color.White))
 }
 
 /** Exercises in order; supersets are boxed together under a "Superset" header with A1/A2 badges. */
@@ -164,11 +195,14 @@ fun WorkoutScreen(st: AppState, vm: AppViewModel, goHome: () -> Unit) {
         val a = st.active
         if (a != null) {
             val done = a.items.count { it.done }
-            PageHead(a.planName, "Started ${fmtDate(a.start)}")
-            Box(Modifier.fillMaxWidth().height(4.dp).clip(Look.shape(2.dp)).background(C.line)) {
-                Box(Modifier.fillMaxHeight().fillMaxWidth(if (a.items.isEmpty()) 0f else done / a.items.size.toFloat()).background(C.green))
+            PageHead(a.planName, "Started ${fmtDate(a.start)}") { Elapsed(a.start) }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(Modifier.weight(1f).height(8.dp).clip(Look.shape(2.dp)).background(C.line)) {
+                    Box(Modifier.fillMaxHeight().fillMaxWidth(if (a.items.isEmpty()) 0f else done / a.items.size.toFloat()).background(C.green))
+                }
+                Text("$done of ${a.items.size}", style = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White))
             }
-            Text("$done/${a.items.size} done · tap to complete · hold to change weight, sets & reps", style = T.small)
+            Text("Tap to complete · hold to change weight, sets & reps", style = T.small)
             ItemList(st, a.items, true, onTap = { i ->
                 val item = a.items[i]
                 val last = exerciseHistory(st, item.ex).lastOrNull()
