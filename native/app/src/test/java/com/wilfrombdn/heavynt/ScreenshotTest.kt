@@ -62,6 +62,16 @@ class ScreenshotTest {
         for ((tab, name) in listOf("Home" to "home", "Workout" to "workout", "Plans" to "plans", "Exercises" to "exercises", "History" to "history")) {
             rule.onNodeWithText(tab).performClick(); settle(); shot(name)
             if (name == "plans") {
+                // schedule: each week of the 2-week starter shows its own dates
+                rule.onNodeWithText("Edit").performClick(); settle()
+                val mon = mondayOf(dateKey())
+                val w1 = rule.onAllNodesWithText("Week 1 · ", substring = true, ignoreCase = true).fetchSemanticsNodes()
+                val w2 = rule.onAllNodesWithText("Week 2 · ", substring = true, ignoreCase = true).fetchSemanticsNodes()
+                assertEquals(1, w1.size); assertEquals(1, w2.size)
+                rule.onNodeWithText("${fmtDay(mon)} – ${fmtDay(addDays(mon, 6))} · this week", substring = true, ignoreCase = true).assertExists()
+                rule.onNodeWithText("Week 2 · ${fmtDay(addDays(mon, 7))}", substring = true, ignoreCase = true).assertExists()
+                rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }; settle()
+                if (rule.onAllNodesWithText("Current plan", substring = true, ignoreCase = true).fetchSemanticsNodes().isEmpty()) { rule.onNodeWithText("Plans").performClick(); settle() }
                 rule.onNodeWithText("Current plan", substring = true, ignoreCase = true).performClick(); settle()
                 rule.onNodeWithText("+ Build a new plan").performClick(); settle()
                 rule.onNodeWithText("e.g. Upper / Lower").performTextInput("Upper / Lower"); rule.onNodeWithText("Create plan").performClick(); settle(); shot("plans-new")

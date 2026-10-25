@@ -226,9 +226,8 @@ private fun ScheduleEditor(st: AppState, vm: AppViewModel, onDismiss: () -> Unit
     val weeks = s.days.size / 7
     val today = dateKey()
     val thisWeek = Math.floorDiv(cycleIndex(s, today), 7)
-    var tab by remember { mutableStateOf(maxOf(0, thisWeek)) }
-    if (tab >= weeks) tab = weeks - 1
     val len = s.days.size
+    val thisMon = mondayOf(today)
     val planOpts = listOf(Opt("", "Rest")) + st.plans.map { Opt(it.id, it.name) }
 
     Sheet("Schedule", onDismiss) {
@@ -237,31 +236,31 @@ private fun ScheduleEditor(st: AppState, vm: AppViewModel, onDismiss: () -> Unit
             Segmented(listOf("1" to "Every week", "2" to "2 weeks", "3" to "3 weeks", "4" to "4 weeks"), weeks.toString(),
                 { v -> vm.update { it.resizeWeeks(v.toInt()) } })
         }
-        if (weeks > 1) {
-            Labeled("Which week is THIS week?") {
-                Segmented((0 until weeks).map { it.toString() to "Week ${it + 1}" }, thisWeek.toString(), { v ->
-                    tab = v.toInt()
-                    vm.update { it.copy(schedule = it.schedule.copy(start = addDays(mondayOf(today), -7 * v.toInt()))) }
-                })
-            }
-            SectionTitle("Set up each week")
-            Segmented((0 until weeks).map { it.toString() to "Week ${it + 1}" }, tab.toString(), { tab = it.toInt() })
-        } else SectionTitle("Your week")
-
-        for (d in 0 until 7) {
-            val i = tab * 7 + d
-            val base = addDays(s.start, i)
-            val gap = Math.ceil((dayDiff(today, base)).toDouble() / len).toInt()
-            val next = if (gap > 0) addDays(base, gap * len) else base
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Column(Modifier.width(110.dp)) {
-                    Text(WEEKDAYS[d], style = T.name.copy(fontSize = 15.sp))
-                    Text(if (next == today) "Today" else "Next: ${fmtDay(next)}", style = T.small)
-                }
-                PickerField(planOpts, s.days.getOrNull(i) ?: "", { v -> vm.update { it.setScheduleDay(i, v.ifEmpty { null }) } }, Modifier.weight(1f), "Rest")
-            }
+        if (weeks > 1) Labeled("Which week are you in now?") {
+            Segmented((0 until weeks).map { it.toString() to "Week ${it + 1}" }, thisWeek.toString(), { v ->
+                vm.update { it.copy(schedule = it.schedule.copy(start = addDays(thisMon, -7 * v.toInt()))) }
+            })
         }
-        HButton("Clear this week", { for (d in 0 until 7) vm.update { it.setScheduleDay(tab * 7 + d, null) } })
+        // Every week listed one after another, each with the real dates it next falls on (this week or later).
+        for (w in 0 until weeks) {
+            var ws = addDays(s.start, w * 7)
+            val behind = dayDiff(thisMon, ws)
+            if (behind > 0 && len > 0) ws = addDays(ws, Math.ceil(behind.toDouble() / len).toInt() * len)
+            val range = "${fmtDay(ws)} – ${fmtDay(addDays(ws, 6))}" + if (ws == thisMon) " · this week" else ""
+            SectionTitle(if (weeks > 1) "Week ${w + 1} · $range" else "Your week · $range")
+            for (d in 0 until 7) {
+                val i = w * 7 + d
+                val date = addDays(ws, d)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Column(Modifier.width(110.dp)) {
+                        Text(WEEKDAYS[d], style = T.name.copy(fontSize = 15.sp))
+                        Text(if (date == today) "Today" else fmtDay(date), style = T.small)
+                    }
+                    PickerField(planOpts, s.days.getOrNull(i) ?: "", { v -> vm.update { it.setScheduleDay(i, v.ifEmpty { null }) } }, Modifier.weight(1f), "Rest")
+                }
+            }
+            HButton(if (weeks > 1) "Clear week ${w + 1}" else "Clear this week", { for (d in 0 until 7) vm.update { it.setScheduleDay(w * 7 + d, null) } })
+        }
         HButton("Done", onDismiss, style = BtnStyle.Primary)
     }
 }
