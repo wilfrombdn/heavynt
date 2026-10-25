@@ -100,7 +100,7 @@ private fun arm(d: String) = Shape(d, true, ARM_IN, ARM_SLIM)
 private val FEMALE = Figure(
     front = linkedMapOf(
         "upperChest" to listOf(Shape("M98 69C92 67 86 67 81 70C80 73 80 76 81 79C87 78 93 78 98 80Z", true)),
-        "chest" to listOf(Shape("M98 84C91 81 83 82 79 88C75 95 77 104 84 108C90 111 95 108 98 103Z", true)),
+        "chest" to listOf(Shape("M98 83C90 80 82 81 78 87C73 95 75 105 83 109C90 112 95 109 98 104Z", true)),
         "shoulders" to listOf(Shape(F_DELT_IN, true)),
         "sideDelts" to listOf(Shape(F_DELT_OUT, true)),
         "biceps" to listOf(arm(UPPER_ARM)),
@@ -111,14 +111,14 @@ private val FEMALE = Figure(
         "calves" to listOf(Shape("M78 265C73 286 77 318 84 345C87 347 91 347 93 345C98 320 99 288 95 265C89 268 83 268 78 265Z", true)),
     ),
     back = linkedMapOf(
-        "traps" to listOf(Shape("M100 58C95 60 90 62 86 66C89 71 93 76 100 80C107 76 111 71 114 66C110 62 105 60 100 58Z", false)),
-        "upperBack" to listOf(Shape("M87 71C89 75 93 79 99 82L99 100C94 96 90 91 87 85C86 80 86 75 87 71Z", true)),
-        "lats" to listOf(Shape("M84 89C82 102 83 116 87 128C91 131 96 131 98 130L98 104C92 99 87 95 84 89Z", true)),
+        "traps" to listOf(Shape("M100 57C94 59 88 62 83 66C86 72 92 77 100 81C108 77 114 72 117 66C112 62 106 59 100 57Z", false)),
+        "upperBack" to listOf(Shape("M84 70C86 75 91 79 99 83L99 101C92 97 87 92 84 85C83 80 83 75 84 70Z", true)),
+        "lats" to listOf(Shape("M80 86C75 100 79 117 86 129C91 132 96 132 98 131L98 105C90 100 84 94 80 86Z", true)),
         "rearDelts" to listOf(Shape(F_DELT_IN, true)),
         "sideDelts" to listOf(Shape(F_DELT_OUT, true)),
         "triceps" to listOf(arm(UPPER_ARM)),
         "forearms" to listOf(arm(FOREARM)),
-        "lowerBack" to listOf(Shape("M88 134C92 136 96 136 99 134L99 156C93 158 87 157 84 154C85 147 86 140 88 134Z", true)),
+        "lowerBack" to listOf(Shape("M87 133C91 135 96 135 99 133L99 157C93 159 86 158 83 155C84 147 85 140 87 133Z", true)),
         "glutes" to listOf(Shape("M78 160C65 164 63 191 73 206C83 215 95 212 99 201L99 163C93 160 85 159 78 160Z", true)),
         "hamstrings" to listOf(Shape("M75 213C68 229 71 246 79 259C86 263 93 262 97 258C100 243 100 225 98 213C90 216 82 216 75 213Z", true)),
         "calves" to listOf(Shape("M78 265C72 285 76 317 84 343C87 345 91 345 93 343C99 320 99 288 95 265C89 268 83 268 78 265Z", true)),
