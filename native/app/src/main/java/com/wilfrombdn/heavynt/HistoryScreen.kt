@@ -32,10 +32,10 @@ fun HistoryScreen(st: AppState, vm: AppViewModel) {
 
     Screen {
         PageHead("History")
-        if (st.logs.isEmpty()) HCard { Muted("No workouts yet. Finish one and it shows up here with the date and time.") }
-        st.logs.sortedByDescending { isoMillis(it.start) }.forEach { log ->
+        if (st.logs.isEmpty()) Muted("No workouts yet. Finish one and it shows up here with the date and time.")
+        Column { st.logs.sortedByDescending { isoMillis(it.start) }.forEach { log ->
             val isOpen = log.id in open
-            HCard(onClick = { open = if (isOpen) open - log.id else open + log.id }) {
+            HItem(onClick = { open = if (isOpen) open - log.id else open + log.id }) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) { Text(log.planName, style = T.big); Muted(fmtDate(log.start)) }
                     Column(horizontalAlignment = Alignment.End) {
@@ -62,7 +62,7 @@ fun HistoryScreen(st: AppState, vm: AppViewModel) {
                     }
                 }
             }
-        }
+        } }
     }
     editing?.let { id -> st.logs.firstOrNull { it.id == id }?.let { EditLogSheet(st, vm, it) { editing = null } } }
 }

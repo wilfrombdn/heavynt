@@ -1,5 +1,8 @@
 package com.wilfrombdn.heavynt
 
+import androidx.compose.runtime.key
+import androidx.compose.foundation.clickable
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,44 +40,58 @@ fun ExercisesScreen(st: AppState, vm: AppViewModel) {
     var creating by remember { mutableStateOf(false) }
     var open by rememberSaveable { mutableStateOf<String?>(null) }
 
-    Screen {
+    val hists = st.exercises.associate { it.id to exerciseHistory(st, it.id) }
+    val row: @Composable (Exercise) -> Unit = { ex -> ExerciseRow(st, ex, hists[ex.id].orEmpty()) { detail = ex.id } }
+    val cat = open
+    if (cat != null) {
+        // A category opens as its own page: its name at the top, its exercises underneath.
+        BackHandler { open = null }
+        key(cat) {
+            Screen {
+                Row(Modifier.clickable { open = null }.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("‹  Exercises", style = T.muted)
+                }
+                PageHead(cat)
+                val exs = st.exercises.filter { it.cat == cat }.sortedBy { it.name }
+                Muted("${exs.size} exercises")
+                Column { exs.forEach { row(it) } }
+            }
+        }
+    } else Screen {
         PageHead("Exercises")
-        HTextField(query, { query = it }, placeholder = "Search exercises")
+        HTextField(query, { query = it }, placeholder = "Search exercises", underline = true)
         HButton("+ Add exercise", { creating = true }, style = BtnStyle.Primary)
         val q = query.trim()
-        val hists = st.exercises.associate { it.id to exerciseHistory(st, it.id) }
-        val row: @Composable (Exercise) -> Unit = { ex -> ExerciseRow(st, ex, hists[ex.id].orEmpty()) { detail = ex.id } }
         if (q.isNotEmpty()) {
-            // Searching: show every match, grouped, so nothing hides inside a closed folder.
-            for (cat in st.exercises.map { it.cat }.distinct()) {
-                val exs = st.exercises.filter { it.cat == cat && it.name.contains(q, ignoreCase = true) }.sortedBy { it.name }
+            // Searching: show every match, grouped, so nothing hides inside a closed category.
+            for (c in st.exercises.map { it.cat }.distinct()) {
+                val exs = st.exercises.filter { it.cat == c && it.name.contains(q, ignoreCase = true) }.sortedBy { it.name }
                 if (exs.isEmpty()) continue
-                SectionTitle(cat)
-                exs.forEach { row(it) }
+                SectionTitle(c)
+                Column { exs.forEach { row(it) } }
             }
         } else {
             val mine = st.exercises.filter { hists[it.id].orEmpty().isNotEmpty() }.sortedByDescending { hists[it.id]!!.last().at }
             if (mine.isNotEmpty()) {
                 SectionTitle("Your lifts")
-                mine.forEach { row(it) }
+                Column { mine.forEach { row(it) } }
             }
             SectionTitle("Browse all ${st.exercises.size}")
-            st.exercises.map { it.cat }.distinct().chunked(2).forEach { pair ->
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    pair.forEach { cat ->
-                        val exs = st.exercises.filter { it.cat == cat }
-                        val logged = exs.count { hists[it.id].orEmpty().isNotEmpty() }
-                        HCard(Modifier.weight(1f), onClick = { open = if (open == cat) null else cat }, borderColor = if (open == cat) Color.White else C.line) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(cat, style = T.name, modifier = Modifier.weight(1f))
-                                Text("${exs.size}", style = T.muted)
+            Column {
+                st.exercises.map { it.cat }.distinct().forEach { c ->
+                    val exs = st.exercises.filter { it.cat == c }
+                    val logged = exs.count { hists[it.id].orEmpty().isNotEmpty() }
+                    HItem(onClick = { open = c }) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text(c, style = T.name)
+                                if (logged > 0) Text("$logged logged", style = T.small)
                             }
-                            Text(if (logged > 0) "$logged logged" else "Tap to open", style = T.small)
+                            Text("${exs.size}", style = T.muted)
+                            Text("  ›", style = TextStyle(fontSize = 20.sp, color = C.muted))
                         }
                     }
-                    if (pair.size == 1) Box(Modifier.weight(1f))
                 }
-                pair.firstOrNull { it == open }?.let { cat -> st.exercises.filter { it.cat == cat }.sortedBy { it.name }.forEach { row(it) } }
             }
         }
     }
@@ -87,7 +104,7 @@ fun ExercisesScreen(st: AppState, vm: AppViewModel) {
 @Composable
 private fun ExerciseRow(st: AppState, ex: Exercise, hist: List<HistEntry>, onClick: () -> Unit) {
     val last = hist.lastOrNull()
-    HCard(onClick = onClick) {
+    HItem(onClick = onClick) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(ex.name, style = T.name)

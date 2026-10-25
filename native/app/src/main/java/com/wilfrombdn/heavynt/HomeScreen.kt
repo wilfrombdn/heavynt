@@ -70,13 +70,13 @@ fun HomeScreen(st: AppState, vm: AppViewModel, go: (Int) -> Unit, openSettings: 
         // Today
         val a = st.active
         if (a != null) {
-            HCard { Row(verticalAlignment = Alignment.CenterVertically) {
+            HItem { Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) { Eyebrow("In progress"); Text(a.planName, style = T.big) }
                 SlimButton("Resume", { go(1) })
             } }
         } else if (plan != null) {
             val done = todaysLog(st, plan.id) != null
-            HCard { Row(verticalAlignment = Alignment.CenterVertically) {
+            HItem { Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Eyebrow("Today · ${weekLabel(idx, len)}")
                     Text(plan.name, style = T.big)
@@ -86,14 +86,14 @@ fun HomeScreen(st: AppState, vm: AppViewModel, go: (Int) -> Unit, openSettings: 
             } }
         } else {
             val n = nextWorkout(st)
-            HCard {
+            HItem {
                 Eyebrow("Rest day${if (len > 0) " · ${weekLabel(idx, len)}" else ""}")
                 Muted(if (n != null) "Next: ${n.second.name} on ${fmtLongDay(n.first)}" else "Nothing scheduled")
             }
         }
 
         // Body map
-        HCard(Modifier, bg = Color(0xFF0B0B0D)) {
+        Column(Modifier.fillMaxWidth()) {
             BodyMap(scores, selected, { selected = if (selected == it) null else it }, female = st.settings.sex == "female")
             Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("Below avg", style = T.small)
@@ -109,7 +109,7 @@ fun HomeScreen(st: AppState, vm: AppViewModel, go: (Int) -> Unit, openSettings: 
         if (st.settings.bodyweight > 0) IntakeCard(st, vm)
 
         if (st.settings.bodyweight <= 0) {
-            HCard(onClick = openProfile) {
+            HItem(onClick = openProfile) {
                 Text("Set up your profile", style = T.name)
                 Muted("Add your age, height and weight so the map knows what you should be lifting. Tap to start.")
             }
@@ -130,7 +130,7 @@ private fun IntakeCard(st: AppState, vm: AppViewModel) {
     val glasses = glassesTarget(s)
     val proteinGoal = proteinTargetG(s)
     val step = STANDARDS.nutrition.proteinStepG.toInt()
-    HCard {
+    HItem {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Eyebrow("Water", Modifier.weight(1f))
             Text(waterLabel(s, t.water), style = T.small)
@@ -177,8 +177,7 @@ private fun Glass(full: Boolean, onClick: () -> Unit) {
 
 @Composable
 fun IconBtnVec(icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
-    Box(Modifier.size(38.dp).clip(Look.shape(12.dp)).background(Color.Transparent)
-        .then(Modifier.androidxBorder()).clickableNoRipple(onClick), contentAlignment = Alignment.Center) {
+    Box(Modifier.size(38.dp).clip(Look.shape(12.dp)).clickableNoRipple(onClick), contentAlignment = Alignment.Center) {
         Icon(icon, null, tint = Color.White, modifier = Modifier.size(20.dp))
     }
 }
@@ -192,12 +191,12 @@ fun SlimButton(text: String, onClick: () -> Unit) {
 
 @Composable
 private fun RegionCard(st: AppState, key: String, sc: RegionScore?) {
-    HCard {
+    HItem {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(REGIONS[key] ?: key, style = T.big, modifier = Modifier.weight(1f))
             Tag(if (sc != null) scoreLabel(sc.score) else "No data")
         }
-        if (sc == null) { Muted("No logged lifts hit this area in the last 90 days."); return@HCard }
+        if (sc == null) { Muted("No logged lifts hit this area in the last 90 days."); return@HItem }
         Muted("${(sc.score * 100).roundToInt()}% of your target")
         val u = st.settings.unit
         sc.lifts.take(5).forEach { l ->
@@ -220,7 +219,7 @@ private fun Summary(scores: Map<String, RegionScore>, good: Color) {
     val ok = sorted.filter { it.value.score >= 1 }.reversed().take(4).joinToString(", ") { REGIONS[it.key] ?: it.key }
     val missing = REGIONS.filterKeys { it !in scores }.values.toList()
     val untrained = if (missing.size <= 5) missing.joinToString(", ") else missing.take(4).joinToString(", ") + " + ${missing.size - 4} more"
-    HCard {
+    HItem {
         if (behind.isNotEmpty()) SummaryLine("Behind target", behind, C.bad)
         if (ok.isNotEmpty()) SummaryLine("On target or better", ok, good)
         if (untrained.isNotEmpty()) SummaryLine("Untrained", untrained, Color.White)
@@ -313,7 +312,7 @@ fun SettingsSheet(st: AppState, vm: AppViewModel, onDismiss: () -> Unit, openPro
                     DialogBtn("Just change the label") { vm.update { it.switchUnit(to, false) } })
             })
         }
-        HCard(onClick = { onDismiss(); openProfile() }) {
+        HItem(onClick = { onDismiss(); openProfile() }) {
             Eyebrow("Profile & targets"); Text(profileSummary(s), style = T.body)
         }
         Stepper(s.plateauSessions.toDouble(), { v -> vm.update { it.withSettings { x -> x.copy(plateauSessions = v.toInt()) } } },

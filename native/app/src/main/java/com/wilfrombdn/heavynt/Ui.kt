@@ -51,6 +51,8 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -145,6 +147,15 @@ fun HCard(
     )
 }
 
+/** Flat list row: no box, a hairline underneath. HCard boxes stay where data needs separating (Plans). */
+@Composable
+fun HItem(modifier: Modifier = Modifier, onClick: (() -> Unit)? = null, content: @Composable ColumnScope.() -> Unit) {
+    Column(modifier.fillMaxWidth()) {
+        Column(Modifier.fillMaxWidth().then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier).padding(vertical = 12.dp), content = content)
+        Box(Modifier.fillMaxWidth().height(Look.line).background(C.line))
+    }
+}
+
 @Composable
 fun Tag(text: String) {
     Box(Modifier.border(Look.line, Color(0xFF555555), Look.shape(99.dp)).padding(horizontal = 10.dp, vertical = 2.dp)) {
@@ -232,6 +243,7 @@ fun DialogLayer() {
 fun HTextField(
     value: String, onChange: (String) -> Unit, modifier: Modifier = Modifier, placeholder: String = "",
     keyboard: KeyboardType = KeyboardType.Text, singleLine: Boolean = true, minLines: Int = 1, center: Boolean = false, big: Boolean = false,
+    underline: Boolean = false,
 ) {
     val shape = Look.shape(12.dp)
     var field by remember { mutableStateOf(TextFieldValue(value, TextRange(value.length))) }
@@ -258,7 +270,9 @@ fun HTextField(
             }
         },
         decorationBox = { inner ->
-            Box(Modifier.fillMaxWidth().clip(shape).background(C.field).border(Look.line, C.fieldLine, shape).padding(horizontal = 12.dp, vertical = 12.dp),
+            val box = if (underline) Modifier.fillMaxWidth().drawBehind { drawLine(C.fieldLine, Offset(0f, size.height), Offset(size.width, size.height), Look.line.toPx()) }.padding(vertical = 12.dp)
+                else Modifier.fillMaxWidth().clip(shape).background(C.field).border(Look.line, C.fieldLine, shape).padding(horizontal = 12.dp, vertical = 12.dp)
+            Box(box,
                 contentAlignment = if (center) Alignment.Center else Alignment.CenterStart) {
                 if (value.isEmpty() && placeholder.isNotEmpty()) Text(placeholder, style = T.muted.copy(fontSize = 15.sp))
                 inner()
@@ -371,7 +385,7 @@ fun PickerField(options: List<Opt>, value: String, onChange: (String) -> Unit, m
             if (!searchable) {
                 shown.forEach { o -> PickerRow(o, o.value == value) { pick(o) } }
             } else {
-                HTextField(q, { q = it }, placeholder = "Search…")
+                HTextField(q, { q = it }, placeholder = "Search…", underline = true)
                 // Fixed height (half the screen) so the list doesn't jump around as results change.
                 val listHeight = (LocalConfiguration.current.screenHeightDp * 0.5f).dp
                 LazyColumn(Modifier.fillMaxWidth().height(listHeight)) {
