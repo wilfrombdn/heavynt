@@ -281,4 +281,14 @@ class LogicTest {
         assertEquals(null, entryScore(LIBRARY.first { it.id == "assisted-pullup" }, Entry("assisted-pullup", 3, 8, 60.0), st))
         assertTrue(entryScore(LIBRARY.first { it.id == "machine-curl" }, Entry("machine-curl", 3, 8, 60.0), st) != null)
     }
+
+    @Test fun cardioIsMinutesAndNeverScored() {
+        val st = AppState(exercises = LIBRARY, settings = Settings(bodyweight = 180.0))
+        val tm = LIBRARY.first { it.id == "treadmill-run" }
+        assertTrue(tm.isCardio && "Cardio" in CATEGORIES)
+        assertEquals("20 min", describe(st, tm.id, 1, 20, 0.0))
+        assertEquals("20 min", setText(st, tm, 1, 20, 0.0))
+        assertEquals(null, entryScore(tm, Entry(tm.id, 1, 20, 0.0), st.settings))
+        assertTrue(LIBRARY.count { it.isCardio } >= 8)
+    }
 }

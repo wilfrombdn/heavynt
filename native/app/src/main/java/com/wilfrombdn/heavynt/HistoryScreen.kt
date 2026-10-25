@@ -60,7 +60,7 @@ fun HistoryScreen(st: AppState, vm: AppViewModel, onBack: () -> Unit) {
                             val ex = st.ex(e.ex)
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text(ex?.name ?: "Removed exercise", style = T.body, modifier = Modifier.weight(1f))
-                                Text("${e.sets} × ${e.reps} @ ${fmtNum(e.weight)} ${st.settings.unit}${if (ex?.pair == true) " total" else ""}", style = T.small)
+                                Text(setText(st, ex, e.sets, e.reps, e.weight), style = T.small)
                             }
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(top = 6.dp)) {
@@ -110,7 +110,8 @@ private fun EditLogSheet(st: AppState, vm: AppViewModel, log: Log, onDismiss: ()
             Column(Modifier.fillMaxWidth().border(Look.line, C.line, Look.shape(14.dp)).padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 ExercisePicker(vm, st.exercises, r.ex, { v -> r.ex = v })
                 if (ex?.pair == true) NoteBox("Weight is both dumbbells combined. $PAIR_NOTE")
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (ex?.isCardio == true) MiniNumber("Minutes", r.reps, { r.sets = 1.0; r.reps = it })
+                else Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     MiniNumber("Sets", r.sets, { r.sets = it }, Modifier.weight(1f))
                     MiniNumber("Reps", r.reps, { r.reps = it }, Modifier.weight(1f))
                     MiniNumber(if (ex?.pair == true) "Total (${st.settings.unit})" else "Weight (${st.settings.unit})", r.weight, { r.weight = it }, Modifier.weight(1.4f))

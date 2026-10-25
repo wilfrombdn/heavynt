@@ -30,8 +30,8 @@ val REGION_GROUPS: List<Pair<String, List<String>>> = listOf(
     "Hips & legs" to listOf("hipFlexors", "glutes", "abductors", "adductors", "quads", "hamstrings", "calves", "tibialis"),
     "Neck" to listOf("neck"),
 )
-val CATEGORIES = listOf("Chest", "Back", "Shoulders", "Arms", "Core", "Legs", "Olympic", "Neck")
-val DEFAULT_STD = mapOf("Chest" to 1.0, "Back" to 0.9, "Shoulders" to 0.5, "Arms" to 0.5, "Core" to 0.5, "Legs" to 1.4, "Olympic" to 0.9, "Neck" to 0.2)
+val CATEGORIES = listOf("Chest", "Back", "Shoulders", "Arms", "Core", "Legs", "Cardio", "Olympic", "Neck")
+val DEFAULT_STD = mapOf("Chest" to 1.0, "Back" to 0.9, "Shoulders" to 0.5, "Arms" to 0.5, "Core" to 0.5, "Legs" to 1.4, "Cardio" to 0.0, "Olympic" to 0.9, "Neck" to 0.2)
 val WEEKDAYS = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
 
 // ---------- dates ----------
@@ -198,7 +198,7 @@ data class LiftScore(val score: Double, val e1rm: Double, val target: Double)
 
 fun entryScore(ex: Exercise, e: Entry, st: Settings): LiftScore? {
     val bw = st.bodyweight
-    if (bw <= 0 || ex.noScore) return null
+    if (bw <= 0 || ex.noScore || ex.isCardio) return null
     if (ex.bw <= 0 && e.weight <= 0) return null
     val load = ex.bw * bw + e.weight
     if (load <= 0) return null

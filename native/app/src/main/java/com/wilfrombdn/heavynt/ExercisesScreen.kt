@@ -108,9 +108,10 @@ private fun ExerciseRow(st: AppState, ex: Exercise, hist: List<HistEntry>, onCli
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(ex.name, style = T.name)
-                Text(if (last != null) "${fmtNum(last.weight)} ${st.settings.unit}${if (ex.pair) " total" else ""} · ${fmtShort(last.at)}" else "Not logged yet", style = T.small)
+                Text(if (last == null) "Not logged yet" else if (ex.isCardio) "${last.reps} min · ${fmtShort(last.at)}"
+                    else "${fmtNum(last.weight)} ${st.settings.unit}${if (ex.pair) " total" else ""} · ${fmtShort(last.at)}", style = T.small)
             }
-            if (hist.size > 1) Spark(hist.map { it.weight })
+            if (hist.size > 1) Spark(hist.map { if (ex.isCardio) it.reps.toDouble() else it.weight })
         }
     }
 }
@@ -158,7 +159,16 @@ private fun ExerciseDetail(st: AppState, vm: AppViewModel, ex: Exercise, onEdit:
     Sheet(ex.name, onDismiss) {
         Muted("${ex.cat} · ${ex.primary.joinToString(", ") { REGIONS[it] ?: it }}" +
             if (ex.secondary.isNotEmpty()) " · helps: ${ex.secondary.joinToString(", ") { REGIONS[it] ?: it }}" else "")
-        if (hist.isNotEmpty()) {
+        if (hist.isNotEmpty() && ex.isCardio) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Muted("Total time"); Text("${hist.sumOf { it.reps }} min", style = T.body) }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Muted("Sessions"); Text("${hist.size}", style = T.body) }
+            SectionTitle("History")
+            hist.reversed().take(30).forEach {
+                Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(fmtDate(it.at), style = T.small, modifier = Modifier.weight(1f)); Text("${it.reps} min", style = T.body.copy(fontSize = 13.sp))
+                }
+            }
+        } else if (hist.isNotEmpty()) {
             WeightChart(hist, st.settings.unit)
             Compare(st, ex, hist)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Muted("Best weight"); Text("${fmtNum(hist.maxOf { it.weight })} ${st.settings.unit}", style = T.body) }
@@ -167,7 +177,7 @@ private fun ExerciseDetail(st: AppState, vm: AppViewModel, ex: Exercise, onEdit:
             hist.reversed().take(30).forEach {
                 Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(fmtDate(it.at), style = T.small, modifier = Modifier.weight(1f))
-                    Text("${it.sets} × ${it.reps} @ ${fmtNum(it.weight)} ${st.settings.unit}${if (ex.pair) " total" else ""}", style = T.body.copy(fontSize = 13.sp))
+                    Text(setText(st, ex, it.sets, it.reps, it.weight), style = T.body.copy(fontSize = 13.sp))
                 }
             }
         } else Muted("No sets logged yet.")

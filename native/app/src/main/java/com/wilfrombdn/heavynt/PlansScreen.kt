@@ -189,9 +189,10 @@ private fun PlanEditor(st: AppState, vm: AppViewModel, planId: String, onDismiss
         plan.items.forEachIndexed { i, it ->
             val ex = st.ex(it.ex)
             Column(Modifier.fillMaxWidth().border(Look.line, C.line, Look.shape(14.dp)).padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ExercisePicker(vm, st.exercises, it.ex, { v -> editItem(i) { x -> x.copy(ex = v) } })
+                ExercisePicker(vm, st.exercises, it.ex, { v -> editItem(i) { x -> if (st.ex(v)?.isCardio == true) x.copy(ex = v, sets = 1, reps = 20, weight = 0.0) else x.copy(ex = v) } })
                 if (ex?.pair == true) NoteBox("Weight is both dumbbells combined. $PAIR_NOTE")
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (ex?.isCardio == true) MiniNumber("Minutes", it.reps.toDouble(), { v -> editItem(i) { x -> x.copy(sets = 1, reps = v.toInt()) } })
+                else Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     MiniNumber("Sets", it.sets.toDouble(), { v -> editItem(i) { x -> x.copy(sets = v.toInt()) } }, Modifier.weight(1f))
                     MiniNumber("Reps", it.reps.toDouble(), { v -> editItem(i) { x -> x.copy(reps = v.toInt()) } }, Modifier.weight(1f))
                     MiniNumber(if (ex?.pair == true) "Total (${st.settings.unit})" else "Weight (${st.settings.unit})", it.weight,

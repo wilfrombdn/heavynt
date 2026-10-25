@@ -206,7 +206,7 @@ fun Sheet(title: String?, onDismiss: () -> Unit, content: @Composable ColumnScop
     ) {
         Column(
             Modifier.fillMaxWidth().heightIn(max = 760.dp).verticalScroll(rememberScrollState())
-                .padding(horizontal = 18.dp).padding(bottom = 20.dp).navigationBarsPadding(),
+                .padding(horizontal = 24.dp).padding(bottom = 20.dp).navigationBarsPadding(),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             if (title != null) Text(title, style = T.title)

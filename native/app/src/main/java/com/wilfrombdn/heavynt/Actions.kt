@@ -18,8 +18,16 @@ fun fmtDuration(a: String, b: String): String {
     return if (m >= 60) "${m / 60}h ${m % 60}m" else "${m}m"
 }
 
+/** Cardio is logged in minutes (kept in reps, one set, no weight) instead of sets × reps × weight. */
+val Exercise.isCardio: Boolean get() = cat == "Cardio"
+
+/** "3 × 10 @ 135 lb" for a lift, "20 min" for cardio. */
+fun setText(st: AppState, ex: Exercise?, sets: Int, reps: Int, weight: Double): String =
+    if (ex?.isCardio == true) "$reps min" else "$sets × $reps @ ${fmtNum(weight)} ${st.settings.unit}${if (ex?.pair == true) " total" else ""}"
+
 fun describe(st: AppState, ex: String, sets: Int, reps: Int, weight: Double): String {
     val e = st.ex(ex)
+    if (e?.isCardio == true) return "$reps min"
     val w = when {
         weight > 0 -> " @ ${fmtNum(weight)} ${st.settings.unit}${if (e?.pair == true) " total" else ""}"
         e != null && e.bw > 0 -> " · bodyweight"

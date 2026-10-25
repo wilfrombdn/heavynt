@@ -46,7 +46,7 @@ import androidx.compose.foundation.layout.IntrinsicSize
 @Composable
 fun Screen(content: @Composable () -> Unit) {
     Column(
-        Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 14.dp),
+        Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) { content() }
 }
@@ -76,6 +76,7 @@ fun ItemCard(st: AppState, it: ActiveItem, interactive: Boolean, next: Boolean =
     ) else base
     // big number on the right: the weight, extra load on a bodyweight move, or BW
     val (big, bigUnit) = when {
+        ex.isCardio -> "${it.reps}" to "min"
         it.weight > 0 && ex.bw > 0 -> "+${fmtNum(it.weight)}" to "$unit + BW"
         it.weight > 0 -> fmtNum(it.weight) to (if (ex.pair) "$unit total" else unit)
         ex.bw > 0 -> "BW" to ""
@@ -93,15 +94,15 @@ fun ItemCard(st: AppState, it: ActiveItem, interactive: Boolean, next: Boolean =
                 Text(ex.name, style = T.name.copy(fontSize = 15.sp), modifier = Modifier.weight(1f, fill = false))
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("${it.sets} × ${it.reps}", style = T.sub.copy(fontWeight = FontWeight.SemiBold))
-                if (last != null && it.weight > 0) {
+                Text(if (ex.isCardio) "Cardio" else "${it.sets} × ${it.reps}", style = T.sub.copy(fontWeight = FontWeight.SemiBold))
+                if (last != null && it.weight > 0 && !ex.isCardio) {
                     val d = it.weight - last.weight
                     if (d > 0) Text("▲ +${fmtNum(d)}", style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Bold, color = C.green))
                     else Text("Last ${fmtNum(last.weight)}", style = T.small)
                 }
             }
             if (it.note.isNotBlank()) Text(it.note, style = T.small.copy(color = Color(0xFFB9B9B9)))
-            if (interactive && ex.bw <= 0 && it.weight <= 0) Text("Hold to set weight", style = T.small)
+            if (interactive && ex.bw <= 0 && it.weight <= 0 && !ex.isCardio) Text("Hold to set weight", style = T.small)
             if (plateau) Box(Modifier.padding(top = 4.dp)) { Tag("Plateau") }
         }
         Column(horizontalAlignment = Alignment.End) {
@@ -212,6 +213,7 @@ fun WorkoutScreen(st: AppState, vm: AppViewModel, goHome: () -> Unit) {
                 val last = exerciseHistory(st, item.ex).lastOrNull()
                 when {
                     item.done -> vm.update { s -> s.toggleDone(i) }
+                    st.ex(item.ex)?.isCardio == true -> vm.update { s -> s.editItem(i, item.sets, item.reps, 0.0, complete = true) }
                     item.weight > 0 || last != null -> completeAndSaveToPlan(vm, dialogs, i, item.ex, item.sets, item.reps, if (item.weight > 0) item.weight else last!!.weight)
                     else -> promptIdx = i
                 }
@@ -327,17 +329,21 @@ private fun EditItemSheet(st: AppState, vm: AppViewModel, idx: Int, item: Active
     var weight by remember { mutableStateOf(item.weight) }
     val last = remember { exerciseHistory(st, item.ex).lastOrNull() }
     Sheet(ex.name, onDismiss) {
-        if (last != null) Muted("Last time: ${last.sets} × ${last.reps} @ ${fmtNum(last.weight)} ${st.settings.unit}${if (ex.pair) " total" else ""} · ${fmtShort(last.at)}")
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Stepper(sets, { sets = it }, Modifier.weight(1f), "Sets", min = 1.0, max = 20.0)
-            Stepper(reps, { reps = it }, Modifier.weight(1f), "Reps", min = 1.0, max = 100.0)
+        if (last != null) Muted("Last time: ${setText(st, ex, last.sets, last.reps, last.weight)} · ${fmtShort(last.at)}")
+        if (ex.isCardio) Stepper(reps, { reps = it }, label = "Minutes", min = 1.0, max = 300.0)
+        else {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Stepper(sets, { sets = it }, Modifier.weight(1f), "Sets", min = 1.0, max = 20.0)
+                Stepper(reps, { reps = it }, Modifier.weight(1f), "Reps", min = 1.0, max = 100.0)
+            }
+            Stepper(weight, { weight = it }, label = weightLabel(st, ex), step = weightStep(st.settings))
+            if (ex.pair) NoteBox(PAIR_NOTE)
         }
-        Stepper(weight, { weight = it }, label = weightLabel(st, ex), step = weightStep(st.settings))
-        if (ex.pair) NoteBox(PAIR_NOTE)
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             HButton(if (item.done) "Save" else "Save & complete", {
                 onDismiss()
-                completeAndSaveToPlan(vm, dialogs, idx, item.ex, sets.toInt(), reps.toInt(), weight)
+                if (ex.isCardio) vm.update { it.editItem(idx, 1, reps.toInt(), 0.0, complete = true) }
+                else completeAndSaveToPlan(vm, dialogs, idx, item.ex, sets.toInt(), reps.toInt(), weight)
             }, style = BtnStyle.Primary)
             HButton("Remove from this workout", { onDismiss(); vm.update { it.removeItem(idx) } }, style = BtnStyle.Danger)
         }
@@ -362,14 +368,18 @@ private fun AddExerciseSheet(st: AppState, vm: AppViewModel, onDismiss: () -> Un
     Sheet("Add exercise", onDismiss) {
         ExercisePicker(vm, st.exercises, exId, { id ->
             exId = id
+            if (st.ex(id)?.isCardio == true) { sets = 1.0; reps = 20.0; weight = 0.0 }
             exerciseHistory(st, id).lastOrNull()?.let { sets = it.sets.toDouble(); reps = it.reps.toDouble(); weight = it.weight }
         })
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Stepper(sets, { sets = it }, Modifier.weight(1f), "Sets", min = 1.0, max = 20.0)
-            Stepper(reps, { reps = it }, Modifier.weight(1f), "Reps", min = 1.0, max = 100.0)
+        if (ex?.isCardio == true) Stepper(reps, { reps = it }, label = "Minutes", min = 1.0, max = 300.0)
+        else {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Stepper(sets, { sets = it }, Modifier.weight(1f), "Sets", min = 1.0, max = 20.0)
+                Stepper(reps, { reps = it }, Modifier.weight(1f), "Reps", min = 1.0, max = 100.0)
+            }
+            Stepper(weight, { weight = it }, label = weightLabel(st, ex), step = weightStep(st.settings))
+            if (ex?.pair == true) NoteBox(PAIR_NOTE)
         }
-        Stepper(weight, { weight = it }, label = weightLabel(st, ex), step = weightStep(st.settings))
-        if (ex?.pair == true) NoteBox(PAIR_NOTE)
         HButton("Add", {
             if (exId.isEmpty()) toast(ctx, "Pick an exercise") else { vm.update { it.addItem(exId, sets.toInt(), reps.toInt(), weight) }; onDismiss() }
         }, style = BtnStyle.Primary)

@@ -23,7 +23,7 @@ export const REGION_GROUPS = {
   Neck: ['neck'],
 };
 
-export const CATEGORIES = ['Chest', 'Back', 'Shoulders', 'Arms', 'Core', 'Legs', 'Olympic', 'Neck'];
+export const CATEGORIES = ['Chest', 'Back', 'Shoulders', 'Arms', 'Core', 'Legs', 'Cardio', 'Olympic', 'Neck'];
 
 const E = (id, name, cat, primary, secondary, std, bw = 0) => ({
   id, name, cat, primary, secondary, std, bw, custom: false,
@@ -233,6 +233,16 @@ const RAW = [
   E('box-jump', 'Box Jump', 'Legs', ['quads', 'calves'], ['glutes'], 0.3),
   E('sled-push', 'Sled Push', 'Legs', ['quads', 'glutes'], ['calves', 'hamstrings'], 2.0),
   E('thruster', 'Thruster', 'Legs', ['quads', 'shoulders'], ['glutes', 'triceps'], 0.75),
+  // Cardio machines (3.18.0): logged in minutes, never scored. Outdoor runs go in the Run tab.
+  E('treadmill-run', 'Treadmill Run', 'Cardio', ['quads', 'calves'], ['hamstrings', 'glutes'], 0),
+  E('incline-walk', 'Incline Treadmill Walk', 'Cardio', ['glutes', 'calves'], ['hamstrings'], 0),
+  E('stationary-bike', 'Stationary Bike', 'Cardio', ['quads'], ['calves', 'glutes'], 0),
+  E('air-bike', 'Air Bike', 'Cardio', ['quads'], ['shoulders', 'calves'], 0),
+  E('rowing-machine', 'Rowing Machine', 'Cardio', ['lats', 'quads'], ['upperBack', 'biceps', 'hamstrings'], 0),
+  E('elliptical', 'Elliptical', 'Cardio', ['quads', 'glutes'], ['calves'], 0),
+  E('stair-climber', 'Stair Climber', 'Cardio', ['glutes', 'quads'], ['calves'], 0),
+  E('jump-rope', 'Jump Rope', 'Cardio', ['calves'], ['shoulders', 'forearms'], 0),
+  E('ski-erg', 'Ski Erg', 'Cardio', ['lats'], ['triceps', 'abs'], 0),
 ];
 
 // Fallback benchmark for custom exercises when the user leaves it blank.

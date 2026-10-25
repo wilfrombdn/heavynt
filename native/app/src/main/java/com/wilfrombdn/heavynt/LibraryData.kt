@@ -186,7 +186,16 @@ val LIBRARY: List<Exercise> = listOf(
     Exercise("curtsy-lunge", "Curtsy Lunge", "Legs", listOf("glutes", "quads"), listOf("abductors", "adductors"), 0.5, 0.0, true, stdF = 0.0),
     Exercise("box-jump", "Box Jump", "Legs", listOf("quads", "calves"), listOf("glutes"), 0.3, 0.0, false, stdF = 0.0),
     Exercise("sled-push", "Sled Push", "Legs", listOf("quads", "glutes"), listOf("calves", "hamstrings"), 2.0, 0.0, false, stdF = 0.0, noScore = true),
-    Exercise("thruster", "Thruster", "Legs", listOf("quads", "shoulders"), listOf("glutes", "triceps"), 0.75, 0.0, false, stdF = 0.0)
+    Exercise("thruster", "Thruster", "Legs", listOf("quads", "shoulders"), listOf("glutes", "triceps"), 0.75, 0.0, false, stdF = 0.0),
+    Exercise("treadmill-run", "Treadmill Run", "Cardio", listOf("quads", "calves"), listOf("hamstrings", "glutes"), 0.0, 0.0, false, stdF = 0.0),
+    Exercise("incline-walk", "Incline Treadmill Walk", "Cardio", listOf("glutes", "calves"), listOf("hamstrings"), 0.0, 0.0, false, stdF = 0.0),
+    Exercise("stationary-bike", "Stationary Bike", "Cardio", listOf("quads"), listOf("calves", "glutes"), 0.0, 0.0, false, stdF = 0.0),
+    Exercise("air-bike", "Air Bike", "Cardio", listOf("quads"), listOf("shoulders", "calves"), 0.0, 0.0, false, stdF = 0.0),
+    Exercise("rowing-machine", "Rowing Machine", "Cardio", listOf("lats", "quads"), listOf("upperBack", "biceps", "hamstrings"), 0.0, 0.0, false, stdF = 0.0),
+    Exercise("elliptical", "Elliptical", "Cardio", listOf("quads", "glutes"), listOf("calves"), 0.0, 0.0, false, stdF = 0.0),
+    Exercise("stair-climber", "Stair Climber", "Cardio", listOf("glutes", "quads"), listOf("calves"), 0.0, 0.0, false, stdF = 0.0),
+    Exercise("jump-rope", "Jump Rope", "Cardio", listOf("calves"), listOf("shoulders", "forearms"), 0.0, 0.0, false, stdF = 0.0),
+    Exercise("ski-erg", "Ski Erg", "Cardio", listOf("lats"), listOf("triceps", "abs"), 0.0, 0.0, false, stdF = 0.0)
 )
 
 val STANDARDS = Standards(
