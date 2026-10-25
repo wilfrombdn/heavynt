@@ -36,6 +36,17 @@ val WEEKDAYS = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "S
 
 // ---------- dates ----------
 fun today(): LocalDate = LocalDate.now()
+
+/** Water and protein start a new day at 12:01 am on the phone's clock. */
+private const val INTAKE_ROLLOVER_MIN = 1L
+fun intakeDayKey(now: java.time.LocalDateTime = java.time.LocalDateTime.now()): String = now.minusMinutes(INTAKE_ROLLOVER_MIN).toLocalDate().toString()
+
+/** Milliseconds until the next 12:01 am on the phone's clock. */
+fun millisToNextRollover(now: java.time.LocalDateTime = java.time.LocalDateTime.now()): Long {
+    var next = now.toLocalDate().atTime(0, INTAKE_ROLLOVER_MIN.toInt())
+    if (!next.isAfter(now)) next = next.plusDays(1)
+    return java.time.Duration.between(now, next).toMillis()
+}
 fun dateKey(d: LocalDate = today()): String = d.toString()
 fun parseKey(k: String): LocalDate = LocalDate.parse(k)
 fun addDays(key: String, n: Int): String = parseKey(key).plusDays(n.toLong()).toString()

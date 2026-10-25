@@ -75,6 +75,6 @@ fun demoState(real: AppState): AppState {
         settings = settings, exercises = LIBRARY, plans = plans, schedule = Schedule(mondayOf(dateKey()), sched), logs = logs,
         planName = "Demo plan", demoVersion = DEMO_VERSION,
         // part-way through today's water and protein
-        intake = mapOf(dateKey() to Intake(water = glassesTarget(settings) / 2, protein = proteinTargetG(settings) * 6 / 10 / 10 * 10)),
+        intake = mapOf(intakeDayKey() to Intake(water = glassesTarget(settings) / 2, protein = proteinTargetG(settings) * 6 / 10 / 10 * 10)),
     )
 }

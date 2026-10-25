@@ -72,6 +72,22 @@ fun App(vm: AppViewModel) {
 
     BackHandler(enabled = tab != 0) { tab = 0 }
 
+    // New day on the phone's clock (12:01 am, or coming back to the app on a later day): redraw everything so
+    // today's plan and the water/protein card move on to the new date even if the app stayed open.
+    var day by remember { mutableStateOf(intakeDayKey() + dateKey()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(millisToNextRollover() + 1000)
+            day = intakeDayKey() + dateKey()
+        }
+    }
+    val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+    androidx.compose.runtime.DisposableEffect(lifecycle) {
+        val obs = androidx.lifecycle.LifecycleEventObserver { _, e -> if (e == androidx.lifecycle.Lifecycle.Event.ON_RESUME) day = intakeDayKey() + dateKey() }
+        lifecycle.addObserver(obs)
+        onDispose { lifecycle.removeObserver(obs) }
+    }
+
     // First run: ask for the profile so the body map has something to compare against.
     LaunchedEffect(Unit) { if (st.settings.bodyweight <= 0 && !st.settings.profileAsked) profile = true }
 
@@ -116,7 +132,7 @@ fun App(vm: AppViewModel) {
                 }
             },
         ) { pad ->
-            Box(Modifier.padding(pad)) {
+            Box(Modifier.padding(pad)) { androidx.compose.runtime.key(day) {
                 when (tab) {
                     0 -> HomeScreen(st, vm, go = { tab = it }, openSettings = { settings = true }, openProfile = { profile = true })
                     1 -> WorkoutScreen(st, vm, goHome = { tab = 0 })
@@ -124,7 +140,7 @@ fun App(vm: AppViewModel) {
                     3 -> ExercisesScreen(st, vm)
                     else -> HistoryScreen(st, vm)
                 }
-            }
+            } }
         }
         if (settings) SettingsSheet(st, vm, onDismiss = { settings = false }, openProfile = { profile = true })
         if (profile) ProfileSheet(st, vm, onDismiss = { profile = false })

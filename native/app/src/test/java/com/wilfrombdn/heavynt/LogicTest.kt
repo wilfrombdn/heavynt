@@ -227,4 +227,13 @@ class LogicTest {
         s = s.addProtein(10).addProtein(10).addProtein(-10); assertEquals(10, s.todayIntake().protein)
         s = s.addProtein(-50); assertEquals(0, s.todayIntake().protein)
     }
+
+    @Test fun waterAndProteinRollOverAt1201() {
+        val d = java.time.LocalDate.of(2026, 10, 25)
+        assertEquals("2026-10-24", intakeDayKey(d.atTime(0, 0, 30)))   // 12:00:30 am still counts as yesterday
+        assertEquals("2026-10-25", intakeDayKey(d.atTime(0, 1)))        // 12:01 am is the new day
+        assertEquals("2026-10-25", intakeDayKey(d.atTime(23, 59)))
+        assertEquals(60_000L, millisToNextRollover(d.atTime(0, 0)))
+        assertEquals(24 * 3_600_000L - 60_000L, millisToNextRollover(d.atTime(0, 2)))
+    }
 }
