@@ -5,6 +5,7 @@ package com.wilfrombdn.heavynt
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -71,11 +72,9 @@ fun ItemCard(st: AppState, it: ActiveItem, interactive: Boolean, badge: String? 
     val ex = st.ex(it.ex) ?: return
     val last = remember(st.logs, it.ex) { exerciseHistory(st, it.ex).lastOrNull() }
     val plateau = interactive && plateauInfo(st, it.ex, it.weight) != null
-    val shape = Look.shape(16.dp)
     val haptic = LocalHapticFeedback.current
     val unit = st.settings.unit
-    val base = Modifier.fillMaxWidth().alpha(if (it.done) 0.45f else 1f).clip(shape).background(C.panel)
-        .border(Look.line, if (it.done) C.green else C.line, shape)
+    val base = Modifier.fillMaxWidth().alpha(if (it.done) 0.4f else 1f)
     val m = if (interactive) base.combinedClickable(
         onClick = { haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove); onTap() },
         onLongClick = { haptic.performHapticFeedback(HapticFeedbackType.LongPress); onLong() },
@@ -85,11 +84,12 @@ fun ItemCard(st: AppState, it: ActiveItem, interactive: Boolean, badge: String? 
         it.weight > 0 && ex.bw > 0 -> "+${fmtNum(it.weight)}" to "$unit + BW"
         it.weight > 0 -> fmtNum(it.weight) to (if (ex.pair) "$unit total" else unit)
         ex.bw > 0 -> "BW" to ""
-        else -> "—" to unit
+        else -> "—" to ""
     }
-    Row(m.height(IntrinsicSize.Min), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.width(5.dp).fillMaxHeight().background(if (it.done) C.green else CAT_COLOR[ex.cat] ?: C.muted))
-        Column(Modifier.weight(1f).padding(start = 14.dp, top = 14.dp, bottom = 14.dp, end = 8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+    // flat row: a short muscle-colour bar, the lift, and the weight; rows are split by hairlines in ItemList
+    Row(m.height(IntrinsicSize.Min).padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.width(3.dp).fillMaxHeight().clip(Look.shape(2.dp)).background(if (it.done) C.green else CAT_COLOR[ex.cat] ?: C.muted))
+        Column(Modifier.weight(1f).padding(start = 12.dp, end = 8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (it.done) Text("✓", style = TextStyle(fontSize = 17.sp, fontWeight = FontWeight.Bold, color = C.green))
                 if (badge != null) Box(Modifier.clip(Look.shape(6.dp)).background(Color.White).padding(horizontal = 6.dp, vertical = 1.dp)) {
@@ -109,8 +109,8 @@ fun ItemCard(st: AppState, it: ActiveItem, interactive: Boolean, badge: String? 
             if (interactive && ex.bw <= 0 && it.weight <= 0) Text("Hold to set weight", style = T.small)
             if (plateau) Box(Modifier.padding(top = 4.dp)) { Tag("Plateau") }
         }
-        Column(Modifier.padding(end = 16.dp), horizontalAlignment = Alignment.End) {
-            Text(big, style = TextStyle(fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White))
+        Column(horizontalAlignment = Alignment.End) {
+            Text(big, style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold, color = if (big == "—") C.muted else Color.White))
             if (bigUnit.isNotEmpty()) Text(bigUnit, style = T.small)
         }
     }
@@ -126,36 +126,38 @@ private fun Elapsed(startIso: String) {
     Text("⏱ $text", style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color.White))
 }
 
-/** Exercises in order; supersets are boxed together under a "Superset" header with A1/A2 badges. */
+/** Exercises in order, as one list split by hairlines; supersets get a "Superset" header and A1/A2 badges. */
 @Composable
 fun ItemList(st: AppState, items: List<ActiveItem>, interactive: Boolean, onTap: (Int) -> Unit = {}, onLong: (Int) -> Unit = {}) {
     val groups = supersetGroups(items.map { it.ss })
-    var i = 0
-    while (i < items.size) {
-        val g = groups.firstOrNull { it.start == i }
-        if (g == null) {
-            val idx = i
-            ItemCard(st, items[idx], interactive, onTap = { onTap(idx) }, onLong = { onLong(idx) })
-            i++
-        } else {
-            val shape = Look.shape(20.dp)
-            Column(
-                Modifier.fillMaxWidth().border(Look.lineBold, Color(0xFF8A8A8A), shape).padding(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Row(Modifier.padding(horizontal = 6.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(Modifier.fillMaxWidth()) {
+        Hairline()
+        var i = 0
+        while (i < items.size) {
+            val g = groups.firstOrNull { it.start == i }
+            if (g == null) {
+                val idx = i
+                ItemCard(st, items[idx], interactive, onTap = { onTap(idx) }, onLong = { onLong(idx) })
+                Hairline()
+                i++
+            } else {
+                Row(Modifier.padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Eyebrow("Superset ${g.letter}")
                     Text("· back to back, rest after each round", style = T.small)
                 }
                 for (k in 0 until g.size) {
                     val idx = g.start + k
                     ItemCard(st, items[idx], interactive, badge = "${g.letter}${k + 1}", onTap = { onTap(idx) }, onLong = { onLong(idx) })
+                    Hairline()
                 }
+                i += g.size
             }
-            i += g.size
         }
     }
 }
+
+@Composable
+private fun Hairline() = Box(Modifier.fillMaxWidth().height(Look.line).background(C.line))
 
 @Composable
 fun WorkoutScreen(st: AppState, vm: AppViewModel, goHome: () -> Unit) {
@@ -222,23 +224,21 @@ fun WorkoutScreen(st: AppState, vm: AppViewModel, goHome: () -> Unit) {
             PageHead("Workout", fmtToday())
             if (plan != null) {
                 // Tap the day to swap it for another day from the plan.
-                HCard(onClick = { showSwitch = true }) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f)) {
-                            Eyebrow(if (o != null) "Today · switched" else "Today")
-                            Text(plan.name, style = T.big)
-                            if (skipped != null) Text("Skipped ${skipped.name}", style = T.small)
-                            Text("Tap to switch", style = T.small)
-                        }
-                        if (doneToday) Tag("Done ✓") else Text("›", style = TextStyle(fontSize = 22.sp, color = C.muted))
+                Row(Modifier.fillMaxWidth().clickable { showSwitch = true }.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Eyebrow(if (o != null) "Today · switched" else "Today")
+                        Text(plan.name, style = T.big)
+                        if (skipped != null) Text("Skipped ${skipped.name}", style = T.small)
+                        Text("Tap to switch", style = T.small)
                     }
+                    if (doneToday) Tag("Done ✓") else Text("›", style = TextStyle(fontSize = 22.sp, color = C.muted))
                 }
                 ItemList(st, plan.items.map { ActiveItem(it.ex, it.sets, it.reps, it.weight, it.note, ss = it.ss) }, false)
                 HButton(if (doneToday) "Start again" else "Start workout", { start(plan.id) }, style = BtnStyle.Primary)
                 HButton("Switch today's workout", { showSwitch = true })
             } else {
                 val n = nextWorkout(st)
-                HCard(onClick = { showSwitch = true }) {
+                Box(Modifier.fillMaxWidth().clickable { showSwitch = true }.padding(vertical = 24.dp)) {
                     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("Rest day", style = T.big)
                         Muted(if (n != null) "Next: ${n.second.name} on ${fmtLongDay(n.first)}" else "No workouts scheduled")
