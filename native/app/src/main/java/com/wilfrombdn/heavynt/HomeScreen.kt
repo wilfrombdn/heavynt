@@ -54,6 +54,15 @@ fun HomeScreen(st: AppState, vm: AppViewModel, go: (Int) -> Unit, openSettings: 
 
     Screen {
         PageHead("Strength", fmtToday()) { IconBtnVec(Icons.gear, openSettings) }
+        if (st.demoBackup != null) HCard(borderColor = Color(0xFFFFB020)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Eyebrow("Developer demo")
+                    Muted("Example data. Your real data is safe and comes back when you exit.")
+                }
+                SlimButton("Exit") { vm.exitDemo() }
+            }
+        }
 
         // Today
         val a = st.active
@@ -85,8 +94,10 @@ fun HomeScreen(st: AppState, vm: AppViewModel, go: (Int) -> Unit, openSettings: 
             BodyMap(scores, selected, { selected = if (selected == it) null else it }, female = st.settings.sex == "female")
             Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("Under target", style = T.small)
+                val f = st.settings.sex == "female"
                 Box(Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)).background(Brush.horizontalGradient(
-                    0f to Color(240, 64, 70), 0.48f to Color(150, 62, 66), 0.52f to Color(58, 118, 230), 1f to Color(110, 175, 255))))
+                    0f to Color(240, 64, 70), 0.48f to Color(150, 62, 66),
+                    0.52f to (if (f) Color(214, 72, 160) else Color(58, 118, 230)), 1f to (if (f) Color(255, 140, 205) else Color(110, 175, 255)))))
                 Text("On / above", style = T.small)
             }
         }
@@ -101,7 +112,7 @@ fun HomeScreen(st: AppState, vm: AppViewModel, go: (Int) -> Unit, openSettings: 
         }
 
         val sel = selected
-        if (sel != null) RegionCard(st, sel, scores[sel]) else if (hasData) Summary(scores)
+        if (sel != null) RegionCard(st, sel, scores[sel]) else if (hasData) Summary(scores, goodColor(st))
     }
 }
 
@@ -137,14 +148,14 @@ private fun RegionCard(st: AppState, key: String, sc: RegionScore?) {
                     Text("est. max ${l.e1rm.roundToInt()} $u · target ${l.target.roundToInt()} $u", style = T.small)
                     l.ex?.let { e -> Text("average for you ${targetFor(e, st.settings, "intermediate").roundToInt()} $u · beats ~${percentileFor(e, st.settings, l.e1rm)}% of lifters", style = T.small) }
                 }
-                Text("${(l.score * 100).roundToInt()}%", style = TextStyle(fontSize = 15.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, color = if (l.score >= 1) C.good else C.bad))
+                Text("${(l.score * 100).roundToInt()}%", style = TextStyle(fontSize = 15.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, color = if (l.score >= 1) goodColor(st) else C.bad))
             }
         }
     }
 }
 
 @Composable
-private fun Summary(scores: Map<String, RegionScore>) {
+private fun Summary(scores: Map<String, RegionScore>, good: Color) {
     val sorted = scores.entries.sortedBy { it.value.score }
     val behind = sorted.filter { it.value.score < 1 }.take(4).joinToString(", ") { REGIONS[it.key] ?: it.key }
     val ok = sorted.filter { it.value.score >= 1 }.reversed().take(4).joinToString(", ") { REGIONS[it.key] ?: it.key }
@@ -152,7 +163,7 @@ private fun Summary(scores: Map<String, RegionScore>) {
     val untrained = if (missing.size <= 5) missing.joinToString(", ") else missing.take(4).joinToString(", ") + " + ${missing.size - 4} more"
     HCard {
         if (behind.isNotEmpty()) SummaryLine("Behind target", behind, C.bad)
-        if (ok.isNotEmpty()) SummaryLine("On target or better", ok, C.good)
+        if (ok.isNotEmpty()) SummaryLine("On target or better", ok, good)
         if (untrained.isNotEmpty()) SummaryLine("Untrained", untrained, Color.White)
     }
 }
@@ -200,7 +211,7 @@ fun ProfileSheet(st: AppState, vm: AppViewModel, onDismiss: () -> Unit) {
     val notifPerm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     fun markAsked() { if (!s.profileAsked) vm.update { it.withSettings { x -> x.copy(profileAsked = true) } } }
     Sheet("Your profile", onDismiss = { markAsked(); onDismiss() }) {
-        Muted("Targets are worked out from your sex, age, height and weight, then compared to what you actually lift. Under target shows red, on or above target shows blue.")
+        Muted("Targets are worked out from your sex, age, height and weight, then compared to what you actually lift. Under target shows red, on or above target shows blue (pink on the female body).")
         Labeled("Sex") { Segmented(listOf("male" to "Male", "female" to "Female"), sex, { sex = it }) }
         Stepper(age, { age = it }, label = "Age", min = 12.0, max = 90.0)
         Stepper(bw, { bw = it }, label = "Bodyweight (${s.unit})", max = 700.0)
@@ -223,6 +234,8 @@ fun ProfileSheet(st: AppState, vm: AppViewModel, onDismiss: () -> Unit) {
         }, style = BtnStyle.Primary)
     }
 }
+
+fun goodColor(st: AppState): Color = if (st.settings.sex == "female") C.goodF else C.good
 
 // ---------------- settings ----------------
 @Composable
@@ -269,6 +282,11 @@ fun SettingsSheet(st: AppState, vm: AppViewModel, onDismiss: () -> Unit, openPro
             dialogs.ask("Erase everything?", "All workouts, plans and settings are deleted from this device.",
                 DialogBtn("Erase all data", primary = true) { vm.eraseAll(); onDismiss() }, DialogBtn("Cancel"))
         }, style = BtnStyle.Danger)
+        SectionTitle("Developer")
+        if (st.demoBackup == null) HButton("Load demo data", {
+            dialogs.ask("Load demo data?", "Shows an example lifter with a filled-in body map (very strong upper body, very weak legs), a demo plan and 8 weeks of history. Your real data is set aside and comes back when you exit the demo.",
+                DialogBtn("Load demo", primary = true) { vm.enterDemo(); onDismiss() }, DialogBtn("Cancel"))
+        }) else HButton("Exit demo (bring back my data)", { vm.exitDemo(); onDismiss() }, style = BtnStyle.Primary)
         Text("Strength scores are estimates: your best set in the last 90 days → estimated 1-rep max, compared to a target for your profile.", style = T.small)
         HButton("Done", onDismiss, style = BtnStyle.Primary)
     }

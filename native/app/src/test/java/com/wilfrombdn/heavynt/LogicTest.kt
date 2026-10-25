@@ -167,4 +167,19 @@ class LogicTest {
         assertEquals(emptySet<String>(), REGIONS.keys - trained)
         assertEquals(REGIONS.keys, REGION_GROUPS.flatMap { it.second }.toSet())
     }
+
+    @Test fun demoLightsEveryMuscleDeepBlueOrDeepRed() {
+        val upper = setOf("upperChest", "chest", "shoulders", "sideDelts", "rearDelts", "traps", "upperBack", "lats",
+            "biceps", "triceps", "forearms", "abs", "obliques", "hipFlexors", "neck")
+        for (sex in listOf("male", "female")) {
+            val demo = demoState(AppState(settings = Settings(sex = sex)))
+            val scores = regionScores(demo)
+            assertEquals(sex, REGIONS.keys, scores.keys)
+            for ((k, sc) in scores) {
+                if (k in upper) assertTrue("$sex $k ${sc.score}", sc.score >= 1.5)
+                else assertTrue("$sex $k ${sc.score}", sc.score <= 0.55)
+            }
+            assertTrue(demo.logs.size >= 20)
+        }
+    }
 }

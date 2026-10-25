@@ -86,5 +86,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
 
     fun eraseAll() { update { seedState() } }
 
+    /** Developer demo: set the real data aside and show a filled-in example. */
+    fun enterDemo() { update { s -> if (s.demoBackup != null) s else demoState(s).copy(demoBackup = AppJson.encodeToString(s)) } }
+
+    fun exitDemo() { update { s -> s.demoBackup?.let { normalize(AppJson.decodeFromString<AppState>(it)) } ?: s } }
+
     suspend fun saveNow() = withContext(Dispatchers.IO) { storage.save(_state.value) }
 }

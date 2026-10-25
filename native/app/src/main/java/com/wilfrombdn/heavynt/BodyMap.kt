@@ -238,7 +238,7 @@ fun BodyMap(scores: Map<String, RegionScore>, selected: String?, onPick: (String
                 val sc = scores[b.key]
                 val isSel = b.key == selected
                 if (sc != null) {
-                    val (r, g, bl) = scoreRGB(sc.score)
+                    val (r, g, bl) = scoreRGB(sc.score, female)
                     val k = scoreStrength(sc.score)
                     val breathe = pulse.value
                     fun argb(a: Float) = android.graphics.Color.argb((a.coerceIn(0f, 1f) * 255).toInt(), r, g, bl)

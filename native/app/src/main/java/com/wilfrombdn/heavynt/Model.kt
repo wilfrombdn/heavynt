@@ -117,6 +117,8 @@ data class AppState(
     /** Name of the whole current plan (plans + schedule). */
     val planName: String = "My plan",
     val saved: List<SavedPlan> = emptyList(),
+    /** While the developer demo is showing: the user's real data, as backup JSON, to put back on exit. */
+    val demoBackup: String? = null,
 )
 
 class StarterPlan(val name: String, val weekday: Int, val items: List<PlanItem>)

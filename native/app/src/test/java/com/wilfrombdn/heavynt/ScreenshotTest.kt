@@ -14,6 +14,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Rule
+import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -83,5 +84,9 @@ class ScreenshotTest {
         }
         vm.update { it.withSettings { x -> x.copy(sex = "female") } }
         rule.onNodeWithText("Home").performClick(); settle(); shot("home-female")
+        vm.enterDemo(); settle(); shot("demo-female")
+        vm.exitDemo(); vm.update { it.withSettings { x -> x.copy(sex = "male") } }; vm.enterDemo(); settle(); shot("demo-male")
+        vm.exitDemo(); settle()
+        assertEquals("Upper / Lower", vm.state.value.planName)  // real data came back
     }
 }

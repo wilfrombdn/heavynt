@@ -250,11 +250,13 @@ fun weightStep(st: Settings): Double = if (st.unit == "kg") 2.5 else 5.0
 fun weeksOf(s: Schedule): Int = max(1, ceil(s.days.size / 7.0).toInt())
 
 /** RGB triple used both for the map and for legend/text colours. */
-fun scoreRGB(score: Double): Triple<Int, Int, Int> {
+/** Red under target; at or above target blue for the male body, pink for the female one. */
+fun scoreRGB(score: Double, female: Boolean = false): Triple<Int, Int, Int> {
     fun mix(a: IntArray, b: IntArray, t: Double) = Triple(
         (a[0] + (b[0] - a[0]) * t).toInt(), (a[1] + (b[1] - a[1]) * t).toInt(), (a[2] + (b[2] - a[2]) * t).toInt(),
     )
     return if (score < 1) mix(intArrayOf(150, 62, 66), intArrayOf(240, 64, 70), minOf(1.0, (1 - score) / 0.5))
+    else if (female) mix(intArrayOf(214, 72, 160), intArrayOf(255, 140, 205), minOf(1.0, (score - 1) / 0.4))
     else mix(intArrayOf(58, 118, 230), intArrayOf(110, 175, 255), minOf(1.0, (score - 1) / 0.4))
 }
 

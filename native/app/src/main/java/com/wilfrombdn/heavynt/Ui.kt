@@ -74,6 +74,7 @@ object C {
     val green = Color(0xFF22C55E)
     val greenSoft = Color(0xFF9FDCB4)
     val good = Color(0xFF6AAAFF)
+    val goodF = Color(0xFFFF7AC8)
     val bad = Color(0xFFFF6B70)
     val sheet = Color(0xFF0B0B0B)
 }
