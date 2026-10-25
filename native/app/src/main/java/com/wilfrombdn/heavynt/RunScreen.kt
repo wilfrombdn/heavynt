@@ -98,7 +98,8 @@ private fun LiveRunView(r: LiveRun, vm: AppViewModel, onSaved: (String) -> Unit)
         if (r.paused) HButton("Resume", { RunService.send(ctx, RunService.ACTION_RESUME) }, style = BtnStyle.Primary)
         else HButton("Pause", { RunService.send(ctx, RunService.ACTION_PAUSE) })
         HButton("Finish", {
-            dialogs.ask("Finish run?", "${fmtKm(r.distanceM)} km in ${fmtClock(sec)}.",
+            dialogs.ask("Finish run?", "${fmtKm(r.distanceM)} km in ${fmtClock(sec)}." +
+                    if (r.distanceM < 50) " Almost no distance was recorded, so there's no route to save." else "",
                 DialogBtn("Save run", primary = true) { finish(true) },
                 DialogBtn("Keep going"),
                 DialogBtn("Discard", danger = true) { finish(false) })
@@ -198,7 +199,11 @@ fun RunDetail(st: AppState, vm: AppViewModel, id: String, onBack: () -> Unit) {
     Screen {
         Row(Modifier.clickable(onClick = onBack).padding(vertical = 4.dp)) { Text("‹  Back", style = T.muted) }
         PageHead("Run", fmtDate(run.start))
-        if (pts != null && pts.size >= 2) RouteMap(pts) else Muted("Route not available for this run.")
+        when {
+            pts != null && pts.size >= 2 -> RouteMap(pts)
+            pts != null -> Muted("No route to show: you didn't move far enough for GPS to draw one.")
+            else -> Muted("Route not available for this run (it was restored from a backup).")
+        }
         Row(Modifier.fillMaxWidth()) {
             BigStat(fmtKm(run.distanceM), "Kilometres", Modifier.weight(1f), size = 32)
             BigStat(fmtClock(run.movingSec), "Time", Modifier.weight(1f), size = 32)
