@@ -149,8 +149,9 @@ fun HCard(
 
 /** Flat list row: no box, a hairline underneath. HCard boxes stay where data needs separating (Plans). */
 @Composable
-fun HItem(modifier: Modifier = Modifier, onClick: (() -> Unit)? = null, content: @Composable ColumnScope.() -> Unit) {
+fun HItem(modifier: Modifier = Modifier, onClick: (() -> Unit)? = null, topLine: Boolean = false, content: @Composable ColumnScope.() -> Unit) {
     Column(modifier.fillMaxWidth()) {
+        if (topLine) Box(Modifier.fillMaxWidth().height(Look.line).background(C.line))
         Column(Modifier.fillMaxWidth().then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier).padding(vertical = 12.dp), content = content)
         Box(Modifier.fillMaxWidth().height(Look.line).background(C.line))
     }
@@ -442,7 +443,7 @@ object Icons {
     val plans = strokeIcon("plans", "M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2H6a2 2 0 0 1 -2 -2V6a2 2 0 0 1 2 -2zM8 9h8M8 13h8M8 17h5")
     val exercises = strokeIcon("exercises", "M4 6h16M4 12h16M4 18h10")
     val history = strokeIcon("history", "M4 12a8 8 0 1 0 3-6.2M4 4v4h4M12 8v4l3 2")
-    val gear = strokeIcon("gear", "M15 12a3 3 0 1 0 -6 0a3 3 0 1 0 6 0M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8")
+    val gear = strokeIcon("gear", "M19.03 10.42 L21.35 10.33 L21.35 13.67 L19.03 13.58 L18.08 15.85 L19.79 17.43 L17.43 19.79 L15.85 18.08 L13.58 19.03 L13.67 21.35 L10.33 21.35 L10.42 19.03 L8.15 18.08 L6.57 19.79 L4.21 17.43 L5.92 15.85 L4.97 13.58 L2.65 13.67 L2.65 10.33 L4.97 10.42 L5.92 8.15 L4.21 6.57 L6.57 4.21 L8.15 5.92 L10.42 4.97 L10.33 2.65 L13.67 2.65 L13.58 4.97 L15.85 5.92 L17.43 4.21 L19.79 6.57 L18.08 8.15Z M15 12a3 3 0 1 0 -6 0a3 3 0 1 0 6 0")
     val check = strokeIcon("check", "M5 12.5l4.5 4.5L19 7.5")
 }
 

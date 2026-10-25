@@ -60,7 +60,7 @@ fun PlansScreen(st: AppState, vm: AppViewModel) {
                 Text("›", style = TextStyle(fontSize = 22.sp, color = C.muted))
             }
         }
-        HCard {
+        HItem(topLine = true) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Eyebrow("Schedule")

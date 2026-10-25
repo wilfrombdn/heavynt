@@ -72,13 +72,13 @@ fun HomeScreen(st: AppState, vm: AppViewModel, go: (Int) -> Unit, openSettings: 
         // Today
         val a = st.active
         if (a != null) {
-            HItem { Row(verticalAlignment = Alignment.CenterVertically) {
+            HItem(topLine = true) { Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) { Eyebrow("In progress"); Text(a.planName, style = T.big) }
                 SlimButton("Resume", { go(1) })
             } }
         } else if (plan != null) {
             val done = todaysLog(st, plan.id) != null
-            HItem { Row(verticalAlignment = Alignment.CenterVertically) {
+            HItem(topLine = true) { Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Eyebrow("Today · ${weekLabel(idx, len)}")
                     Text(plan.name, style = T.big)
@@ -88,7 +88,7 @@ fun HomeScreen(st: AppState, vm: AppViewModel, go: (Int) -> Unit, openSettings: 
             } }
         } else {
             val n = nextWorkout(st)
-            HItem {
+            HItem(topLine = true) {
                 Eyebrow("Rest day${if (len > 0) " · ${weekLabel(idx, len)}" else ""}")
                 Muted(if (n != null) "Next: ${n.second.name} on ${fmtLongDay(n.first)}" else "Nothing scheduled")
             }
