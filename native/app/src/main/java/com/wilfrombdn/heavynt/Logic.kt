@@ -253,19 +253,26 @@ fun weeksOf(s: Schedule): Int = max(1, ceil(s.days.size / 7.0).toInt())
 /** Weakest colour (score ≤ 0.5): red. Strongest (score ≥ 1.4): pink on the female body, blue on the male. */
 val RED_RGB = Triple(235, 60, 66)
 val PINK_RGB = Triple(255, 112, 200)
-val BLUE_RGB = Triple(72, 142, 255)
+val BLUE_RGB = Triple(60, 130, 255)
+/** Male scale passes through this pale colour at the average lift, so red and blue never blend into purple. */
+val MID_RGB = Triple(225, 225, 232)
 private const val SCALE_LOW = 0.5
 private const val SCALE_HIGH = 1.4
 
 /** Where a score sits on the red → pink/blue scale, 0..1 (the average lift, 1.0, is just past halfway). */
 fun scoreT(score: Double): Double = ((score - SCALE_LOW) / (SCALE_HIGH - SCALE_LOW)).coerceIn(0.0, 1.0)
 
-/** One smooth scale: the further below average the redder, the stronger the more pink (female) or blue (male). */
-fun scoreRGB(score: Double, female: Boolean = false): Triple<Int, Int, Int> {
-    val hi = if (female) PINK_RGB else BLUE_RGB
-    val t = scoreT(score)
-    fun mix(a: Int, b: Int) = (a + (b - a) * t).toInt()
-    return Triple(mix(RED_RGB.first, hi.first), mix(RED_RGB.second, hi.second), mix(RED_RGB.third, hi.third))
+private fun mix(a: Triple<Int, Int, Int>, b: Triple<Int, Int, Int>, t: Double) =
+    Triple((a.first + (b.first - a.first) * t).toInt(), (a.second + (b.second - a.second) * t).toInt(), (a.third + (b.third - a.third) * t).toInt())
+
+/**
+ * The further below average the redder. Female: one smooth red → pink scale.
+ * Male: red → pale at the average lift → blue, so it reads as clearly red or clearly blue.
+ */
+fun scoreRGB(score: Double, female: Boolean = false): Triple<Int, Int, Int> = when {
+    female -> mix(RED_RGB, PINK_RGB, scoreT(score))
+    score < 1 -> mix(RED_RGB, MID_RGB, ((score - SCALE_LOW) / (1 - SCALE_LOW)).coerceIn(0.0, 1.0))
+    else -> mix(MID_RGB, BLUE_RGB, ((score - 1) / (SCALE_HIGH - 1)).coerceIn(0.0, 1.0))
 }
 
 // ---------- supersets ----------

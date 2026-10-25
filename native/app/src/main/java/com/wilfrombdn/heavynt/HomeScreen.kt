@@ -95,9 +95,10 @@ fun HomeScreen(st: AppState, vm: AppViewModel, go: (Int) -> Unit, openSettings: 
             Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("Below avg", style = T.small)
                 val f = st.settings.sex == "female"
-                val hi = if (f) PINK_RGB else BLUE_RGB
-                Box(Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)).background(Brush.horizontalGradient(
-                    0f to Color(RED_RGB.first, RED_RGB.second, RED_RGB.third), 1f to Color(hi.first, hi.second, hi.third))))
+                fun c(t: Triple<Int, Int, Int>) = Color(t.first, t.second, t.third)
+                Box(Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp)).background(
+                    if (f) Brush.horizontalGradient(0f to c(RED_RGB), 1f to c(PINK_RGB))
+                    else Brush.horizontalGradient(0f to c(RED_RGB), scoreT(1.0).toFloat() to c(MID_RGB), 1f to c(BLUE_RGB))))
                 Text("Strong", style = T.small)
             }
         }

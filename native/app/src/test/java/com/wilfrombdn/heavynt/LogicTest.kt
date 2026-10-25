@@ -192,6 +192,10 @@ class LogicTest {
         assertEquals(BLUE_RGB, scoreRGB(2.0))
         val mid = scoreRGB(1.0, female = true)
         assertTrue(mid.third in (RED_RGB.third + 1) until PINK_RGB.third)  // in between, not a jump
+        // men: pale at average, never purple: below average has more red than blue, above more blue than red
+        assertEquals(MID_RGB, scoreRGB(1.0))
+        val below = scoreRGB(0.8); val above = scoreRGB(1.2)
+        assertTrue(below.first > below.third && above.third > above.first)
     }
 
     @Test fun oldDemoIsRebuiltOnUpdate() {
