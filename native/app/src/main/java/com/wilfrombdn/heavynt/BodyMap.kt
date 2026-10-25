@@ -36,7 +36,10 @@ private class Shape(val d: String, val mirror: Boolean, val dx: Float = 0f, val 
 
 private const val ARM_CX = 50f
 
-private class Figure(val front: Map<String, List<Shape>>, val back: Map<String, List<Shape>>, val outline: List<Shape>)
+/** height < 1 draws the whole figure shorter, standing on the same floor line. */
+private class Figure(val front: Map<String, List<Shape>>, val back: Map<String, List<Shape>>, val outline: List<Shape>, val height: Float = 1f)
+
+private const val FLOOR_Y = 373f
 
 private fun rr(x: Int, y: Int, w: Int, h: Int, r: Int) =
     "M${x + r} ${y}h${w - 2 * r}a$r $r 0 0 1 $r $r" + "v${h - 2 * r}a$r $r 0 0 1 -$r $r" + "h-${w - 2 * r}a$r $r 0 0 1 -$r -$r" + "v-${h - 2 * r}a$r $r 0 0 1 $r -${r}z"
@@ -96,14 +99,14 @@ private fun arm(d: String) = Shape(d, true, ARM_IN, ARM_SLIM)
 private val FEMALE = Figure(
     front = linkedMapOf(
         "upperChest" to listOf(Shape("M98 69C92 67 87 67 83 70C82 73 82 76 83 79C88 78 93 78 98 80Z", true)),
-        "chest" to listOf(Shape("M98 84C92 82 85 83 81 87C78 94 79 102 85 106C90 109 95 107 98 102Z", true)),
+        "chest" to listOf(Shape("M98 84C91 81 83 82 79 88C75 95 77 104 84 108C90 111 95 108 98 103Z", true)),
         "shoulders" to listOf(Shape(F_DELT_IN, true)),
         "sideDelts" to listOf(Shape(F_DELT_OUT, true)),
         "biceps" to listOf(arm(UPPER_ARM)),
         "forearms" to listOf(arm(FOREARM)),
         "abs" to listOf(Shape("M98 113C94 113 91 114 90 117C89 128 89 142 91 151C93 155 96 156 98 155Z", true)),
-        "obliques" to listOf(Shape("M82 110C81 118 83 126 85 132C84 142 80 151 76 159C80 160 84 160 88 158C87 145 87 128 88 114C86 113 84 112 82 110Z", true)),
-        "quads" to listOf(Shape("M74 164C65 182 68 226 79 256C86 261 93 260 97 255C100 232 100 198 98 168C91 164 82 162 74 164Z", true)),
+        "obliques" to listOf(Shape("M83 111C82 119 84 126 86 132C85 142 80 151 74 159C79 160 84 160 88 158C87 145 87 128 88 115C86 114 84 113 83 111Z", true)),
+        "quads" to listOf(Shape("M72 164C63 183 67 226 79 256C86 261 93 260 97 255C100 232 100 198 98 168C91 164 81 162 72 164Z", true)),
         "calves" to listOf(Shape("M78 265C73 286 77 318 84 345C87 347 91 347 93 345C98 320 99 288 95 265C89 268 83 268 78 265Z", true)),
     ),
     back = linkedMapOf(
@@ -115,17 +118,18 @@ private val FEMALE = Figure(
         "triceps" to listOf(arm(UPPER_ARM)),
         "forearms" to listOf(arm(FOREARM)),
         "lowerBack" to listOf(Shape("M88 134C92 136 96 136 99 134L99 156C93 158 87 157 84 154C85 147 86 140 88 134Z", true)),
-        "glutes" to listOf(Shape("M78 160C63 164 61 192 72 207C82 217 95 213 99 201L99 163C93 160 85 159 78 160Z", true)),
+        "glutes" to listOf(Shape("M77 159C61 163 59 192 71 207C82 217 95 213 99 201L99 162C93 159 84 158 77 159Z", true)),
         "hamstrings" to listOf(Shape("M75 213C68 229 71 246 79 259C86 263 93 262 97 258C100 243 100 225 98 213C90 216 82 216 75 213Z", true)),
         "calves" to listOf(Shape("M78 265C72 285 76 317 84 343C87 345 91 345 93 343C99 320 99 288 95 265C89 268 83 268 78 265Z", true)),
     ),
     outline = listOf(
-        Shape("M100 16C107 16 112 23 112 31C112 40 107 46 100 46C93 46 88 40 88 31C88 23 93 16 100 16Z", false),
-        Shape("M95 45C95 50 94 54 92 57M105 45C105 50 106 54 108 57", false),
+        Shape("M100 13C109 13 115 21 115 31C115 41 109 49 100 49C91 49 85 41 85 31C85 21 91 13 100 13Z", false),
+        Shape("M95 48C95 52 94 55 92 57M105 48C105 52 106 55 108 57", false),
         Shape("M92 57C87 60 80 63 72 67", true),
         Shape("M37 201C32 207 34 217 41 219C47 217 49 208 47 201", true, ARM_IN, ARM_SLIM),
         Shape("M79 350C75 361 78 371 85 372C90 372 93 368 93 360L93 350", true),
     ),
+    height = 0.92f,
 )
 
 private val MIRROR = Matrix().apply { translate(200f, 0f); scale(-1f, 1f) }
@@ -144,8 +148,8 @@ private class Built(val key: String, val paths: List<Path>, val hit: Region)
 
 private fun offsetMatrix(x: Float) = Matrix().apply { translate(x, 0f) }
 
-private fun buildView(parts: Map<String, List<Shape>>, x: Float): List<Built> = parts.map { (key, shapes) ->
-    val paths = shapes.flatMap(::build).map { p -> Path().apply { addPath(p); transform(offsetMatrix(x)) } }
+private fun buildView(parts: Map<String, List<Shape>>, x: Float, squash: Matrix): List<Built> = parts.map { (key, shapes) ->
+    val paths = shapes.flatMap(::build).map { p -> Path().apply { addPath(p); transform(squash); transform(offsetMatrix(x)) } }
     val region = Region()
     val clip = Region(0, 0, 420, 400)
     for (p in paths) {
@@ -157,8 +161,9 @@ private fun buildView(parts: Map<String, List<Shape>>, x: Float): List<Built> = 
 }
 
 private class BuiltFigure(f: Figure) {
-    val outline = f.outline.flatMap(::build)
-    val regions = buildView(f.front, 0f) + buildView(f.back, 220f)
+    private val squash = Matrix().apply { translate(0f, FLOOR_Y * (1 - f.height)); scale(1f, f.height) }
+    val outline = f.outline.flatMap(::build).onEach { it.transform(squash) }
+    val regions = buildView(f.front, 0f, squash) + buildView(f.back, 220f, squash)
 }
 
 private val MALE_BUILT by lazy { BuiltFigure(MALE) }
