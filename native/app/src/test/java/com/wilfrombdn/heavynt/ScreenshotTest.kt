@@ -120,6 +120,12 @@ class ScreenshotTest {
         rule.onNodeWithText("Run").performClick(); settle(); shot("run-live")
         rule.onNodeWithText("Pause").assertExists()
         RunTracker.clear(); settle()
+        // the recap after finishing a workout
+        FinishSummary.value = WorkoutSummary("Push", 62, 7, 12450.0, 10, listOf("Barbell Bench Press" to "230 lb (+5)"))
+        settle()
+        rule.onNodeWithText("Workout saved").assertExists()
+        rule.onNodeWithText("230 lb (+5)").assertExists()
+        FinishSummary.value = null; settle()
         // a workout in progress: first lift done, weights set, one beating last time
         val w = listOf(145.0, 120.0, 225.0, 140.0, 40.0, 60.0, 30.0)
         val day = STARTER_DAYS[0].let { d -> d.copy(items = d.items.mapIndexed { i, x -> x.copy(weight = w[i]) }) }

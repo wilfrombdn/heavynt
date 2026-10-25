@@ -55,7 +55,7 @@ fun RunScreen(st: AppState, vm: AppViewModel) {
 }
 
 @Composable
-private fun BigStat(value: String, label: String, modifier: Modifier = Modifier, size: Int = 40) {
+fun BigStat(value: String, label: String, modifier: Modifier = Modifier, size: Int = 40) {
     Column(modifier) {
         Text(value, style = TextStyle(fontSize = size.sp, fontWeight = FontWeight.Bold, color = Color.White))
         Text(label.uppercase(), style = T.eyebrow)

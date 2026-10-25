@@ -60,6 +60,9 @@ class MainActivity : ComponentActivity() {
 }
 
 const val TAB_RUN = 2
+/** The recap shown after finishing a workout. */
+val FinishSummary = kotlinx.coroutines.flow.MutableStateFlow<WorkoutSummary?>(null)
+
 /** A tab something outside the screens (like the run notification) asked to show. */
 val OpenTab = kotlinx.coroutines.flow.MutableStateFlow<Int?>(null)
 
@@ -131,6 +134,15 @@ fun App(vm: AppViewModel) {
         }
     }
 
+    // Rest timer alarm follows the workout's rest end time.
+    LaunchedEffect(st.active?.restUntil) { RestAlarm.sync(ctx, st.active?.restUntil ?: 0) }
+
+    // Automatic backup to Downloads/Heavynt, a few seconds after anything changes.
+    LaunchedEffect(st) {
+        delay(8000)
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { AutoBackup.write(ctx, st) }
+    }
+
     // Keep reminders in sync with the schedule.
     LaunchedEffect(st.schedule, st.plans, st.logs, st.overrides, st.settings.reminderOn, st.settings.reminderTime) {
         delay(1500)
@@ -173,6 +185,8 @@ fun App(vm: AppViewModel) {
         }
         if (settings) SettingsSheet(st, vm, onDismiss = { settings = false }, openProfile = { profile = true })
         if (profile) ProfileSheet(st, vm, onDismiss = { profile = false })
+        val summary by FinishSummary.collectAsStateWithLifecycle()
+        summary?.let { SummarySheet(st, it) { FinishSummary.value = null } }
         DialogLayer()
     }
 }

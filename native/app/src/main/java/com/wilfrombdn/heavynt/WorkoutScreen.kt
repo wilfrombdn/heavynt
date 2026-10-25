@@ -2,6 +2,7 @@
 
 package com.wilfrombdn.heavynt
 
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.fillMaxSize
@@ -197,6 +198,15 @@ fun WorkoutScreen(st: AppState, vm: AppViewModel, goHome: () -> Unit) {
         DialogBtn("Discard workout", danger = true) { vm.update { it.discardWorkout() }; toast(ctx, "Workout discarded"); goHome() },
         DialogBtn("Keep it"))
 
+    /** Save the workout and show its recap (time, volume, new personal bests). */
+    fun saveAndRecap() {
+        val before = vm.state.value.logs.size
+        vm.update { it.finishWorkout() }
+        val now = vm.state.value
+        if (now.logs.size > before) FinishSummary.value = workoutSummary(now, now.logs.last())
+        goHome()
+    }
+
     fun finish() {
         val a = st.active ?: return
         val done = a.items.count { it.done }
@@ -205,9 +215,9 @@ fun WorkoutScreen(st: AppState, vm: AppViewModel, goHome: () -> Unit) {
             done == 0 -> dialogs.ask("Nothing completed", "No exercises were checked off yet.",
                 DialogBtn("Keep going", primary = true), DialogBtn("Discard workout") { vm.update { it.discardWorkout() } })
             left > 0 -> dialogs.ask("Finish workout?", "$left exercise${if (left > 1) "s" else ""} not completed will be skipped.",
-                DialogBtn("Finish & save", primary = true) { vm.update { it.finishWorkout() }; toast(ctx, "Workout saved"); goHome() }, DialogBtn("Keep going"),
+                DialogBtn("Finish & save", primary = true) { saveAndRecap() }, DialogBtn("Keep going"),
                 DialogBtn("Discard workout", danger = true) { discard() })
-            else -> { vm.update { it.finishWorkout() }; toast(ctx, "Workout saved"); goHome() }
+            else -> saveAndRecap()
         }
     }
 
@@ -229,6 +239,7 @@ fun WorkoutScreen(st: AppState, vm: AppViewModel, goHome: () -> Unit) {
                 }
                 Text("$done of ${a.items.size}", style = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White))
             }
+            RestBar(a, vm)
             Text("Tap to complete · hold to change weight, sets & reps", style = T.small)
             ItemList(st, a.items, true, onTap = { i ->
                 val item = a.items[i]
@@ -472,4 +483,63 @@ fun OptionRow(label: String, on: Boolean, onClick: () -> Unit) {
         if (on) Icon(Icons.check, null, tint = Color.White, modifier = Modifier.size(20.dp))
     }
     Box(Modifier.fillMaxWidth().height(1.dp).background(C.line))
+}
+
+
+/** Rest countdown after checking off an exercise (or started by hand between sets), with -15 / +15 / skip. */
+@Composable
+private fun RestBar(a: Active, vm: AppViewModel) {
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(a.restUntil) {
+        now = System.currentTimeMillis()
+        while (a.restUntil > now) { delay(250); now = System.currentTimeMillis() }
+    }
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (a.restUntil > now) {
+            Column(Modifier.weight(1f)) {
+                Eyebrow("Rest")
+                Text(fmtClock((a.restUntil - now + 999) / 1000), style = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold, color = Color.White))
+            }
+            MiniBtn("−15") { vm.update { it.addRest(-15_000) } }
+            MiniBtn("+15") { vm.update { it.addRest(15_000) } }
+            MiniBtn("Skip") { vm.update { it.stopRest() } }
+        } else {
+            Text("Rest timer", style = T.small, modifier = Modifier.weight(1f))
+            MiniBtn("Start rest") { vm.update { it.startRest() } }
+        }
+    }
+}
+
+@Composable
+private fun MiniBtn(text: String, onClick: () -> Unit) {
+    Box(Modifier.clip(Look.shape(10.dp)).border(Look.line, Color(0xFF444444), Look.shape(10.dp)).clickable(onClick = onClick)
+        .padding(horizontal = 12.dp, vertical = 8.dp)) { Text(text, style = T.body.copy(fontSize = 14.sp)) }
+}
+
+/** Shown once after a workout is saved. */
+@Composable
+fun SummarySheet(st: AppState, s: WorkoutSummary, onDismiss: () -> Unit) {
+    Sheet("Workout saved", onDismiss) {
+        Text(s.name, style = T.big)
+        Row(Modifier.fillMaxWidth()) {
+            BigStat("${s.minutes}", "minutes", Modifier.weight(1f), size = 28)
+            BigStat("${s.exercises}", "exercises", Modifier.weight(1f), size = 28)
+            BigStat("%,d".format(s.volume.toLong()), "${st.settings.unit} lifted", Modifier.weight(1.3f), size = 28)
+        }
+        if (s.cardioMin > 0) Muted("Plus ${s.cardioMin} min of cardio.")
+        if (s.prs.isNotEmpty()) {
+            SectionTitle("New personal bests")
+            Column {
+                s.prs.forEach { (name, v) ->
+                    HItem {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(name, style = T.name.copy(fontSize = 15.sp), modifier = Modifier.weight(1f))
+                            Text(v, style = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Bold, color = C.green))
+                        }
+                    }
+                }
+            }
+        } else Muted("No new personal bests this time. Same weights still count.")
+        HButton("Done", onDismiss, style = BtnStyle.Primary)
+    }
 }

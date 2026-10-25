@@ -291,4 +291,41 @@ class LogicTest {
         assertEquals(null, entryScore(tm, Entry(tm.id, 1, 20, 0.0), st.settings))
         assertTrue(LIBRARY.count { it.isCardio } >= 8)
     }
+
+    @Test fun restStartsAfterCheckingOffButNotAfterTheLast() {
+        val st = AppState(exercises = LIBRARY, settings = Settings(restSec = 90),
+            active = Active("w", nowIso(), items = listOf(ActiveItem("bench", 3, 8, 100.0), ActiveItem("row", 3, 8, 100.0))))
+        val one = st.toggleDone(0)
+        assertTrue(one.active!!.restUntil > System.currentTimeMillis() + 80_000)
+        assertEquals(0L, one.stopRest().active!!.restUntil)
+        assertEquals(0L, one.copy(active = one.active!!.copy(restUntil = 0)).toggleDone(1).active!!.restUntil)  // last one: no rest
+        assertEquals(0L, st.withSettings { it.copy(restSec = 0) }.toggleDone(0).active!!.restUntil)          // timer off
+        assertEquals(0L, one.addRest(-200_000).active!!.restUntil)                                             // can't go below zero
+        assertTrue(st.editItem(0, 3, 8, 100.0, complete = true).active!!.restUntil > 0)
+    }
+
+    @Test fun finishSummaryFindsNewBests() {
+        val t0 = "2026-10-01T10:00:00Z"
+        val old = Log("a", t0, t0, null, "Push", listOf(Entry("bench", 3, 8, 200.0), Entry("ohp", 3, 8, 100.0)))
+        val new = Log("b", "2026-10-08T10:00:00Z", "2026-10-08T11:05:00Z", null, "Push",
+            listOf(Entry("bench", 3, 8, 210.0), Entry("ohp", 3, 8, 95.0), Entry("squat", 3, 5, 300.0), Entry("treadmill-run", 1, 15, 0.0)))
+        val st = AppState(exercises = LIBRARY, logs = listOf(old, new))
+        val sum = workoutSummary(st, new)
+        assertEquals(65L, sum.minutes)
+        assertEquals(listOf("Barbell Bench Press"), sum.prs.map { it.first })   // ohp went down, squat is a first time
+        assertEquals("210 lb (+10)", sum.prs[0].second)
+        assertEquals(15, sum.cardioMin)
+        assertEquals(3 * 8 * 210.0 + 3 * 8 * 95.0 + 3 * 5 * 300.0, sum.volume, 0.01)
+    }
+
+    @Test fun backupFilesReadBackIncludingRoutes() {
+        val st = AppState(exercises = LIBRARY, planName = "Mine")
+        val pts = listOf(RunPoint(49.0, -123.0, 0.0, 0), RunPoint(49.001, -123.0, 0.0, 5000))
+        val file = AppJson.encodeToString(BackupFile(savedAt = nowIso(), state = st, routes = mapOf("r1" to pts)))
+        val back = parseBackup(file)
+        assertEquals("Mine", back.state.planName)
+        assertEquals(pts, back.routes["r1"])
+        // the older copy-paste backup is still accepted
+        assertEquals("Mine", parseBackup(AppJson.encodeToString(st)).state.planName)
+    }
 }

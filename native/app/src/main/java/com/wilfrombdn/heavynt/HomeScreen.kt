@@ -306,6 +306,16 @@ fun SettingsSheet(st: AppState, vm: AppViewModel, onDismiss: () -> Unit, openPro
     var restore by remember { mutableStateOf(false) }
     val notifPerm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
+    val pickFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        val text = runCatching { ctx.contentResolver.openInputStream(uri)!!.use { it.readBytes().decodeToString() } }.getOrNull()
+        if (text == null) { toast(ctx, "Couldn't read that file"); return@rememberLauncherForActivityResult }
+        dialogs.ask("Restore this backup?", "Everything in the app now is replaced by the backup.",
+            DialogBtn("Restore", primary = true) {
+                vm.importBackup(text).onSuccess { toast(ctx, "Backup restored"); onDismiss() }.onFailure { toast(ctx, "That isn't a Heavyn't backup") }
+            }, DialogBtn("Cancel"))
+    }
+
     Sheet("Settings", onDismiss) {
         Labeled("Units") {
             Segmented(listOf("lb" to "lb", "kg" to "kg"), s.unit, { to ->
@@ -330,7 +340,19 @@ fun SettingsSheet(st: AppState, vm: AppViewModel, onDismiss: () -> Unit, openPro
                 TimePickerDialog(ctx, { _, hh, mm -> vm.update { it.withSettings { x -> x.copy(reminderTime = "%02d:%02d".format(hh, mm)) } } }, h, m, false).show()
             }) { Text(s.reminderTime, style = T.body) }
         }
+        Stepper(s.restSec.toDouble(), { v -> vm.update { it.withSettings { x -> x.copy(restSec = v.toInt()) } } },
+            label = "Rest timer after each exercise (seconds, 0 = off)", min = 0.0, max = 600.0, step = 15.0)
         SectionTitle("Backup")
+        if (AutoBackup.supported) {
+            Text("Saved automatically to Downloads/${AutoBackup.FOLDER} on your phone, one file per day (the last week is kept). " +
+                (AutoBackup.lastSaved(ctx)?.let { "Last saved ${fmtDate(it)}." } ?: "Not saved yet."), style = T.small)
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                HButton("Back up now", {
+                    AutoBackup.write(ctx, st).onSuccess { toast(ctx, "Saved to Downloads/${AutoBackup.FOLDER}") }.onFailure { toast(ctx, "Backup failed: ${it.message}") }
+                }, Modifier.weight(1f))
+                HButton("Restore from file", { pickFile.launch(arrayOf("application/json", "application/octet-stream", "text/plain")) }, Modifier.weight(1f))
+            }
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             HButton("Copy backup", {
                 (ctx.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("Heavyn't backup", vm.exportBackup()))

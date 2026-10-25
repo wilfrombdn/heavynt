@@ -56,7 +56,7 @@ private fun AppState.mapItems(f: (List<ActiveItem>) -> List<ActiveItem>): AppSta
 
 fun AppState.toggleDone(i: Int): AppState = mapItems { items ->
     items.mapIndexed { j, it -> if (j == i) it.copy(done = !it.done, at = if (!it.done) nowIso() else null) else it }
-}
+}.restAfter(i)
 
 fun AppState.editItem(i: Int, sets: Int, reps: Int, weight: Double, complete: Boolean): AppState = mapItems { items ->
     items.mapIndexed { j, it ->
@@ -65,7 +65,20 @@ fun AppState.editItem(i: Int, sets: Int, reps: Int, weight: Double, complete: Bo
             done = it.done || complete, at = if (!it.done && complete) nowIso() else it.at,
         )
     }
+}.let { if (complete && active?.items?.getOrNull(i)?.done == false) it.restAfter(i) else it }
+
+/** Start the rest timer after item [i] was just checked off, unless rest is off or nothing is left to do. */
+private fun AppState.restAfter(i: Int, now: Long = System.currentTimeMillis()): AppState {
+    val a = active ?: return this
+    if (a.items.getOrNull(i)?.done != true || a.items.all { it.done } || settings.restSec <= 0) return this
+    return copy(active = a.copy(restUntil = now + settings.restSec * 1000L))
 }
+
+fun AppState.startRest(now: Long = System.currentTimeMillis()): AppState =
+    active?.let { copy(active = it.copy(restUntil = now + maxOf(settings.restSec, 30) * 1000L)) } ?: this
+fun AppState.addRest(ms: Long, now: Long = System.currentTimeMillis()): AppState =
+    active?.let { a -> copy(active = a.copy(restUntil = if (a.restUntil + ms <= now) 0 else a.restUntil + ms)) } ?: this
+fun AppState.stopRest(): AppState = active?.let { copy(active = it.copy(restUntil = 0)) } ?: this
 
 fun AppState.removeItem(i: Int): AppState = mapItems { items -> items.filterIndexed { j, _ -> j != i } }
 fun AppState.addItem(ex: String, sets: Int, reps: Int, weight: Double): AppState =

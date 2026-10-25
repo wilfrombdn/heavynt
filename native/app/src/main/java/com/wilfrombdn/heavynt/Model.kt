@@ -19,6 +19,8 @@ data class Settings(
     val profileAsked: Boolean = false,
     val bodyweightSetAt: String = "",
     val weighInAsked: String = "",
+    /** Rest timer length in seconds after checking off an exercise; 0 = off. */
+    val restSec: Int = 120,
 )
 
 @Serializable
@@ -95,6 +97,8 @@ data class Active(
     val planId: String? = null,
     val planName: String = "Quick workout",
     val items: List<ActiveItem> = emptyList(),
+    /** When the current rest ends (epoch ms); 0 = no rest running. */
+    val restUntil: Long = 0,
 )
 
 /** One-off switch for a date: plan = what you do instead (null = rest), skipped = the scheduled plan you dropped. */

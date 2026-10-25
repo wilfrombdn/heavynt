@@ -86,8 +86,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun importBackup(text: String): Result<Unit> = runCatching {
-        val s = AppJson.decodeFromString<AppState>(text)
+        val b = parseBackup(text)
+        val s = b.state
         require(s.exercises.isNotEmpty() || s.logs.isNotEmpty() || s.plans.isNotEmpty()) { "Not a workout backup" }
+        for ((id, pts) in b.routes) RunFiles.save(getApplication(), id, pts)
         update { normalize(s.copy(v = 4)) }
     }
 

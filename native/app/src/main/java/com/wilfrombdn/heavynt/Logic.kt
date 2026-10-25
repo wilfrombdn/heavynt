@@ -337,3 +337,23 @@ fun inferSupersets(p: Plan): Plan {
     val tag = Regex("^[A-Z]2( |$)")
     return p.copy(items = p.items.mapIndexed { i, it -> if (i > 0 && tag.containsMatchIn(it.note)) it.copy(ss = true) else it })
 }
+
+
+/** What the finish screen shows: time, volume and new personal bests (heaviest weight beaten). */
+data class WorkoutSummary(val name: String, val minutes: Long, val exercises: Int, val volume: Double, val cardioMin: Int, val prs: List<Pair<String, String>>)
+
+fun workoutSummary(st: AppState, log: Log): WorkoutSummary {
+    val before = st.logs.filter { it.id != log.id }
+    var volume = 0.0; var cardio = 0
+    val prs = mutableListOf<Pair<String, String>>()
+    for (e in log.entries) {
+        val ex = st.ex(e.ex)
+        if (ex?.isCardio == true) { cardio += e.reps; continue }
+        volume += e.sets * e.reps * e.weight
+        if (ex == null || ex.noScore || e.weight <= 0) continue
+        val best = before.flatMap { it.entries }.filter { it.ex == e.ex }.maxOfOrNull { it.weight } ?: continue
+        if (e.weight > best && best > 0) prs += ex.name to "${fmtNum(e.weight)} ${st.settings.unit} (+${fmtNum(e.weight - best)})"
+    }
+    val minutes = if (log.end != null) (isoMillis(log.end) - isoMillis(log.start)) / 60_000 else 0
+    return WorkoutSummary(log.planName, minutes, log.entries.size, volume, cardio, prs.distinctBy { it.first })
+}
