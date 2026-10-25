@@ -18,8 +18,8 @@ android {
         applicationId = "com.wilfrombdn.heavynt2" // new signing key (old one lost), so a new ID installs beside the old app
         minSdk = 26
         targetSdk = 36
-        versionCode = 102
-        versionName = "3.2.0"
+        versionCode = 103
+        versionName = "3.3.0"
     }
 
     signingConfigs {
