@@ -36,10 +36,11 @@ private class Shape(val d: String, val mirror: Boolean, val dx: Float = 0f, val 
 
 private const val ARM_CX = 50f
 
-/** height < 1 draws the whole figure shorter, standing on the same floor line. */
+/** height < 1 draws the whole figure shorter, kept centred at the same middle line. */
 private class Figure(val front: Map<String, List<Shape>>, val back: Map<String, List<Shape>>, val outline: List<Shape>, val height: Float = 1f)
 
-private const val FLOOR_Y = 373f
+/** Halfway between the top of the head (y 12) and the soles (y 373). */
+private const val MID_Y = 192.5f
 
 private fun rr(x: Int, y: Int, w: Int, h: Int, r: Int) =
     "M${x + r} ${y}h${w - 2 * r}a$r $r 0 0 1 $r $r" + "v${h - 2 * r}a$r $r 0 0 1 -$r $r" + "h-${w - 2 * r}a$r $r 0 0 1 -$r -$r" + "v-${h - 2 * r}a$r $r 0 0 1 $r -${r}z"
@@ -161,7 +162,12 @@ private fun buildView(parts: Map<String, List<Shape>>, x: Float, squash: Matrix)
 }
 
 private class BuiltFigure(f: Figure) {
-    private val squash = Matrix().apply { translate(0f, FLOOR_Y * (1 - f.height)); scale(1f, f.height) }
+    /** A shorter figure is moved up to the same top margin and its box trimmed, so it sits centred like the full-height one. */
+    private val lift = (MID_Y - 12f) * (1 - f.height)
+    private val squash = Matrix().apply { translate(0f, MID_Y * (1 - f.height) - lift); scale(1f, f.height) }
+    /** FRONT / BACK labels sit just under the feet. */
+    val labelY = MID_Y + (392f - MID_Y) * f.height - lift
+    val viewH = labelY + 8f
     val outline = f.outline.flatMap(::build).onEach { it.transform(squash) }
     val regions = buildView(f.front, 0f, squash) + buildView(f.back, 220f, squash)
 }
@@ -184,7 +190,7 @@ fun BodyMap(scores: Map<String, RegionScore>, selected: String?, onPick: (String
     val all = fig.regions
 
     Canvas(
-        modifier.fillMaxWidth().aspectRatio(420f / 400f).pointerInput(female) {
+        modifier.fillMaxWidth().aspectRatio(420f / fig.viewH).pointerInput(female) {
             detectTapGestures { pos ->
                 val s = size.width / 420f
                 val x = (pos.x / s).toInt()
@@ -244,8 +250,8 @@ fun BodyMap(scores: Map<String, RegionScore>, selected: String?, onPick: (String
                 }
             }
             nc.restore()
-            nc.drawText("FRONT", 100f * s, 392f * s, labelPaint)
-            nc.drawText("BACK", 320f * s, 392f * s, labelPaint)
+            nc.drawText("FRONT", 100f * s, fig.labelY * s, labelPaint)
+            nc.drawText("BACK", 320f * s, fig.labelY * s, labelPaint)
         }
     }
 }
