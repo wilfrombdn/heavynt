@@ -95,4 +95,25 @@ class LogicTest {
         assertTrue(!weighInDue(s.copy(settings = s.settings.copy(bodyweightSetAt = "2026-11-01")), nov1))
         assertTrue(!weighInDue(s.copy(settings = s.settings.copy(bodyweight = 0.0)), nov1))
     }
+
+    @Test fun newPlanKeepsTheOldOneAndSwitchingBackRestoresIt() {
+        val days = MutableList<String?>(7) { null }; days[0] = "a"; days[2] = "b"
+        val old = state(days).copy(planName = "Old")
+        val fresh = old.startNewPlan("New", copyCurrent = false)
+        assertEquals("New", fresh.planName)
+        assertTrue(fresh.plans.isEmpty() && fresh.schedule.days.all { it == null })
+        assertEquals(listOf("Old"), fresh.saved.map { it.name })
+
+        val back = fresh.switchToSaved(fresh.saved[0].id)
+        assertEquals("Old", back.planName)
+        assertEquals(old.plans, back.plans)
+        assertEquals(old.schedule, back.schedule)
+        assertEquals(listOf("New"), back.saved.map { it.name })
+
+        val copy = old.startNewPlan("Copy", copyCurrent = true)
+        assertEquals(listOf("A", "B"), copy.plans.map { it.name })
+        assertTrue(copy.plans.none { it.id == "a" || it.id == "b" })  // own ids, so edits don't touch the saved one
+        assertEquals(copy.plans[0].id, copy.schedule.days[0])
+        assertEquals(copy.plans[1].id, copy.schedule.days[2])
+    }
 }

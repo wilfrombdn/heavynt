@@ -36,6 +36,8 @@ private fun planNameFor(st: AppState, id: String?) = st.plan(id)?.name
 fun PlansScreen(st: AppState, vm: AppViewModel) {
     var editPlan by remember { mutableStateOf<String?>(null) }
     var schedule by remember { mutableStateOf(false) }
+    var manage by remember { mutableStateOf(false) }
+    var building by remember { mutableStateOf(false) }
     val today = dateKey()
     val idx = cycleIndex(st.schedule, today)
     val weeks = st.schedule.days.size / 7
@@ -43,6 +45,17 @@ fun PlansScreen(st: AppState, vm: AppViewModel) {
 
     Screen {
         PageHead("Plans")
+        HCard(onClick = { manage = true }) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Eyebrow("Current plan")
+                    Text(st.planName, style = T.big)
+                    Muted("${st.plans.size} workout day${if (st.plans.size == 1) "" else "s"}" +
+                        if (st.saved.isNotEmpty()) " · ${st.saved.size} saved plan${if (st.saved.size == 1) "" else "s"}" else "")
+                }
+                Text("›", style = TextStyle(fontSize = 22.sp, color = C.muted))
+            }
+        }
         HCard {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
@@ -72,7 +85,7 @@ fun PlansScreen(st: AppState, vm: AppViewModel) {
                 }
             }
         }
-        SectionTitle("Workout plans")
+        SectionTitle("Workout days")
         st.plans.forEach { p ->
             HCard(onClick = { editPlan = p.id }) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -84,8 +97,9 @@ fun PlansScreen(st: AppState, vm: AppViewModel) {
                 }
             }
         }
-        HButton("+ New plan", {
-            val p = Plan(uid(), "Plan ${st.plans.size + 1}")
+        if (st.plans.isEmpty()) Muted("No workout days yet. Add one, then pick which weekdays it falls on under Schedule › Edit.")
+        HButton("+ New workout day", {
+            val p = Plan(uid(), "Day ${st.plans.size + 1}")
             vm.update { it.copy(plans = it.plans + p) }
             editPlan = p.id
         }, style = BtnStyle.Primary)
@@ -93,6 +107,57 @@ fun PlansScreen(st: AppState, vm: AppViewModel) {
 
     editPlan?.let { id -> if (st.plan(id) != null) PlanEditor(st, vm, id) { editPlan = null } else editPlan = null }
     if (schedule) ScheduleEditor(st, vm) { schedule = false }
+    if (manage) ManagePlans(st, vm, onBuild = { manage = false; building = true }) { manage = false }
+    if (building) BuildPlan(st, vm) { building = false }
+}
+
+@Composable
+private fun ManagePlans(st: AppState, vm: AppViewModel, onBuild: () -> Unit, onDismiss: () -> Unit) {
+    val ctx = LocalContext.current
+    val dialogs = LocalDialogs.current
+    Sheet("Your plans", onDismiss) {
+        Labeled("Current plan name") { HTextField(st.planName, { v -> vm.update { it.copy(planName = v) } }, placeholder = "e.g. Summer cut") }
+        HButton("+ Build a new plan", onBuild, style = BtnStyle.Primary)
+        HButton("Save a copy of this plan", { vm.update { it.saveCopyOfPlan() }; toast(ctx, "Saved to Saved plans") })
+        SectionTitle("Saved plans")
+        if (st.saved.isEmpty()) Muted("Nothing saved yet. When you build a new plan, the one you have now is kept here so you can switch back any time.")
+        st.saved.reversed().forEach { sp ->
+            HCard {
+                Text(sp.name, style = T.name)
+                Muted("${sp.plans.size} workout day${if (sp.plans.size == 1) "" else "s"}" + if (sp.savedAt.isNotEmpty()) " · saved ${fmtDay(sp.savedAt)}" else "")
+                Muted(sp.plans.joinToString(" · ") { it.name }.ifEmpty { "Empty" })
+                Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    HButton("Switch to this", {
+                        dialogs.ask("Switch to \"${sp.name}\"?", "\"${st.planName}\" is kept in Saved plans so you can switch back any time.",
+                            DialogBtn("Switch", primary = true) { vm.update { it.switchToSaved(sp.id) }; toast(ctx, "Now using ${sp.name}"); onDismiss() },
+                            DialogBtn("Cancel"))
+                    }, Modifier.weight(1f), style = BtnStyle.Primary)
+                    HButton("Delete", {
+                        dialogs.ask("Delete saved plan?", "\"${sp.name}\" will be gone for good. Your workout history stays.",
+                            DialogBtn("Delete", primary = true) { vm.update { it.deleteSaved(sp.id) } }, DialogBtn("Cancel"))
+                    }, Modifier.weight(1f), style = BtnStyle.Danger)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BuildPlan(st: AppState, vm: AppViewModel, onDismiss: () -> Unit) {
+    val ctx = LocalContext.current
+    var name by remember { mutableStateOf("") }
+    var from by remember { mutableStateOf("empty") }
+    Sheet("Build a new plan", onDismiss) {
+        Labeled("Name") { HTextField(name, { name = it }, placeholder = "e.g. Upper / Lower") }
+        Labeled("Start from") {
+            Segmented(listOf("empty" to "Blank", "copy" to "Copy of current"), from, { from = it })
+        }
+        NoteBox("\"${st.planName}\" goes into Saved plans, so you can switch back to it any time.")
+        HButton("Create plan", {
+            if (name.isBlank()) toast(ctx, "Give it a name")
+            else { vm.update { it.startNewPlan(name.trim(), from == "copy") }; toast(ctx, "Now using ${name.trim()}"); onDismiss() }
+        }, style = BtnStyle.Primary)
+    }
 }
 
 @Composable
@@ -108,8 +173,8 @@ private fun PlanEditor(st: AppState, vm: AppViewModel, planId: String, onDismiss
     }
     fun close() { edit { p -> p.copy(items = p.items.filter { it.ex.isNotEmpty() }) }; onDismiss() }
 
-    Sheet("Edit plan", onDismiss = { close() }) {
-        Labeled("Name") { HTextField(plan.name, { v -> edit { it.copy(name = v) } }, placeholder = "Plan name") }
+    Sheet("Edit workout day", onDismiss = { close() }) {
+        Labeled("Name") { HTextField(plan.name, { v -> edit { it.copy(name = v) } }, placeholder = "e.g. Push day") }
         plan.items.forEachIndexed { i, it ->
             val ex = st.ex(it.ex)
             Column(Modifier.fillMaxWidth().border(1.dp, C.line, RoundedCornerShape(14.dp)).padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -134,10 +199,10 @@ private fun PlanEditor(st: AppState, vm: AppViewModel, planId: String, onDismiss
             HButton("Done", { close() }, style = BtnStyle.Primary)
             HButton("Duplicate", {
                 vm.update { s -> s.plan(planId)?.let { p -> s.copy(plans = s.plans + p.copy(id = uid(), name = p.name + " copy")) } ?: s }
-                toast(ctx, "Plan duplicated"); close()
+                toast(ctx, "Day duplicated"); close()
             })
-            HButton("Delete plan", {
-                dialogs.ask("Delete plan?", "\"${plan.name}\" will be removed from your schedule too.",
+            HButton("Delete workout day", {
+                dialogs.ask("Delete workout day?", "\"${plan.name}\" will be removed from your schedule too.",
                     DialogBtn("Delete", primary = true) { vm.update { it.deletePlan(planId) }; onDismiss() }, DialogBtn("Cancel"))
             }, style = BtnStyle.Danger)
         }

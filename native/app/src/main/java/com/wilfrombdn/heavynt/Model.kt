@@ -97,6 +97,10 @@ data class Active(
 @Serializable
 data class Override(val plan: String? = null, val skipped: String? = null)
 
+/** A whole plan put aside: its workout days and schedule, ready to switch back to. */
+@Serializable
+data class SavedPlan(val id: String, val name: String, val plans: List<Plan>, val schedule: Schedule, val savedAt: String = "")
+
 @Serializable
 data class AppState(
     val v: Int = 5,
@@ -108,6 +112,9 @@ data class AppState(
     val active: Active? = null,
     val snooze: Map<String, Int> = emptyMap(),
     val overrides: Map<String, Override> = emptyMap(),
+    /** Name of the whole current plan (plans + schedule). */
+    val planName: String = "My plan",
+    val saved: List<SavedPlan> = emptyList(),
 )
 
 class StarterPlan(val name: String, val weekday: Int, val items: List<PlanItem>)

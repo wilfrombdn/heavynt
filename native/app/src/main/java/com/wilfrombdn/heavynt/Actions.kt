@@ -108,12 +108,45 @@ fun AppState.resizeWeeks(n: Int): AppState {
     return copy(schedule = schedule.copy(days = days))
 }
 
+// ---------- whole plans (saved / switch) ----------
+private fun AppState.currentAsSaved() = SavedPlan(uid(), planName, plans, schedule, dateKey())
+
+/** Day-by-day switches made for the old plan don't apply to the new one. */
+private fun AppState.dropFutureOverrides(): AppState = copy(overrides = overrides.filterKeys { it < dateKey() })
+
+fun AppState.saveCopyOfPlan(): AppState = copy(saved = saved + currentAsSaved())
+
+/** Put the current plan in Saved plans and start a new one, empty or as a copy of the current one. */
+fun AppState.startNewPlan(name: String, copyCurrent: Boolean): AppState {
+    val base = copy(saved = saved + currentAsSaved(), planName = name)
+    if (!copyCurrent) return base.copy(plans = emptyList(), schedule = Schedule(mondayOf(dateKey()), List(7) { null })).dropFutureOverrides()
+    val ids = plans.associate { it.id to uid() }
+    return base.copy(
+        plans = plans.map { it.copy(id = ids.getValue(it.id)) },
+        schedule = schedule.copy(days = schedule.days.map { d -> d?.let { ids[it] } }),
+    ).dropFutureOverrides()
+}
+
+/** Swap a saved plan in; the current one goes into Saved plans in its place. */
+fun AppState.switchToSaved(id: String): AppState {
+    val target = saved.firstOrNull { it.id == id } ?: return this
+    return copy(
+        saved = saved.filter { it.id != id } + currentAsSaved(),
+        planName = target.name, plans = target.plans, schedule = target.schedule,
+    ).dropFutureOverrides()
+}
+
+fun AppState.deleteSaved(id: String): AppState = copy(saved = saved.filter { it.id != id })
+
 // ---------- exercises ----------
 fun AppState.upsertExercise(e: Exercise): AppState =
     if (exercises.any { it.id == e.id }) copy(exercises = exercises.map { if (it.id == e.id) e else it }) else copy(exercises = exercises + e)
 
 fun AppState.deleteExercise(id: String): AppState =
-    copy(exercises = exercises.filter { it.id != id }, plans = plans.map { p -> p.copy(items = p.items.filter { it.ex != id }) })
+    copy(
+        exercises = exercises.filter { it.id != id }, plans = plans.map { p -> p.copy(items = p.items.filter { it.ex != id }) },
+        saved = saved.map { sp -> sp.copy(plans = sp.plans.map { p -> p.copy(items = p.items.filter { it.ex != id }) }) },
+    )
 
 // ---------- settings ----------
 fun AppState.withSettings(f: (Settings) -> Settings): AppState = copy(settings = f(settings))
@@ -127,6 +160,7 @@ fun AppState.switchUnit(to: String, convert: Boolean): AppState {
     return copy(
         settings = settings.copy(unit = to, bodyweight = Math.round(settings.bodyweight * k * 10) / 10.0),
         plans = plans.map { p -> p.copy(items = p.items.map { it.copy(weight = cv(it.weight)) }) },
+        saved = saved.map { sp -> sp.copy(plans = sp.plans.map { p -> p.copy(items = p.items.map { it.copy(weight = cv(it.weight)) }) }) },
         logs = logs.map { l -> l.copy(entries = l.entries.map { it.copy(weight = cv(it.weight)) }) },
         active = active?.let { a -> a.copy(items = a.items.map { it.copy(weight = cv(it.weight)) }) },
     )
