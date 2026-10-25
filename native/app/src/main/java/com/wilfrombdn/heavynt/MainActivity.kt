@@ -88,8 +88,18 @@ fun App(vm: AppViewModel) {
         onDispose { lifecycle.removeObserver(obs) }
     }
 
-    // First run: ask for the profile so the body map has something to compare against.
-    LaunchedEffect(Unit) { if (st.settings.bodyweight <= 0 && !st.settings.profileAsked) profile = true }
+    // First run: ask to allow notifications (workout reminders), then for sex and body details. Nothing else.
+    val notifPerm = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) vm.update { it.withSettings { x -> x.copy(reminderOn = true) } }
+        profile = true
+    }
+    LaunchedEffect(Unit) {
+        if (st.settings.bodyweight <= 0 && !st.settings.profileAsked) {
+            val needsAsk = android.os.Build.VERSION.SDK_INT >= 33 && androidx.core.content.ContextCompat.checkSelfPermission(
+                ctx, android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
+            if (needsAsk) notifPerm.launch(android.Manifest.permission.POST_NOTIFICATIONS) else profile = true
+        }
+    }
 
     // New month: ask once to update the bodyweight, unless it was already changed this month.
     LaunchedEffect(Unit) {

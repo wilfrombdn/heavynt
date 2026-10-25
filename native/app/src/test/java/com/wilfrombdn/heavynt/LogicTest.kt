@@ -236,4 +236,13 @@ class LogicTest {
         assertEquals(60_000L, millisToNextRollover(d.atTime(0, 0)))
         assertEquals(24 * 3_600_000L - 60_000L, millisToNextRollover(d.atTime(0, 2)))
     }
+
+    @Test fun freshInstallStartsEmpty() {
+        val s = seedState()
+        assertTrue(s.plans.isEmpty())
+        assertTrue(s.schedule.days.all { it == null })
+        assertTrue(s.logs.isEmpty())
+        assertEquals(LIBRARY.size, s.exercises.size)  // the exercise list is still there to pick from
+        assertEquals(0.0, s.settings.bodyweight, 0.0)
+    }
 }

@@ -19,16 +19,12 @@ val AppJson = Json { ignoreUnknownKeys = true; encodeDefaults = true; coerceInpu
 
 fun uid(): String = UUID.randomUUID().toString().take(8)
 
-/** First-run state: library, the preloaded programme (Wed-Sun of week 1, week 2 off) and this week = week 1. */
+/** First-run state: just the exercise library. No plans or schedule; the user builds their own. */
 fun seedState(): AppState {
-    val plans = STARTER_PLANS.map { Plan(uid(), it.name, it.items) }
-    val days = MutableList<String?>(7 * STARTER_WEEKS) { null }
-    STARTER_PLANS.forEachIndexed { i, sp -> days[sp.weekday] = plans[i].id }
     return AppState(
         v = 4,
         exercises = LIBRARY,
-        plans = plans.map(::inferSupersets),
-        schedule = Schedule(mondayOf(dateKey()), days),
+        schedule = Schedule(mondayOf(dateKey()), List(7) { null }),
     )
 }
 

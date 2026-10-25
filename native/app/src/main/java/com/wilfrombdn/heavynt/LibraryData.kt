@@ -155,8 +155,6 @@ val LIBRARY: List<Exercise> = listOf(
     Exercise("neck-ext", "Neck Extension", "Neck", listOf("neck"), listOf("traps"), 0.25, 0.0, false, stdF = 0.0)
 )
 
-const val STARTER_WEEKS = 2
-
 val STANDARDS = Standards(
     male = SexStandard(82.0, 0.85, mapOf("beginner" to 0.52, "novice" to 0.74, "intermediate" to 1.0, "advanced" to 1.3, "elite" to 1.63)),
     female = SexStandard(65.0, 0.72, mapOf("beginner" to 0.37, "novice" to 0.64, "intermediate" to 1.0, "advanced" to 1.44, "elite" to 1.94)),
@@ -166,53 +164,4 @@ val STANDARDS = Standards(
     femaleRatioDefault = 0.68,
     bodyweightFloor = 1.1,
     nutrition = Nutrition(waterMlPerKg = 35.0, waterMinMl = 1500.0, waterMaxMl = 4500.0, proteinGPerKg = 1.6, proteinStepG = 10.0),
-)
-
-val STARTER_PLANS: List<StarterPlan> = listOf(
-    StarterPlan("Push", 2, listOf(
-        PlanItem("bench", 5, 5, 0.0, "Heavy · 4–6 reps · rest 3 min"),
-        PlanItem("incline-db", 3, 8, 0.0, "A1 · superset with lateral raise"),
-        PlanItem("cable-lateral", 3, 8, 0.0, "A2 · 8–10 per side · rest 75 s"),
-        PlanItem("dip", 3, 8, 0.0, "B1 · weighted · superset with triceps extension"),
-        PlanItem("oh-rope", 3, 8, 0.0, "B2 · overhead cable · 8–10 reps · rest 75 s"),
-        PlanItem("pec-deck", 1, 20, 0.0, "Finisher · triple drop: 20 → drop 25% → max → drop 25% → max"),
-        PlanItem("machine-lateral", 2, 20, 0.0, "Finisher · 20–25 reps · rest 45 s")
-    )),
-    StarterPlan("Pull", 3, listOf(
-        PlanItem("pullup", 5, 5, 0.0, "Heavy 1 · weighted pull-up (or heavy lat pulldown) · 4–6 reps · rest 3 min"),
-        PlanItem("row", 3, 5, 0.0, "Heavy 2 · rest 2.5 min"),
-        PlanItem("one-arm-cable-row", 3, 8, 0.0, "A1 · per side · superset with face pull"),
-        PlanItem("face-pull", 3, 10, 0.0, "A2 · 10–12 reps · rest 75 s"),
-        PlanItem("incline-curl", 3, 8, 0.0, "B1 · superset with reverse pec deck"),
-        PlanItem("reverse-pec-deck", 3, 10, 0.0, "B2 · rest 75 s"),
-        PlanItem("lat-pulldown", 1, 15, 0.0, "Finisher · myo-reps: 15–20, then 4–5 mini-sets of 5 with 15 s rest")
-    )),
-    StarterPlan("Legs + Abs", 4, listOf(
-        PlanItem("leg-press", 5, 5, 0.0, "Heavy · 5–6 reps · rest 3 min"),
-        PlanItem("rdl", 3, 8, 0.0, "A1 · superset with calf raise"),
-        PlanItem("db-calf", 3, 8, 0.0, "A2 · single-leg · 8–10 per side · rest 90 s"),
-        PlanItem("seated-leg-curl", 3, 8, 0.0, "B1 · seated or lying · superset with cable crunch"),
-        PlanItem("cable-crunch", 3, 10, 0.0, "B2 · rest 75 s"),
-        PlanItem("leg-ext", 1, 20, 0.0, "Finisher · 20 + one drop to failure")
-    )),
-    StarterPlan("Shoulders + Arms", 5, listOf(
-        PlanItem("ohp", 5, 5, 0.0, "Heavy · standing · 4–6 reps · rest 3 min"),
-        PlanItem("cgbp", 3, 8, 0.0, "A1 · superset with EZ-bar curl"),
-        PlanItem("ez-curl", 3, 8, 0.0, "A2 · rest 90 s"),
-        PlanItem("lateral", 4, 10, 0.0, "B1 · superset with rear-delt fly"),
-        PlanItem("cable-rear-fly", 3, 10, 0.0, "B2 · rest 60 s"),
-        PlanItem("cable-curl", 2, 25, 0.0, "Finisher · arm burnout: cable curl 25 → rope pushdown 25, no rest · rest 60 s"),
-        PlanItem("rope-pushdown", 2, 25, 0.0, "Finisher · arm burnout, straight after the curls"),
-        PlanItem("cable-lateral", 1, 12, 0.0, "Finisher · drop set per side: to failure, drop, to failure")
-    )),
-    StarterPlan("Upper Volume", 6, listOf(
-        PlanItem("incline-bench", 5, 5, 0.0, "Heavy 1 · 4–6 reps · rest 3 min"),
-        PlanItem("row", 3, 5, 0.0, "Heavy 2 · rest 2.5 min"),
-        PlanItem("chest-row", 3, 8, 0.0, "A1 · chest-supported T-bar row · superset with machine chest press"),
-        PlanItem("machine-chest", 3, 8, 0.0, "A2 · rest 90 s"),
-        PlanItem("close-pulldown", 3, 8, 0.0, "B1 · neutral-grip lat pulldown · superset with cable fly"),
-        PlanItem("low-cable-fly", 3, 8, 0.0, "B2 · low-to-high · 8–10 reps · rest 75 s"),
-        PlanItem("straight-arm", 1, 25, 0.0, "Finisher"),
-        PlanItem("pushup", 2, 15, 0.0, "Finisher · max reps · rest 60 s")
-    ))
 )

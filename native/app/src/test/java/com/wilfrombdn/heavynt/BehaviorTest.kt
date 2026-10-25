@@ -29,7 +29,9 @@ class BehaviorTest {
         val app = ApplicationProvider.getApplicationContext<Application>()
         android.provider.Settings.Global.putFloat(app.contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 0f)
         val vm = AppViewModel(app)
-        vm.update { s -> s.copy(settings = s.settings.copy(bodyweight = 180.0, profileAsked = true)).startWorkout(s.plans.first().id) }
+        // the app starts with no plans, so give it a small one
+        val plan = Plan("t1", "Test day", listOf(PlanItem("bench", 3, 5), PlanItem("ohp", 3, 5), PlanItem("dip", 3, 8)))
+        vm.update { s -> s.copy(settings = s.settings.copy(bodyweight = 180.0, profileAsked = true), plans = listOf(plan)).startWorkout(plan.id) }
         return vm
     }
 

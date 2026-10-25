@@ -128,7 +128,5 @@ data class AppState(
 @Serializable
 data class Intake(val water: Int = 0, val protein: Int = 0)
 
-class StarterPlan(val name: String, val weekday: Int, val items: List<PlanItem>)
-
 fun AppState.ex(id: String): Exercise? = exercises.firstOrNull { it.id == id }
 fun AppState.plan(id: String?): Plan? = plans.firstOrNull { it.id == id }
