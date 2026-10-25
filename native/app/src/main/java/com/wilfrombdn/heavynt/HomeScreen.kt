@@ -1,4 +1,8 @@
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
 package com.wilfrombdn.heavynt
+
+import androidx.compose.foundation.layout.FlowRow
 
 import android.Manifest
 import android.app.TimePickerDialog
@@ -103,6 +107,8 @@ fun HomeScreen(st: AppState, vm: AppViewModel, go: (Int) -> Unit, openSettings: 
             }
         }
 
+        if (st.settings.bodyweight > 0) IntakeCard(st, vm)
+
         if (st.settings.bodyweight <= 0) {
             HCard(onClick = openProfile) {
                 Text("Set up your profile", style = T.name)
@@ -114,6 +120,61 @@ fun HomeScreen(st: AppState, vm: AppViewModel, go: (Int) -> Unit, openSettings: 
 
         val sel = selected
         if (sel != null) RegionCard(st, sel, scores[sel]) else if (hasData) Summary(scores, goodColor(st))
+    }
+}
+
+private val WATER = Color(0xFF4FA8FF)
+
+/** Today's water (tap glasses) and protein (tap the bar to add 10 g), against targets from the profile. */
+@Composable
+private fun IntakeCard(st: AppState, vm: AppViewModel) {
+    val s = st.settings
+    val t = st.todayIntake()
+    val glasses = glassesTarget(s)
+    val proteinGoal = proteinTargetG(s)
+    val step = STANDARDS.nutrition.proteinStepG.toInt()
+    HCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Eyebrow("Water", Modifier.weight(1f))
+            Text(waterLabel(s, t.water), style = T.small)
+        }
+        FlowRow(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            for (i in 1..maxOf(glasses, t.water)) Glass(i <= t.water) { vm.update { it.tapGlass(i) } }
+        }
+        Text("Tap a glass when you drink one (${if (s.unit == "lb") "8 oz" else "250 ml"}). Tap the last full one to undo.", style = T.small, modifier = Modifier.padding(top = 6.dp))
+
+        Row(Modifier.padding(top = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Eyebrow("Protein", Modifier.weight(1f))
+            Text("${t.protein} / $proteinGoal g", style = T.small)
+        }
+        Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            val frac = if (proteinGoal > 0) (t.protein.toFloat() / proteinGoal).coerceIn(0f, 1f) else 0f
+            Box(Modifier.weight(1f).height(28.dp).clip(RoundedCornerShape(14.dp)).background(Color(0xFF1A1A1A))
+                .clickableNoRipple { vm.update { it.addProtein(step) } }) {
+                Box(Modifier.fillMaxWidth(frac).height(28.dp).clip(RoundedCornerShape(14.dp)).background(goodColor(st)))
+                Text("+$step g", style = TextStyle(fontSize = 13.sp, color = Color.White, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold),
+                    modifier = Modifier.align(Alignment.Center))
+            }
+            IconBtn("−", { vm.update { it.addProtein(-step) } })
+        }
+    }
+}
+
+@Composable
+private fun Glass(full: Boolean, onClick: () -> Unit) {
+    androidx.compose.foundation.Canvas(Modifier.size(22.dp, 30.dp).clickableNoRipple(onClick)) {
+        val w = size.width; val h = size.height; val inset = w * 0.12f
+        val cup = androidx.compose.ui.graphics.Path().apply {
+            moveTo(0f, 0f); lineTo(w, 0f); lineTo(w - inset, h); lineTo(inset, h); close()
+        }
+        if (full) {
+            val top = h * 0.22f
+            val water = androidx.compose.ui.graphics.Path().apply {
+                moveTo(inset * top / h, top); lineTo(w - inset * top / h, top); lineTo(w - inset, h); lineTo(inset, h); close()
+            }
+            drawPath(water, WATER.copy(alpha = 0.85f))
+        }
+        drawPath(cup, if (full) WATER else Color(0xFF5A5A5A), style = androidx.compose.ui.graphics.drawscope.Stroke(1.5.dp.toPx()))
     }
 }
 

@@ -205,4 +205,26 @@ class LogicTest {
         assertEquals("{}", s.demoBackup)
         assertTrue(s.logs.isNotEmpty())
     }
+
+    @Test fun waterAndProteinTargets() {
+        val man = Settings(unit = "lb", bodyweight = 180.0, heightCm = 180.0)
+        assertEquals(2858.0, waterTargetMl(man).toDouble(), 2.0)  // 81.6 kg × 35 ml
+        assertEquals(13, glassesTarget(man))             // 8 oz glasses
+        assertEquals(130, proteinTargetG(man))           // 81.6 kg × 1.6 g, to 5 g
+        val woman = Settings(unit = "kg", bodyweight = 63.5, sex = "female")
+        assertEquals(9, glassesTarget(woman))            // 2.2 L in 250 ml glasses
+        assertEquals(100, proteinTargetG(woman))
+        // heavy and short: protein ignores weight above BMI 27
+        assertEquals(proteinTargetG(man.copy(bodyweight = 300.0, heightCm = 170.0)), proteinTargetG(man.copy(bodyweight = 260.0, heightCm = 170.0)))
+        assertEquals(0, glassesTarget(Settings()))
+    }
+
+    @Test fun tappingGlassesAndProtein() {
+        var s = AppState()
+        s = s.tapGlass(3); assertEquals(3, s.todayIntake().water)
+        s = s.tapGlass(3); assertEquals(2, s.todayIntake().water)  // tapping the last full glass empties it
+        s = s.tapGlass(1); assertEquals(1, s.todayIntake().water)
+        s = s.addProtein(10).addProtein(10).addProtein(-10); assertEquals(10, s.todayIntake().protein)
+        s = s.addProtein(-50); assertEquals(0, s.todayIntake().protein)
+    }
 }

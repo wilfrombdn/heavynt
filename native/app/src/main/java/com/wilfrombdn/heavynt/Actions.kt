@@ -138,6 +138,16 @@ fun AppState.switchToSaved(id: String): AppState {
 
 fun AppState.deleteSaved(id: String): AppState = copy(saved = saved.filter { it.id != id })
 
+// ---------- water & protein ----------
+fun AppState.todayIntake(): Intake = intake[dateKey()] ?: Intake()
+
+private fun AppState.setToday(i: Intake) = copy(intake = intake + (dateKey() to i))
+
+/** Tap glass number n (1-based): fill up to it, or if it's the last full one, empty it. */
+fun AppState.tapGlass(n: Int): AppState = todayIntake().let { t -> setToday(t.copy(water = if (t.water == n) n - 1 else n)) }
+
+fun AppState.addProtein(g: Int): AppState = todayIntake().let { t -> setToday(t.copy(protein = maxOf(0, t.protein + g))) }
+
 // ---------- exercises ----------
 fun AppState.upsertExercise(e: Exercise): AppState =
     if (exercises.any { it.id == e.id }) copy(exercises = exercises.map { if (it.id == e.id) e else it }) else copy(exercises = exercises + e)

@@ -165,6 +165,7 @@ val STANDARDS = Standards(
     femaleRatio = mapOf("upperChest" to 0.62, "chest" to 0.62, "shoulders" to 0.62, "triceps" to 0.62, "sideDelts" to 0.7, "rearDelts" to 0.68, "traps" to 0.68, "upperBack" to 0.68, "lats" to 0.68, "biceps" to 0.68, "forearms" to 0.68, "lowerBack" to 0.72, "abs" to 0.72, "obliques" to 0.72, "quads" to 0.72, "hamstrings" to 0.72, "calves" to 0.75, "tibialis" to 0.72, "neck" to 0.65, "hipFlexors" to 0.75, "glutes" to 0.85, "adductors" to 0.82, "abductors" to 0.85),
     femaleRatioDefault = 0.68,
     bodyweightFloor = 1.1,
+    nutrition = Nutrition(waterMlPerKg = 35.0, waterMinMl = 1500.0, waterMaxMl = 4500.0, proteinGPerKg = 1.6, proteinStepG = 10.0),
 )
 
 val STARTER_PLANS: List<StarterPlan> = listOf(

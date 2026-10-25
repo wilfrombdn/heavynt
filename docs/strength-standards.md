@@ -50,3 +50,14 @@ Neck and tibialis benchmarks are rough estimates with no published table.
 23 regions: upper chest, chest, front/side/rear delts, traps, mid back, lats, lower back, biceps, triceps,
 forearms, abs, obliques, hip flexors, glutes, outer hips, inner thighs, quads, hamstrings, calves, shins, neck.
 Deep muscles you can't see or train on their own (rotator cuff, serratus, brachialis…) are left out on purpose.
+
+## Water and protein (Home screen, under the body map)
+
+`STANDARDS.nutrition` in `src/data.js`. Each day's glasses and grams are saved in the app data (`AppState.intake`, last 60 days).
+
+- **Water:** 35 ml per kg of bodyweight, kept between 1.5 and 4.5 L. A 180 lb man gets about 2.9 L (13 × 8 oz glasses);
+  a 140 lb woman about 2.2 L. This is close to the US National Academies' adequate intakes from drinks
+  (about 3.0 L for men and 2.2 L for women, out of 3.7 / 2.7 L total water including food).
+- **Protein:** 1.6 g per kg of bodyweight, rounded to 5 g; weight above BMI 27 doesn't count when height is set.
+  That's where extra protein stopped adding muscle in the Morton et al. 2018 meta-analysis of people who lift
+  (ISSN position stand: 1.4–2.0 g/kg). A 180 lb man gets 130 g, a 140 lb woman 100 g.

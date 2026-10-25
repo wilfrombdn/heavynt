@@ -95,8 +95,37 @@ val LEVELS = listOf("beginner", "novice", "intermediate", "advanced", "elite")
 class SexStandard(val refKg: Double, val exponent: Double, val levels: Map<String, Double>)
 class Standards(
     val male: SexStandard, val female: SexStandard, val age: List<Pair<Double, Double>>, val percentiles: Map<String, Double>,
-    val femaleRatio: Map<String, Double>, val femaleRatioDefault: Double, val bodyweightFloor: Double,
+    val femaleRatio: Map<String, Double>, val femaleRatioDefault: Double, val bodyweightFloor: Double, val nutrition: Nutrition,
 )
+class Nutrition(val waterMlPerKg: Double, val waterMinMl: Double, val waterMaxMl: Double, val proteinGPerKg: Double, val proteinStepG: Double)
+
+// ---------- water & protein ----------
+private fun kgOf(s: Settings) = if (s.unit == "lb") s.bodyweight / LB_PER_KG else s.bodyweight
+
+/** Daily drinking water in ml for this profile (0 until bodyweight is set). */
+fun waterTargetMl(s: Settings): Int {
+    if (s.bodyweight <= 0) return 0
+    val n = STANDARDS.nutrition
+    return (kgOf(s) * n.waterMlPerKg).coerceIn(n.waterMinMl, n.waterMaxMl).roundToInt()
+}
+
+/** One glass: 8 US fl oz with pounds, 250 ml with kilograms. */
+fun glassMl(s: Settings): Int = if (s.unit == "lb") 237 else 250
+fun glassesTarget(s: Settings): Int = if (waterTargetMl(s) == 0) 0 else ceil(waterTargetMl(s).toDouble() / glassMl(s)).toInt()
+
+/** "1.5 / 2.9 L" or "48 / 97 oz". */
+fun waterLabel(s: Settings, glasses: Int): String {
+    val ml = glasses * glassMl(s); val t = waterTargetMl(s)
+    return if (s.unit == "lb") "${(ml / 29.5735).roundToInt()} / ${(t / 29.5735).roundToInt()} oz" else "${fmtNum(ml / 1000.0)} / ${fmtNum(Math.round(t / 100.0) / 10.0)} L"
+}
+
+/** Daily protein in grams, rounded to 5 g; weight above BMI 27 is left out when height is known. */
+fun proteinTargetG(s: Settings): Int {
+    if (s.bodyweight <= 0) return 0
+    var kg = kgOf(s)
+    if (s.heightCm > 0) kg = min(kg, 27 * (s.heightCm / 100).pow(2))
+    return (Math.round(kg * STANDARDS.nutrition.proteinGPerKg / 5) * 5).toInt()
+}
 
 /** Share of peak (25-40) strength at this age, read off the standards' age curve. */
 fun ageFactor(age: Int): Double {

@@ -18,6 +18,7 @@ const standards = `val STANDARDS = Standards(
     femaleRatio = ${nums(S.femaleRatio)},
     femaleRatioDefault = ${d(S.femaleRatioDefault)},
     bodyweightFloor = ${d(S.bodyweightFloor)},
+    nutrition = Nutrition(${['waterMlPerKg', 'waterMinMl', 'waterMaxMl', 'proteinGPerKg', 'proteinStepG'].map((k) => `${k} = ${d(S.nutrition[k])}`).join(', ')}),
 )`;
 const plans = STARTER_PLANS.map((p) =>
   `    StarterPlan(${q(p.name)}, ${p.weekday}, listOf(\n${p.items.map(([ex, sets, reps, note]) =>

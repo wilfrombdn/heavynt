@@ -43,10 +43,11 @@ fun normalize(s: AppState): AppState {
     val merged = retagged + LIBRARY.filter { it.id !in have }
     val cutoff = dateKey(today().minusDays(60))
     val overrides = s.overrides.filterKeys { it >= cutoff }
+    val intake = s.intake.filterKeys { it >= cutoff }
     val plans = if (s.v < 5) s.plans.map(::inferSupersets) else s.plans
     // Weights saved before the monthly weigh-in existed count as current, so nobody is asked straight after updating.
     val settings = if (s.settings.bodyweight > 0 && s.settings.bodyweightSetAt.isEmpty()) s.settings.copy(bodyweightSetAt = dateKey()) else s.settings
-    val out = s.copy(v = 7, exercises = merged, plans = plans, overrides = overrides, settings = settings)
+    val out = s.copy(v = 7, exercises = merged, plans = plans, overrides = overrides, settings = settings, intake = intake)
     // a demo left on from an older version: show the current demo (the real data stays set aside)
     return if (out.demoBackup != null && out.demoVersion < DEMO_VERSION) demoState(out).copy(demoBackup = out.demoBackup) else out
 }

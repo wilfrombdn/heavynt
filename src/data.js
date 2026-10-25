@@ -228,6 +228,10 @@ export const STANDARDS = {
   femaleRatioDefault: 0.68,
   // Bodyweight moves (pull-ups, dips…): an intermediate woman still does a few reps, so the target never drops below this × the body part moved.
   bodyweightFloor: 1.1,
+  // Daily water and protein. Water: the common 35 ml per kg rule, which lands close to the US National Academies'
+  // drinking-water intakes (men ~3 L, women ~2.2 L). Protein: 1.6 g per kg, where muscle gains level off for people
+  // who lift (Morton et al. 2018 meta-analysis; ISSN range 1.4-2.0); weight above BMI 27 doesn't count.
+  nutrition: { waterMlPerKg: 35, waterMinMl: 1500, waterMaxMl: 4500, proteinGPerKg: 1.6, proteinStepG: 10 },
 };
 
 // Measured women's intermediate 1RM ÷ bodyweight at 65 kg (dumbbell lifts: ONE dumbbell).

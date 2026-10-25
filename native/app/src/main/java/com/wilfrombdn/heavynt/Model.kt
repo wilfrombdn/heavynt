@@ -121,7 +121,12 @@ data class AppState(
     val demoBackup: String? = null,
     /** Which demo layout is showing, so a demo left on during an update gets the newest one. */
     val demoVersion: Int = 0,
+    /** Water glasses and protein grams per day, keyed by date (yyyy-MM-dd). */
+    val intake: Map<String, Intake> = emptyMap(),
 )
+
+@Serializable
+data class Intake(val water: Int = 0, val protein: Int = 0)
 
 class StarterPlan(val name: String, val weekday: Int, val items: List<PlanItem>)
 
