@@ -1,5 +1,6 @@
 package com.wilfrombdn.heavynt
 
+import androidx.compose.ui.test.onNodeWithContentDescription
 import android.app.Application
 import androidx.compose.ui.test.captureToImage
 import androidx.activity.ComponentActivity
@@ -66,10 +67,10 @@ class ScreenshotTest {
         settle()
         shot("launch")
         for ((tab, name) in listOf("Home" to "home", "Workout" to "workout", "Run" to "run", "Plans" to "plans", "Exercises" to "exercises")) {
-            rule.onNodeWithText(tab).performClick(); settle(); shot(name)
+            rule.onNodeWithContentDescription(tab).performClick(); settle(); shot(name)
             if (name == "workout") {
                 rule.onNodeWithText("History", substring = true).performClick(); settle(); shot("history")
-                rule.onNodeWithText("‹  Workout").performClick(); settle()
+                rule.onNodeWithContentDescription("Back").performClick(); settle()
             }
             if (name == "run") {
                 rule.onAllNodesWithText("km", substring = false)[0].performClick(); settle(); shot("run-detail")
@@ -87,7 +88,7 @@ class ScreenshotTest {
                 rule.onNodeWithText("${fmtDay(mon)} – ${fmtDay(addDays(mon, 6))} · this week", substring = true, ignoreCase = true).assertExists()
                 rule.onNodeWithText("Week 2 · ${fmtDay(addDays(mon, 7))}", substring = true, ignoreCase = true).assertExists()
                 rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }; settle()
-                if (rule.onAllNodesWithText("Current plan", substring = true, ignoreCase = true).fetchSemanticsNodes().isEmpty()) { rule.onNodeWithText("Plans").performClick(); settle() }
+                if (rule.onAllNodesWithText("Current plan", substring = true, ignoreCase = true).fetchSemanticsNodes().isEmpty()) { rule.onNodeWithContentDescription("Plans").performClick(); settle() }
                 rule.onNodeWithText("Current plan", substring = true, ignoreCase = true).performClick(); settle()
                 rule.onNodeWithText("+ Build a new plan").performClick(); settle()
                 rule.onNodeWithText("e.g. Upper / Lower").performTextInput("Upper / Lower"); rule.onNodeWithText("Create plan").performClick(); settle(); shot("plans-new")
@@ -98,18 +99,18 @@ class ScreenshotTest {
                 rule.onNodeWithText("How you compare", ignoreCase = true).assertExists()
                 rule.onNodeWithText("Stronger than about", substring = true).assertExists()
                 rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }; settle()
-                if (rule.onAllNodesWithText("+ Add exercise").fetchSemanticsNodes().isEmpty()) { rule.onNodeWithText("Exercises").performClick(); settle() }
+                if (rule.onAllNodesWithText("+ Add exercise").fetchSemanticsNodes().isEmpty()) { rule.onNodeWithContentDescription("Exercises").performClick(); settle() }
                 rule.onNodeWithText("+ Add exercise").performClick(); settle()
                 // main and helper muscle pickers, both grouped by body area
                 rule.onAllNodesWithText("Hips & legs", ignoreCase = true).assertCountEquals(2)
                 rule.onAllNodesWithText("Inner thighs").assertCountEquals(2)
                 rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }; settle()
-                if (rule.onAllNodesWithText("Olympic").fetchSemanticsNodes().isEmpty()) { rule.onNodeWithText("Exercises").performClick(); settle() }
+                if (rule.onAllNodesWithText("Olympic").fetchSemanticsNodes().isEmpty()) { rule.onNodeWithContentDescription("Exercises").performClick(); settle() }
                 rule.onNodeWithText("Olympic").performScrollTo().performClick(); settle(); shot("exercises-open")
             }
         }
         vm.update { it.withSettings { x -> x.copy(sex = "female") } }
-        rule.onNodeWithText("Home").performClick(); settle(); shot("home-female")
+        rule.onNodeWithContentDescription("Home").performClick(); settle(); shot("home-female")
         vm.enterDemo(); settle(); shot("demo-female")
         vm.exitDemo(); vm.update { it.withSettings { x -> x.copy(sex = "male") } }; vm.enterDemo(); settle(); shot("demo-male")
         vm.exitDemo(); settle()
@@ -117,7 +118,7 @@ class ScreenshotTest {
         // a run being recorded
         val clock = android.os.SystemClock.elapsedRealtime()
         RunTracker.live.value = LiveRun(nowIso(), clock - 754_000, pts.take(60), activeMs = 0, resumedAt = clock - 754_000, distanceM = trackDistanceM(pts.take(60)), gpsOk = true)
-        rule.onNodeWithText("Run").performClick(); settle(); shot("run-live")
+        rule.onNodeWithContentDescription("Run").performClick(); settle(); shot("run-live")
         rule.onNodeWithText("Pause").assertExists()
         RunTracker.clear(); settle()
         // the recap after finishing a workout
@@ -131,6 +132,6 @@ class ScreenshotTest {
         val day = STARTER_DAYS[0].let { d -> d.copy(items = d.items.mapIndexed { i, x -> x.copy(weight = w[i]) }) }
         vm.update { it.copy(plans = it.plans + day).startWorkout(day.id) }
         vm.update { it.toggleDone(0) }
-        rule.onNodeWithText("Workout").performClick(); settle(); shot("workout-active")
+        rule.onNodeWithContentDescription("Workout").performClick(); settle(); shot("workout-active")
     }
 }

@@ -1,5 +1,19 @@
 package com.wilfrombdn.heavynt
 
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import android.graphics.Color as AColor
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -151,24 +165,27 @@ fun App(vm: AppViewModel) {
 
     CompositionLocalProvider(LocalDialogs provides dialogs) {
         Scaffold(
-            containerColor = Color.Black,
+            containerColor = C.bg,
             bottomBar = {
-                NavigationBar(containerColor = Color.Black) {
-                    TABS.forEachIndexed { i, t ->
-                        NavigationBarItem(
-                            selected = tab == i,
-                            onClick = { tab = i },
-                            icon = {
-                                if ((i == 1 && st.active != null) || (i == TAB_RUN && liveRun != null)) BadgedBox(badge = { Badge(containerColor = Color.White) }) { Icon(t.icon, t.label) }
-                                else Icon(t.icon, t.label)
-                            },
-                            label = { Text(t.label, style = TextStyle(fontSize = 11.sp)) },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = Color.White, selectedTextColor = Color.White,
-                                unselectedIconColor = C.muted, unselectedTextColor = C.muted,
-                                indicatorColor = Color(0xFF1C1C1C),
-                            ),
-                        )
+                // Tellem's pill switch: one rounded tray, the open tab is a white pill with its name
+                Box(Modifier.fillMaxWidth().background(C.bg).navigationBarsPadding().padding(horizontal = 14.dp, vertical = 10.dp)) {
+                    Row(Modifier.fillMaxWidth().clip(CircleShape).background(Color(0xFF1C1C1C)).padding(5.dp), verticalAlignment = Alignment.CenterVertically) {
+                        TABS.forEachIndexed { i, t ->
+                            val on = tab == i
+                            val live = (i == 1 && st.active != null) || (i == TAB_RUN && liveRun != null)
+                            Row(
+                                Modifier.weight(if (on) 2.3f else 1f).height(46.dp).clip(CircleShape)
+                                    .background(if (on) Color.White else Color.Transparent)
+                                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { tab = i },
+                                horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Box {
+                                    Icon(t.icon, t.label, tint = if (on) Color.Black else C.muted, modifier = Modifier.size(22.dp))
+                                    if (live) Box(Modifier.align(Alignment.TopEnd).size(7.dp).clip(CircleShape).background(if (on) Color.Black else Color.White))
+                                }
+                                if (on) Text(t.label, style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color.Black), maxLines = 1, modifier = Modifier.padding(start = 6.dp))
+                            }
+                        }
                     }
                 }
             },
@@ -188,5 +205,6 @@ fun App(vm: AppViewModel) {
         val summary by FinishSummary.collectAsStateWithLifecycle()
         summary?.let { SummarySheet(st, it) { FinishSummary.value = null } }
         DialogLayer()
+        UpdateLayer()
     }
 }

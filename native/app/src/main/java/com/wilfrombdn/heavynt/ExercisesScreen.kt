@@ -47,12 +47,7 @@ fun ExercisesScreen(st: AppState, vm: AppViewModel) {
         // A category opens as its own page: its name at the top, its exercises underneath.
         BackHandler { open = null }
         key(cat) {
-            Screen(head = {
-                Row(Modifier.clickable { open = null }.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("‹  Exercises", style = T.muted)
-                }
-                PageHead(cat)
-            }) {
+            Screen(onBack = { open = null }, head = { PageHead(cat) }) {
                 val exs = st.exercises.filter { it.cat == cat }.sortedBy { it.name }
                 Muted("${exs.size} exercises")
                 Column { exs.forEach { row(it) } }

@@ -2,6 +2,10 @@
 
 package com.wilfrombdn.heavynt
 
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import android.content.Context
 import android.os.SystemClock
 import android.widget.Toast
@@ -76,29 +80,31 @@ import androidx.compose.ui.unit.sp
 /** Shape switch: SQUARE = small corners and hairline outlines; false = the original rounded look (12-22 dp corners, 1 dp outlines). */
 object Look {
     const val SQUARE = true
-    fun shape(r: Dp): Shape = RoundedCornerShape(if (SQUARE) minOf(r, 3.dp) else r)
+    fun shape(r: Dp): Shape = RoundedCornerShape(if (SQUARE) minOf(r, 4.dp) else r)
     fun top(r: Dp): Shape = if (SQUARE) RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp) else RoundedCornerShape(topStart = r, topEnd = r)
     val line: Dp get() = if (SQUARE) 0.5.dp else 1.dp
     val lineBold: Dp get() = if (SQUARE) 1.dp else 1.5.dp
 }
 
 object C {
-    val bg = Color.Black
-    val panel = Color(0xFF0E0E0E)
+    val bg = Color(0xFF0F0F0F)
+    val bar = Color(0xFF1F1F1F)   // Tellem's shaded top band
+    val panel = Color(0xFF141414)
     val line = Color(0xFF262626)
     val muted = Color(0xFF8A8A8A)
     val sub = Color(0xFFCFCFCF)
-    val field = Color(0xFF111111)
+    val field = Color(0xFF141414)
     val fieldLine = Color(0xFF333333)
     val green = Color(0xFF22C55E)
     val greenSoft = Color(0xFF9FDCB4)
     val good = Color(0xFF6AAAFF)
     val goodF = Color(0xFFFF7AC8)
     val bad = Color(0xFFFF6B70)
-    val sheet = Color(0xFF0B0B0B)
+    val sheet = Color(0xFF171717)
 }
 
 object T {
+    val bar = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Medium, color = Color.White)
     val h1 = TextStyle(fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White, letterSpacing = (-0.5).sp)
     val big = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
     val title = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
@@ -115,8 +121,8 @@ object T {
 fun HeavyntTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = darkColorScheme(
-            primary = Color.White, onPrimary = Color.Black, background = Color.Black, onBackground = Color.White,
-            surface = Color.Black, onSurface = Color.White, surfaceVariant = C.panel, outline = C.line,
+            primary = Color.White, onPrimary = Color.Black, background = C.bg, onBackground = Color.White,
+            surface = C.bg, onSurface = Color.White, surfaceVariant = C.panel, outline = C.line,
         ),
         content = content,
     )
@@ -171,11 +177,11 @@ fun HButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, st
     val shape = Look.shape(14.dp)
     val (bgc, fg, bd) = when (style) {
         BtnStyle.Primary -> Triple(Color.White, Color.Black, Color.White)
-        BtnStyle.Outline -> Triple(Color.Transparent, Color.White, Color(0xFF3A3A3A))
-        BtnStyle.Danger -> Triple(Color.Transparent, C.bad, Color(0xFF3A2222))
+        BtnStyle.Outline -> Triple(C.bar, Color.White, Color(0xFF2E2E2E))
+        BtnStyle.Danger -> Triple(C.bar, C.bad, Color(0xFF3A2222))
     }
     Box(
-        modifier.fillMaxWidth().height(50.dp).clip(shape).background(bgc).border(Look.line, bd, shape)
+        modifier.fillMaxWidth().height(46.dp).clip(shape).background(bgc).border(Look.line, bd, shape)
             .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) { Text(text, style = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = fg.copy(alpha = if (enabled) 1f else 0.4f))) }
@@ -201,17 +207,18 @@ fun Sheet(title: String?, onDismiss: () -> Unit, content: @Composable ColumnScop
         sheetState = state,
         containerColor = C.sheet,
         contentColor = Color.White,
-        shape = Look.top(22.dp),
-        dragHandle = { BottomSheetDefaults.DragHandle(color = Color(0xFF333333)) },
+        shape = Look.top(4.dp),
+        dragHandle = null,
     ) {
+        // Tellem pop-up look: a shaded band on top carrying the title, the content underneath
+        if (title != null) Box(Modifier.fillMaxWidth().background(C.bar).padding(horizontal = 24.dp, vertical = 16.dp)) {
+            Text(title, style = T.bar)
+        }
         Column(
             Modifier.fillMaxWidth().heightIn(max = 760.dp).verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp).padding(bottom = 20.dp).navigationBarsPadding(),
+                .padding(horizontal = 24.dp).padding(top = 16.dp, bottom = 20.dp).navigationBarsPadding(),
             verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            if (title != null) Text(title, style = T.title)
-            content()
-        }
+        ) { content() }
     }
 }
 
@@ -225,17 +232,38 @@ class DialogHost {
 
 val LocalDialogs = staticCompositionLocalOf { DialogHost() }
 
+/** Tellem pop-up: shaded title band, plain text, plain-word buttons in the bottom right. */
+@Composable
+fun Popup(title: String, onDismiss: () -> Unit, buttons: @Composable RowScope.() -> Unit, body: @Composable ColumnScope.() -> Unit) {
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        Column(Modifier.fillMaxWidth().clip(Look.shape(4.dp)).background(C.sheet)) {
+            Box(Modifier.fillMaxWidth().background(C.bar).padding(horizontal = 20.dp, vertical = 14.dp)) { Text(title, style = T.bar.copy(fontSize = 18.sp)) }
+            Column(Modifier.fillMaxWidth().heightIn(max = 480.dp).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp), content = body)
+            Row(Modifier.fillMaxWidth().padding(end = 8.dp, bottom = 6.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically, content = buttons)
+        }
+    }
+}
+
+@Composable
+fun PopupBtn(text: String, onClick: () -> Unit, danger: Boolean = false, strong: Boolean = false) {
+    Box(Modifier.clip(Look.shape(4.dp)).clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 12.dp)) {
+        Text(text, style = TextStyle(fontSize = 15.sp, fontWeight = if (strong) FontWeight.Bold else FontWeight.Medium,
+            color = if (danger) C.bad else if (strong) Color.White else C.sub))
+    }
+}
+
 @Composable
 fun DialogLayer() {
     val host = LocalDialogs.current
     val spec = host.spec ?: return
-    Sheet(spec.title, onDismiss = { host.spec = null }) {
+    val close = { host.spec = null }
+    // buttons read left to right with the main one last (right-most), like Tellem
+    val ordered = spec.buttons.sortedBy { it.primary }
+    Popup(spec.title, close, buttons = {
+        ordered.forEach { b -> PopupBtn(b.label, { close(); b.onClick() }, danger = b.danger, strong = b.primary) }
+    }) {
         if (spec.message != null) Muted(spec.message)
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            spec.buttons.forEach { b ->
-                HButton(b.label, { host.spec = null; b.onClick() }, style = if (b.primary) BtnStyle.Primary else if (b.danger) BtnStyle.Danger else BtnStyle.Outline)
-            }
-        }
     }
 }
 
@@ -445,9 +473,57 @@ object Icons {
     val run = strokeIcon("run", "M12.4 4.5a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0 -3.2 0M13 7.5l-2 5.5m0 0-3 3H5m6-3 3 3-1 5M12.6 8.8l3.4 2.2h2.5M12.6 8.8H9.5L7.5 11")
     val history = strokeIcon("history", "M4 12a8 8 0 1 0 3-6.2M4 4v4h4M12 8v4l3 2")
     val gear = strokeIcon("gear", "M19.03 10.42 L21.35 10.33 L21.35 13.67 L19.03 13.58 L18.08 15.85 L19.79 17.43 L17.43 19.79 L15.85 18.08 L13.58 19.03 L13.67 21.35 L10.33 21.35 L10.42 19.03 L8.15 18.08 L6.57 19.79 L4.21 17.43 L5.92 15.85 L4.97 13.58 L2.65 13.67 L2.65 10.33 L4.97 10.42 L5.92 8.15 L4.21 6.57 L6.57 4.21 L8.15 5.92 L10.42 4.97 L10.33 2.65 L13.67 2.65 L13.58 4.97 L15.85 5.92 L17.43 4.21 L19.79 6.57 L18.08 8.15Z M15 12a3 3 0 1 0 -6 0a3 3 0 1 0 6 0")
+    val back = strokeIcon("back", "M19 12H5M11 6l-6 6 6 6")
     val check = strokeIcon("check", "M5 12.5l4.5 4.5L19 7.5")
 }
 
 
 fun Modifier.clickableNoRipple(onClick: () -> Unit): Modifier = this.clickable(onClick = onClick)
 fun Modifier.androidxBorder(): Modifier = this.border(Look.line, C.line, Look.shape(12.dp))
+
+// ---------- app updates ----------
+/** Checks for a new release on launch (every few hours), downloads it quietly, and offers to install it. */
+@Composable
+fun UpdateLayer() {
+    val ctx = LocalContext.current
+    val s by Updater.state.collectAsStateWithLifecycle()
+    val err by Updater.installError.collectAsStateWithLifecycle()
+    var dismissed by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(Unit) { kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { Updater.run(ctx, force = false) } }
+    val ready = s as? Updater.State.Ready
+    if (ready != null && dismissed != ready.update.version) {
+        Popup("Update ready", { dismissed = ready.update.version }, buttons = {
+            PopupBtn("Later", { dismissed = ready.update.version })
+            PopupBtn("Install", { runCatching { Updater.install(ctx, ready.file) }.onFailure { Updater.installError.value = it.message } }, strong = true)
+        }) {
+            Text("Heavyn't ${ready.update.version}", style = T.name)
+            ready.update.notes.forEach { Text("•  $it", style = T.sub) }
+            Muted("It installs in a few seconds and the app reopens by itself.")
+        }
+    }
+    if (err != null) Popup("Update didn't install", { Updater.installError.value = null }, buttons = { PopupBtn("OK", { Updater.installError.value = null }, strong = true) }) { Muted(err!!) }
+}
+
+/** Settings row: shows where the update check is at and lets you run it by hand. */
+@Composable
+fun UpdateRow() {
+    val ctx = LocalContext.current
+    val s by Updater.state.collectAsStateWithLifecycle()
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    val now = remember { Updater.currentName(ctx) }
+    val line = when (val x = s) {
+        is Updater.State.Checking -> "Checking…"
+        is Updater.State.Downloading -> "Downloading ${x.update.version}… ${(x.progress * 100).toInt()}%"
+        is Updater.State.Ready -> "${x.update.version} is ready — tap to install"
+        is Updater.State.Failed -> "Couldn't check: ${x.message}. Tap to try again"
+        else -> "You have Heavyn't $now. Tap to check"
+    }
+    HItem(onClick = {
+        val x = s
+        if (x is Updater.State.Ready) runCatching { Updater.install(ctx, x.file) }.onFailure { Updater.installError.value = it.message }
+        else if (x !is Updater.State.Checking && x !is Updater.State.Downloading) scope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            Updater.run(ctx, force = true)
+            if (Updater.state.value is Updater.State.UpToDate) kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) { toast(ctx, "You have the newest version") }
+        }
+    }) { Eyebrow("Updates"); Text(line, style = T.body) }
+}

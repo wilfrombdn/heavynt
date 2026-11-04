@@ -2,6 +2,8 @@
 
 package com.wilfrombdn.heavynt
 
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.foundation.layout.heightIn
@@ -48,22 +50,25 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.IntrinsicSize
 
 @Composable
-fun Screen(head: (@Composable () -> Unit)? = null, content: @Composable () -> Unit) {
-    // The title (head) stays at the top; on short pages the rest sits in the middle of the space left, long pages scroll as usual.
-    androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize()) {
-        val h = maxHeight
-        val density = androidx.compose.ui.platform.LocalDensity.current
-        var headH by remember { mutableStateOf(0.dp) }
-        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 14.dp)) {
-            if (head != null) Column(
-                Modifier.fillMaxWidth().onSizeChanged { headH = with(density) { it.height.toDp() } + 12.dp }.padding(bottom = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) { head() }
-            Column(
-                Modifier.fillMaxWidth().heightIn(min = (h - 28.dp - headH).coerceAtLeast(0.dp)),
-                verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
-            ) { content() }
+fun Screen(onBack: (() -> Unit)? = null, head: (@Composable () -> Unit)? = null, content: @Composable () -> Unit) {
+    // Tellem layout: a shaded title band pinned at the top (back arrow on the left, actions on the right),
+    // and the page scrolls underneath it, starting right below the band.
+    Column(Modifier.fillMaxSize()) {
+        if (head != null) Row(
+            Modifier.fillMaxWidth().background(C.bar).statusBarsPadding().heightIn(min = 64.dp).padding(end = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (onBack != null) Box(Modifier.size(56.dp).clickable(onClick = onBack), contentAlignment = Alignment.Center) {
+                Icon(Icons.back, "Back", tint = Color.White, modifier = Modifier.size(24.dp))
+            } else Spacer(Modifier.width(20.dp))
+            Column(Modifier.weight(1f).padding(vertical = 10.dp)) { head() }
         }
+        Column(
+            Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState())
+                .then(if (head == null) Modifier.statusBarsPadding() else Modifier)
+                .padding(horizontal = 20.dp).padding(top = 14.dp, bottom = 28.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) { content() }
     }
 }
 
@@ -71,8 +76,8 @@ fun Screen(head: (@Composable () -> Unit)? = null, content: @Composable () -> Un
 fun PageHead(title: String, subtitle: String? = null, trailing: @Composable (() -> Unit)? = null) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
-            Text(title, style = T.h1)
-            if (subtitle != null) Muted(subtitle)
+            Text(title, style = T.bar, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+            if (subtitle != null) Text(subtitle, style = T.small.copy(fontSize = 13.sp))
         }
         trailing?.invoke()
     }
@@ -100,10 +105,10 @@ fun ItemCard(st: AppState, it: ActiveItem, interactive: Boolean, next: Boolean =
     }
     // flat row: a short bar (white = up next, grey = still to come, green = done), the lift, and the weight
     Row(m.height(IntrinsicSize.Min).padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.width(3.dp).fillMaxHeight().clip(Look.shape(2.dp)).background(if (it.done) C.green else if (next) Color.White else Color(0xFF4A4A4A)))
+        Box(Modifier.width(3.dp).fillMaxHeight().clip(Look.shape(2.dp)).background(if (it.done) Color(0xFF8A8A8A) else if (next) Color.White else Color(0xFF4A4A4A)))
         Column(Modifier.weight(1f).padding(start = 12.dp, end = 8.dp), verticalArrangement = Arrangement.spacedBy(1.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (it.done) Text("✓", style = TextStyle(fontSize = 17.sp, fontWeight = FontWeight.Bold, color = C.green))
+                if (it.done) Text("✓", style = TextStyle(fontSize = 17.sp, fontWeight = FontWeight.Bold, color = Color.White))
                 if (badge != null) Box(Modifier.clip(Look.shape(6.dp)).background(Color.White).padding(horizontal = 6.dp, vertical = 1.dp)) {
                     Text(badge, style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.Black))
                 }
@@ -235,7 +240,7 @@ fun WorkoutScreen(st: AppState, vm: AppViewModel, goHome: () -> Unit) {
             val done = a.items.count { it.done }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Box(Modifier.weight(1f).height(8.dp).clip(Look.shape(2.dp)).background(C.line)) {
-                    Box(Modifier.fillMaxHeight().fillMaxWidth(if (a.items.isEmpty()) 0f else done / a.items.size.toFloat()).background(C.green))
+                    Box(Modifier.fillMaxHeight().fillMaxWidth(if (a.items.isEmpty()) 0f else done / a.items.size.toFloat()).background(Color.White))
                 }
                 Text("$done of ${a.items.size}", style = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White))
             }

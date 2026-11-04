@@ -194,10 +194,7 @@ fun RunDetail(st: AppState, vm: AppViewModel, id: String, onBack: () -> Unit) {
     val dialogs = LocalDialogs.current
     val run = st.runs.firstOrNull { it.id == id } ?: run { onBack(); return }
     val pts = remember(id) { RunFiles.load(ctx, id) }
-    Screen(head = {
-        Row(Modifier.clickable(onClick = onBack).padding(vertical = 4.dp)) { Text("‹  Back", style = T.muted) }
-        PageHead("Run", fmtDate(run.start))
-    }) {
+    Screen(onBack = onBack, head = { PageHead("Run", fmtDate(run.start)) }) {
         when {
             pts != null && pts.size >= 2 -> RouteMap(pts)
             pts != null -> Muted("No route to show: you didn't move far enough for GPS to draw one.")

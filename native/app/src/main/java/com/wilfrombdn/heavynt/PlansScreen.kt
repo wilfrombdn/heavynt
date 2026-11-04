@@ -1,5 +1,6 @@
 package com.wilfrombdn.heavynt
 
+import androidx.compose.foundation.layout.size
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.height
@@ -83,7 +84,7 @@ fun PlansScreen(st: AppState, vm: AppViewModel) {
                         val fg = if (isToday) Color.Black else if (p != null) Color.White else C.muted
                         Text(parseKey(k).dayOfWeek.getDisplayName(DayStyle.NARROW, Locale.getDefault()), style = TextStyle(fontSize = 10.sp, color = fg))
                         Text(parseKey(k).dayOfMonth.toString(), style = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Bold, color = fg))
-                        Text(p?.take(4) ?: "–", style = TextStyle(fontSize = 10.sp, color = fg))
+                        Box(Modifier.padding(top = 3.dp).size(5.dp).clip(androidx.compose.foundation.shape.CircleShape).background(if (p != null) fg else Color.Transparent))
                     }
                 }
             }

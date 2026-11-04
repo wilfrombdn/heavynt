@@ -342,6 +342,7 @@ fun SettingsSheet(st: AppState, vm: AppViewModel, onDismiss: () -> Unit, openPro
         }
         Stepper(s.restSec.toDouble(), { v -> vm.update { it.withSettings { x -> x.copy(restSec = v.toInt()) } } },
             label = "Rest timer after each exercise (seconds, 0 = off)", min = 0.0, max = 600.0, step = 15.0)
+        UpdateRow()
         SectionTitle("Backup")
         if (AutoBackup.supported) {
             Text("Saved automatically to Downloads/${AutoBackup.FOLDER} on your phone, one file per day (the last week is kept). " +
