@@ -13,5 +13,5 @@ Set-Content $gradle $g -NoNewline
 $apk = "$root\dist\heavynt.apk"
 if (-not (Test-Path $apk)) { throw 'no apk' }
 Set-Location $root
-git add -A; git commit -m "v$Version: $Notes"; git push
+git add -A; git commit -m "v${Version}: $Notes"; git push
 gh release create "v$Version" $apk --title "Heavyn't $Version" --notes $Notes
